@@ -25,8 +25,8 @@ escribir cualquier código.
 - Lo único que se permite sustituir son los **shims de plataforma nativa** que no
   existen en el entorno Node de Jest (`expo-secure-store`, `AsyncStorage`) — nunca
   lógica de negocio ni respuestas del servidor. Ver `jest.setup.ts`.
-- Credenciales sembradas (de `../pawcare/db/seeds`): `owner1@example.com`,
-  `admin@pawcare.com`, `vet@pawcare.com` — todas con `password123`.
+- Credenciales sembradas (de `../pawcare/db/seeds`): `owner1@example.com` y
+  `vet@pawcare.com` con `password123`; `admin@pawcare.com` con `admin12345`.
 
 ## Compuertas de calidad — antes de CADA commit
 

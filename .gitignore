@@ -49,5 +49,5 @@ yarn-error.*
 /android
 
 # Jest (Node localStorage file)
-.jest-localstorage
+.jest-localstorage*
 coverage/
