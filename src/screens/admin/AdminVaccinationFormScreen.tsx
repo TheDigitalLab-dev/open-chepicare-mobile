@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { AppHeader, MobileShell } from '@/components/layout';
 import { Button, InfoBanner, TextField } from '@/components/ui';
+import { useAuth } from '@/hooks/useAuth';
 import { useRemoteSearch } from '@/hooks/useRemoteSearch';
 import { RemoteSearchPicker } from '@/components/domain/RemoteSearchPicker';
 import { createAdminVaccination, listAdminPets } from '@/services/admin';
@@ -36,12 +37,16 @@ function VaccinationForm() {
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
   const petSearch = useRemoteSearch(searchPets);
+  // El backend exige can_vaccinate al veterinario que registra la vacuna.
+  const { user } = useAuth();
+  const canVaccinate = user?.type === 'User' && user.can_vaccinate !== false;
   const [pet, setPet] = useState<Pet | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>();
 
   const canSubmit =
+    canVaccinate &&
     form.petId !== undefined &&
     form.vaccine_name.trim().length > 0 &&
     form.application_date.trim().length > 0 &&
@@ -71,6 +76,12 @@ function VaccinationForm() {
   return (
     <>
       {error ? <InfoBanner tone="destructive" message={error} /> : null}
+      {canVaccinate ? null : (
+        <InfoBanner
+          tone="warning"
+          message="Tu usuario no está habilitado para registrar vacunas. Pide a un administrador que active el permiso en Personal."
+        />
+      )}
 
       <RemoteSearchPicker
         label="Mascota"

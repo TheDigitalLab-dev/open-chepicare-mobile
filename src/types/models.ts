@@ -133,6 +133,8 @@ export interface StaffUser {
   username: string;
   role: StaffRole;
   specialty?: string;
+  /** Habilitado para registrar vacunas (el backend rechaza si es false). */
+  can_vaccinate?: boolean;
 }
 
 export type AuthUser = Owner | StaffUser;
