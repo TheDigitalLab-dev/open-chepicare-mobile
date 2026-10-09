@@ -36,7 +36,12 @@ export function ChangePasswordScreen() {
         password: next,
         password_confirmation: confirm,
       });
-      Alert.alert('Listo', 'Tu contraseña se actualizó correctamente.');
+      // El backend cerró las sesiones de otros dispositivos; esta sigue activa
+      // con el par de tokens nuevo que guardó el servicio.
+      Alert.alert(
+        'Listo',
+        'Tu contraseña se actualizó. Se cerró la sesión en tus otros dispositivos.',
+      );
       if (back) back();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'No se pudo cambiar la contraseña.');

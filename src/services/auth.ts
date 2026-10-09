@@ -10,6 +10,7 @@
  *  - `user` trae `user_type` ("Owner" | "User"); de ahí se deriva el rol.
  */
 import type { AuthUser, Owner, StaffUser } from '@/types/models';
+import { ApiError } from '@/types/api';
 import * as secureStore from '@/utils/secureStore';
 import type { OwnerRegistration } from '@/screens/auth/RegisterScreen';
 import { api, registerSessionRefresher, registerTokenProvider } from './api';
@@ -27,15 +28,18 @@ interface ApiUser extends Record<string, unknown> {
   role?: StaffUser['role'];
 }
 
+/** Par de tokens Bearer que entrega el backend. */
+export interface AuthTokenPair {
+  access_token: string;
+  refresh_token: string;
+  token_type: 'Bearer';
+  expires_in: number;
+}
+
 interface AuthEnvelope {
   success: boolean;
   user: ApiUser;
-  auth: {
-    access_token: string;
-    refresh_token: string;
-    token_type: 'Bearer';
-    expires_in: number;
-  };
+  auth: AuthTokenPair;
 }
 
 // --- Normalización ---------------------------------------------------------
@@ -50,10 +54,7 @@ export function toAuthUser(raw: ApiUser): AuthUser {
 }
 
 async function persistTokens(env: AuthEnvelope): Promise<AuthUser> {
-  await secureStore.setTokens({
-    access: env.auth.access_token,
-    refresh: env.auth.refresh_token,
-  });
+  await storeTokenPair(env.auth);
   return toAuthUser(env.user);
 }
 
@@ -122,8 +123,33 @@ export function setOnSessionExpired(fn: () => void): void {
   onSessionExpired = fn;
 }
 
-/** Rota tokens usando el refresh guardado. Devuelve true si conviene reintentar. */
-async function refreshSession(): Promise<boolean> {
+/** Guarda el par que entrega el backend (login, refresh o cambio de contraseña). */
+export async function storeTokenPair(pair: AuthTokenPair): Promise<void> {
+  await secureStore.setTokens({ access: pair.access_token, refresh: pair.refresh_token });
+}
+
+/**
+ * Rota tokens usando el refresh guardado. Devuelve true si conviene reintentar.
+ *
+ * - El backend rota (y revoca) el refresh en cada uso: si dos peticiones
+ *   renovaran a la vez, la segunda usaría un refresh revocado y cerraría la
+ *   sesión. Por eso hay UNA renovación en vuelo compartida por todas.
+ * - Si el servidor rechaza el refresh (revocado por cambio/restablecimiento de
+ *   contraseña, cuenta desactivada o eliminada, vencido) se borran los tokens y
+ *   se avisa una sola vez a la capa de sesión.
+ * - Un fallo transitorio (sin red, timeout, 5xx, 429) NO cierra la sesión: la
+ *   petición falla y el usuario puede reintentar.
+ */
+let refreshInFlight: Promise<boolean> | null = null;
+
+function refreshSession(): Promise<boolean> {
+  refreshInFlight ??= renewTokens().finally(() => {
+    refreshInFlight = null;
+  });
+  return refreshInFlight;
+}
+
+async function renewTokens(): Promise<boolean> {
   const refresh = await secureStore.getRefreshToken();
   if (!refresh) return false;
   try {
@@ -132,14 +158,16 @@ async function refreshSession(): Promise<boolean> {
       { refresh_token: refresh },
       { auth: false, skipRefresh: true },
     );
-    await secureStore.setTokens({
-      access: env.auth.access_token,
-      refresh: env.auth.refresh_token,
-    });
+    await storeTokenPair(env.auth);
     return true;
-  } catch {
-    await secureStore.clearTokens();
-    onSessionExpired();
+  } catch (err) {
+    const rejected =
+      err instanceof ApiError &&
+      (err.kind === 'unauthorized' || err.kind === 'forbidden' || err.kind === 'validation');
+    if (rejected) {
+      await secureStore.clearTokens();
+      onSessionExpired();
+    }
     return false;
   }
 }

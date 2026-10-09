@@ -215,9 +215,10 @@ async function rawRequest(
     }
   }
 
+  let sentToken: string | null = null;
   if (auth) {
-    const token = await getToken();
-    if (token) finalHeaders.Authorization = `Bearer ${token}`;
+    sentToken = await getToken();
+    if (sentToken) finalHeaders.Authorization = `Bearer ${sentToken}`;
   }
 
   const controller = new AbortController();
@@ -243,8 +244,16 @@ async function rawRequest(
   }
   clearTimeout(timer);
 
-  // 401 → intentar refresh una sola vez y reintentar.
+  // 401 → reintentar UNA sola vez. Si mientras esta petición viajaba otra ya
+  // renovó la sesión (o se cambió la contraseña y llegó un par nuevo), basta
+  // con reintentar con el token actual: renovar otra vez gastaría un refresh
+  // ya rotado. Si no, se renueva (la capa de sesión comparte una sola
+  // renovación entre peticiones concurrentes).
   if (res.status === 401 && auth && !options.skipRefresh && !isRetry) {
+    const current = await getToken();
+    if (current && current !== sentToken) {
+      return rawRequest(method, path, body, options, true);
+    }
     const ok = await refreshSession();
     if (ok) return rawRequest(method, path, body, options, true);
   }

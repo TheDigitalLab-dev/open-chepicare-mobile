@@ -36,6 +36,19 @@ export interface SessionContextValue {
 
 const SessionContext = createContext<SessionContextValue | undefined>(undefined);
 
+/**
+ * Teléfono compartido: ni los datos clínicos locales ni las alarmas del usuario
+ * saliente deben sobrevivir a su sesión (cierre manual o sesión revocada).
+ */
+async function clearLocalUserData(): Promise<void> {
+  try {
+    purgeLocalData();
+  } catch {
+    // La base local no estaba abierta: nada que purgar.
+  }
+  await cancelAllLocalAlarms();
+}
+
 /** Deriva el rol de navegación a partir del tipo de cuenta. */
 function roleForUser(user: AuthUser): SessionRole {
   return user.type === 'Owner' ? 'owner' : 'admin';
@@ -51,11 +64,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
 
-    // Cuando el refresh falla dentro de una petición cualquiera, volvemos a público.
+    // El servidor rechazó el refresh (contraseña cambiada o restablecida en otro
+    // dispositivo, cuenta desactivada o eliminada): los tokens ya se borraron;
+    // se limpian los datos locales y se vuelve a público.
     authService.setOnSessionExpired(() => {
       if (!active) return;
       setUser(null);
       setRole('public');
+      void clearLocalUserData();
     });
 
     (async () => {
@@ -98,14 +114,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         authService.resetPassword(token, password, passwordConfirmation),
       signOut: async () => {
         await authService.logout();
-        // Teléfono compartido: ni los datos clínicos locales ni las alarmas del
-        // usuario saliente deben sobrevivir a su sesión.
-        try {
-          purgeLocalData();
-        } catch {
-          // La base local no estaba abierta: nada que purgar.
-        }
-        await cancelAllLocalAlarms();
+        await clearLocalUserData();
         setUser(null);
         setRole('public');
       },
