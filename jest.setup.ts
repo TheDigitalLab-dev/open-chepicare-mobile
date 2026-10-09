@@ -39,6 +39,26 @@ if (
   globalPerf.performance.markResourceTiming = noop;
 }
 
+// Node define `Symbol.dispose` solo en su realm principal; el contexto vm de Jest
+// no lo hereda. undici 8 limpia sus listeners de abort con
+// `events.addAbortListener(...)[Symbol.dispose]`: sin el símbolo, todo fetch que
+// termina lanza "removeAbortListener is not a function". Se reutiliza el símbolo
+// real de Node (el mismo que usa `node:events`), no se inventa uno.
+const symbolCtor = Symbol as unknown as { dispose?: symbol };
+if (typeof symbolCtor.dispose !== 'symbol') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const events = require('node:events') as {
+    addAbortListener: (signal: AbortSignal, listener: () => void) => object;
+  };
+  const disposable = events.addAbortListener(new AbortController().signal, noop);
+  const nodeDispose = Object.getOwnPropertySymbols(disposable).find(
+    (s) => s.description === 'nodejs.dispose',
+  );
+  if (nodeDispose) {
+    Object.defineProperty(Symbol, 'dispose', { value: nodeDispose });
+  }
+}
+
 // El preset de React Native reemplaza `fetch` por un polyfill que no hace red
 // real en Node. Restauramos un cliente HTTP real (undici) para que los tests
 // peguen DE VERDAD al backend.
