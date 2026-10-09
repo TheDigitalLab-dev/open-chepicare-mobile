@@ -227,6 +227,8 @@ export async function registerAdminPayment(
 
 export interface AdminConsultationInput {
   pet_id: number;
+  /** Cita que se atiende: el backend la marca completada (no cancelada, misma mascota). */
+  appointment_id?: number;
   consultation_date: string;
   diagnosis?: string;
   treatment?: string;
@@ -342,6 +344,21 @@ export async function createAdminAppointment(
   return appointment;
 }
 
+/**
+ * Detalle de una cita (incluye pagos y `allowed_status_transitions`). Una cita
+ * eliminada (borrado lógico) responde 404.
+ */
+export async function getAdminAppointment(id: number): Promise<Appointment> {
+  const { appointment } = await api.get<{ appointment: Appointment }>(
+    `/admin/appointments/${id}`,
+  );
+  return appointment;
+}
+
+/**
+ * "Eliminar" es un borrado lógico: los pagos abiertos se cancelan. El backend
+ * lo bloquea (422 con el motivo) si la cita tiene consulta o pagos cobrados.
+ */
 export async function deleteAdminAppointment(id: number): Promise<void> {
   await api.delete<unknown>(`/admin/appointments/${id}`);
 }

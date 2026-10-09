@@ -13,6 +13,7 @@ import {
   confirmAppointment,
   getAppointment,
 } from '@/services/appointments';
+import { ApiError } from '@/types/api';
 import { formatDateTime } from '@/utils/format';
 import {
   APPOINTMENT_PAYMENT_STATUS_LABEL,
@@ -73,8 +74,14 @@ function Details({
     try {
       await fn();
       await onChanged();
-    } catch {
-      Alert.alert('Error', 'No se pudo completar la acción. Inténtalo de nuevo.');
+    } catch (e) {
+      // El backend explica el rechazo (p. ej. transición de estado no permitida).
+      Alert.alert(
+        'Error',
+        e instanceof ApiError
+          ? e.message
+          : 'No se pudo completar la acción. Inténtalo de nuevo.',
+      );
     } finally {
       setBusy(false);
     }

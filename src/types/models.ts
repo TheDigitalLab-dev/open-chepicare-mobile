@@ -213,6 +213,8 @@ export interface Appointment {
   payment_status: AppointmentPaymentStatus;
   notes?: string | null;
   cancellation_reason?: string | null;
+  /** Solo en /admin/appointments*: estados a los que puede pasar la cita. */
+  allowed_status_transitions?: AppointmentStatus[];
   pet: AppointmentPet | null;
   service: AppointmentService | null;
   assigned_to: AppointmentVet | null;
