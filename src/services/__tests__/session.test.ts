@@ -67,9 +67,7 @@ describe('renovación de sesión ante 401', () => {
       Array.from({ length: 5 }, () => authService.fetchCurrentUser()),
     );
 
-    expect(results.map((u) => u.email)).toEqual(
-      Array(5).fill('owner1@example.com'),
-    );
+    expect(results.map((u) => u.email)).toEqual(Array(5).fill('owner1@example.com'));
     expect(expired).not.toHaveBeenCalled();
     const { refresh: rotated } = await snapshotTokens();
     expect(rotated).not.toBe(original);

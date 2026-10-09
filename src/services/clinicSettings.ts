@@ -19,7 +19,10 @@ export async function fetchClinicTimeZone(): Promise<string | null> {
     const settings = await api.get<GeneralSettings>('/admin/settings/general-config');
     return settings.timezone || null;
   } catch (err) {
-    if (err instanceof ApiError && (err.kind === 'forbidden' || err.kind === 'notFound')) {
+    if (
+      err instanceof ApiError &&
+      (err.kind === 'forbidden' || err.kind === 'notFound')
+    ) {
       return null;
     }
     throw err;

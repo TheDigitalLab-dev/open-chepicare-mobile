@@ -163,7 +163,9 @@ async function renewTokens(): Promise<boolean> {
   } catch (err) {
     const rejected =
       err instanceof ApiError &&
-      (err.kind === 'unauthorized' || err.kind === 'forbidden' || err.kind === 'validation');
+      (err.kind === 'unauthorized' ||
+        err.kind === 'forbidden' ||
+        err.kind === 'validation');
     if (rejected) {
       await secureStore.clearTokens();
       onSessionExpired();
