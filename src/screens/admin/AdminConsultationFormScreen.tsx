@@ -1,21 +1,16 @@
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Text, View } from 'react-native';
 
-import { useTheme } from '@/theme';
 import { AppHeader, MobileShell } from '@/components/layout';
-import {
-  AsyncBoundary,
-  Button,
-  FilterChips,
-  InfoBanner,
-  SectionTitle,
-  TextField,
-} from '@/components/ui';
-import { useAsync } from '@/hooks/useAsync';
+import { Button, InfoBanner, SectionTitle, TextField } from '@/components/ui';
+import { useRemoteSearch } from '@/hooks/useRemoteSearch';
+import { RemoteSearchPicker } from '@/components/domain/RemoteSearchPicker';
 import { createAdminConsultation, listAdminPets } from '@/services/admin';
 import { ApiError } from '@/types/api';
 import type { Pet } from '@/types/models';
+
+const petId = (p: Pet) => p.id;
+const petName = (p: Pet) => p.name;
 
 function todayDate(): string {
   const now = new Date();
@@ -23,13 +18,15 @@ function todayDate(): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
-function ConsultationForm({ pets }: { pets: Pet[] }) {
-  const { colors } = useTheme();
+/** Búsqueda de pacientes en el servidor (la lista del backend es paginada). */
+const searchPets = (query: string) => listAdminPets({ search: query || undefined });
+
+function ConsultationForm() {
   const navigation = useNavigation();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
   const [form, setForm] = useState({
-    petId: pets[0]?.id,
+    petId: undefined as number | undefined,
     date: todayDate(),
     diagnosis: '',
     treatment: '',
@@ -39,17 +36,14 @@ function ConsultationForm({ pets }: { pets: Pet[] }) {
   });
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+  const petSearch = useRemoteSearch(searchPets);
+  const [pet, setPet] = useState<Pet | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>();
 
   const canSubmit =
     form.petId !== undefined && form.date.trim().length > 0 && !submitting;
-  const labelStyle = {
-    fontSize: 14,
-    fontWeight: '500' as const,
-    color: colors.foreground,
-  };
 
   const onSubmit = async () => {
     if (form.petId === undefined) return;
@@ -77,14 +71,20 @@ function ConsultationForm({ pets }: { pets: Pet[] }) {
     <>
       {error ? <InfoBanner tone="destructive" message={error} /> : null}
 
-      <View>
-        <Text style={labelStyle}>Mascota</Text>
-        <FilterChips
-          options={pets.map((p) => ({ id: String(p.id), label: p.name }))}
-          selectedId={form.petId !== undefined ? String(form.petId) : ''}
-          onSelect={(id) => set('petId', Number(id))}
-        />
-      </View>
+      <RemoteSearchPicker
+        label="Mascota"
+        search={petSearch}
+        getId={petId}
+        getLabel={petName}
+        selected={pet}
+        onSelect={(p) => {
+          setPet(p);
+          set('petId', p.id);
+        }}
+        placeholder="Buscar paciente por nombre"
+        emptyIcon="paw"
+        emptyTitle="Sin pacientes"
+      />
 
       <TextField
         label="Fecha"
@@ -141,7 +141,6 @@ function ConsultationForm({ pets }: { pets: Pet[] }) {
 export function AdminConsultationFormScreen() {
   const navigation = useNavigation();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
-  const { data, loading, error, reload } = useAsync(() => listAdminPets());
 
   return (
     <MobileShell
@@ -149,17 +148,7 @@ export function AdminConsultationFormScreen() {
       header={<AppHeader title="Nueva consulta" onBack={back} />}
       contentStyle={{ gap: 12, paddingBottom: 32 }}
     >
-      <AsyncBoundary
-        loading={loading && data === null}
-        error={error}
-        onRetry={reload}
-        empty={(data ?? []).length === 0}
-        emptyIcon="paw"
-        emptyTitle="Sin pacientes"
-        emptyDescription="Registra un paciente antes de crear consultas."
-      >
-        {data ? <ConsultationForm pets={data} /> : null}
-      </AsyncBoundary>
+      <ConsultationForm />
     </MobileShell>
   );
 }

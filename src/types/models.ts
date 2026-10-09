@@ -152,6 +152,14 @@ export interface Pet {
   photo_url?: string | null;
   proprietary_id?: number;
   proprietary_type?: 'Owner' | 'User';
+  /** Dueño embebido (solo en las respuestas admin con include_proprietary). */
+  proprietary?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    full_name?: string;
+    email: string;
+  } | null;
 }
 
 export interface PetMedicalProfile {
