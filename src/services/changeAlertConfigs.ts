@@ -5,6 +5,7 @@
  */
 import type { Appointment, LabExam, MedicalReport, Payment } from '@/types/models';
 import type { AdoptionRecord } from '@/services/admin';
+import { formatClinicDateTime } from '@/utils/clinicTime';
 
 import type { ChangeAlertConfig } from './changeAlerts';
 
@@ -12,12 +13,9 @@ function apptWho(appt: Appointment): string {
   return [appt.pet?.name, appt.service?.name].filter(Boolean).join(' · ');
 }
 
+// Hora de la cita en la zona de la clínica.
 function apptWhen(appt: Appointment): string {
-  const d = new Date(appt.scheduled_at);
-  return `${d.toLocaleDateString('es-VE', { day: 'numeric', month: 'short' })} · ${d.toLocaleTimeString(
-    'es-VE',
-    { hour: '2-digit', minute: '2-digit' },
-  )}`;
+  return formatClinicDateTime(appt.scheduled_at);
 }
 
 /** O2 — la cita del dueño cambió (estado o fecha) desde el consultorio. */

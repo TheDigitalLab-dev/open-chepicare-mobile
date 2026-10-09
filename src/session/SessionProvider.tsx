@@ -6,6 +6,8 @@ import * as authService from '@/services/auth';
 import * as secureStore from '@/utils/secureStore';
 import { purgeLocalData } from '@/db/database';
 import { cancelAllLocalAlarms } from '@/services/alarms';
+import { fetchClinicTimeZone } from '@/services/clinicSettings';
+import { setClinicTimeZone } from '@/utils/clinicTime';
 
 /** Rol efectivo que decide el árbol de navegación (RNF-SEC-002). */
 export type SessionRole = 'public' | 'owner' | 'admin';
@@ -41,12 +43,30 @@ const SessionContext = createContext<SessionContextValue | undefined>(undefined)
  * saliente deben sobrevivir a su sesión (cierre manual o sesión revocada).
  */
 async function clearLocalUserData(): Promise<void> {
+  setClinicTimeZone(null);
   try {
     purgeLocalData();
   } catch {
     // La base local no estaba abierta: nada que purgar.
   }
   await cancelAllLocalAlarms();
+}
+
+/**
+ * Zona horaria de la clínica para mostrar las citas. Solo el staff con permiso
+ * de configuración puede leerla; si no, queda la del dispositivo. Nunca
+ * bloquea el inicio de sesión.
+ */
+async function loadClinicTimeZone(user: AuthUser): Promise<void> {
+  if (user.type !== 'User') {
+    setClinicTimeZone(null);
+    return;
+  }
+  try {
+    setClinicTimeZone(await fetchClinicTimeZone());
+  } catch {
+    setClinicTimeZone(null);
+  }
 }
 
 /** Deriva el rol de navegación a partir del tipo de cuenta. */
@@ -78,6 +98,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       try {
         if (!(await secureStore.hasSession())) return;
         const restored = await authService.fetchCurrentUser();
+        await loadClinicTimeZone(restored);
         if (!active) return;
         setUser(restored);
         setRole(roleForUser(restored));
@@ -101,11 +122,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       user,
       signIn: async (login, password) => {
         const authed = await authService.login(login, password);
+        await loadClinicTimeZone(authed);
         setUser(authed);
         setRole(roleForUser(authed));
       },
       register: async (data) => {
         const authed = await authService.register(data);
+        await loadClinicTimeZone(authed);
         setUser(authed);
         setRole(roleForUser(authed));
       },

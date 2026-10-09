@@ -6,6 +6,7 @@
  * El `identifier` de cada aviso es estable (p. ej. `appt-10-24h`): reprogramar
  * con el mismo identificador reemplaza al anterior — sin duplicados.
  */
+import { formatClinicDateTime } from './clinicTime';
 
 export interface ReminderSpec {
   identifier: string;
@@ -41,11 +42,9 @@ function localDayKey(d: Date): string {
   return `${d.getFullYear()}-${mm}-${dd}`;
 }
 
+// Hora de la cita en la zona de la clínica (la del aviso, no la del teléfono).
 function formatWhen(iso: string): string {
-  const d = new Date(iso);
-  const date = d.toLocaleDateString('es-VE', { day: 'numeric', month: 'short' });
-  const time = d.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
-  return `${date} · ${time}`;
+  return formatClinicDateTime(iso);
 }
 
 /** Avisos 24 h y 2 h antes de cada cita futura no cancelada/completada. */

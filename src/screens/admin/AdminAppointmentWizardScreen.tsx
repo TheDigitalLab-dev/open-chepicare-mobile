@@ -29,6 +29,7 @@ import {
   type AdminOwner,
 } from '@/services/admin';
 import { ApiError, toApiError } from '@/types/api';
+import { clinicMonth, clinicWallDateTime } from '@/utils/clinicTime';
 import { formatDate } from '@/utils/format';
 import {
   SPECIES_EMOJI,
@@ -211,10 +212,8 @@ export function AdminAppointmentWizardScreen() {
   const navigation = useNavigation<Nav>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
-  const [{ month, year }] = useState(() => {
-    const now = new Date();
-    return { month: now.getMonth() + 1, year: now.getFullYear() };
-  });
+  // Mes de la clínica (no del teléfono): el backend calcula "hoy" en su zona.
+  const [{ month, year }] = useState(() => clinicMonth());
 
   const owners = useAsync(() => listAdminOwners());
   const pets = useAsync(() => listAdminPets());
@@ -303,7 +302,7 @@ export function AdminAppointmentWizardScreen() {
         pet_id: petId,
         service_id: serviceId,
         assigned_to_id: vetId,
-        scheduled_at: `${day}T${time}:00`,
+        scheduled_at: clinicWallDateTime(day, time),
       });
       back?.();
     } catch (e) {
