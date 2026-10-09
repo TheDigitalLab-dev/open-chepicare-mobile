@@ -1,5 +1,5 @@
 /**
- * Integración REAL del perfil contra `../pawcare`.
+ * Integración REAL del perfil contra `../pawcare-web`.
  * Idempotente: re-guarda los mismos datos y revierte, para no corromper la
  * cuenta sembrada compartida (otros tests dependen de ella).
  */

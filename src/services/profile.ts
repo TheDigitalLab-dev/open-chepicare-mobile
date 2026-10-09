@@ -1,5 +1,5 @@
 /**
- * Servicio de Perfil (usuario autenticado) contra `../pawcare`.
+ * Servicio de Perfil (usuario autenticado) contra `../pawcare-web`.
  * Endpoints JSON: PATCH /profile, PATCH /profile/password.
  */
 import { api } from './api';

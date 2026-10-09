@@ -1,5 +1,5 @@
 /**
- * Integración REAL del ciclo de sesión contra `../pawcare` (rama
+ * Integración REAL del ciclo de sesión contra `../pawcare-web` (rama
  * `fix/functional-review-2026-10`):
  *  - el refresh token se ROTA en cada uso: varias peticiones con 401 a la vez
  *    deben compartir una sola renovación (si no, la segunda usa un refresh ya

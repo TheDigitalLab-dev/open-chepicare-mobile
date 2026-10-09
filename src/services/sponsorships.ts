@@ -1,5 +1,5 @@
 /**
- * Servicio de Patrocinios (owner) contra el backend real `../pawcare`.
+ * Servicio de Patrocinios (owner) contra el backend real `../pawcare-web`.
  * Controller JSON: sponsorships (index/show). Requiere Owner (Bearer).
  */
 import type { Sponsorship } from '@/types/models';
