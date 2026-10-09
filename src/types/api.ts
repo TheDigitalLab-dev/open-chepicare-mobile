@@ -15,6 +15,7 @@ export type ApiErrorKind =
   | 'forbidden' // 403
   | 'notFound' // 404
   | 'validation' // 422
+  | 'rateLimited' // 429 (Rack::Attack en login/forgot/reset/refresh)
   | 'server' // 5xx
   | 'unknown';
 

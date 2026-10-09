@@ -16,6 +16,7 @@ import {
 import type { OwnerRegistration } from '@/screens/auth/RegisterScreen';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiError } from '@/types/api';
+import { forgotPasswordErrorMessage, loginErrorMessage } from '@/utils/authErrors';
 import type { AuthStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -63,13 +64,9 @@ function LoginRoute() {
         // Al tener éxito, el rol cambia y RootNavigator monta el árbol del rol.
         await signIn(login, password);
       } catch (err) {
-        // En login, un 401 es "credenciales inválidas" (no "sesión expirada").
-        // Mensaje genérico que no revela si el correo/usuario existe.
-        if (err instanceof ApiError && err.status === 401) {
-          setErrorMessage('Correo/usuario o contraseña incorrectos.');
-        } else {
-          setErrorMessage(messageFrom(err, 'No se pudo iniciar sesión.'));
-        }
+        // 401 = credenciales inválidas o cuenta eliminada (mensaje genérico que
+        // no revela si existe); "inactiva" y el límite de intentos sí se dicen.
+        setErrorMessage(loginErrorMessage(err));
       } finally {
         setSubmitting(false);
       }
@@ -126,16 +123,23 @@ function ForgotPasswordRoute() {
   const { forgotPassword } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>();
 
   const onSubmit = useCallback(
     async (email: string) => {
       setSubmitting(true);
+      setErrorMessage(undefined);
       try {
         await forgotPassword(email);
-      } finally {
         // El backend responde 200 aunque el correo no exista; mensaje genérico.
-        setSubmitting(false);
         setSent(true);
+      } catch (err) {
+        // 429 / sin red se informan; cualquier otro error no revela la cuenta.
+        const message = forgotPasswordErrorMessage(err);
+        if (message) setErrorMessage(message);
+        else setSent(true);
+      } finally {
+        setSubmitting(false);
       }
     },
     [forgotPassword],
@@ -147,6 +151,7 @@ function ForgotPasswordRoute() {
       onSubmit={onSubmit}
       submitting={submitting}
       sent={sent}
+      errorMessage={errorMessage}
     />
   );
 }
