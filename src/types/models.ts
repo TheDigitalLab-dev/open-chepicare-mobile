@@ -1,5 +1,5 @@
 /**
- * Modelos del dominio (presentacionales) basados en el schema real de `../pawcare`.
+ * Modelos del dominio (presentacionales) basados en el schema real de `../pawcare-web`.
  * Los enums Rails son enteros; aquí se modelan como uniones de string + mapas de
  * etiqueta en español para la UI. Campos marcados opcionales = "según contrato API".
  */
@@ -112,6 +112,10 @@ export type StaffRole =
   | 'assistant'
   | 'finances'
   | 'hr';
+// Formatos de Configuración General (`date_format`, `time_format`).
+export type ClinicDateFormat = 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
+export type ClinicTimeFormat = '24h' | '12h';
+
 // --- Entidades -------------------------------------------------------------
 
 export interface Owner {
@@ -145,6 +149,23 @@ export interface StaffUser {
 }
 
 export type AuthUser = Owner | StaffUser;
+
+/**
+ * Configuración de la clínica que el backend entrega a toda sesión Bearer
+ * (`clinic` en `/auth/mobile/me`, login, register y refresh). Sin datos
+ * sensibles. Espejo de `Auth::GetClinicConfig`.
+ */
+export interface ClinicConfig {
+  name: string;
+  /** Zona IANA (p. ej. "America/Caracas"). */
+  time_zone: string;
+  date_format: ClinicDateFormat;
+  time_format: ClinicTimeFormat;
+  language: string;
+  default_appointment_duration: number;
+  allow_outside_hours: boolean;
+  max_advance_days: number;
+}
 
 // Espejo de `pet_json` (app/controllers/concerns/pet_jsonable.rb).
 export interface Pet {

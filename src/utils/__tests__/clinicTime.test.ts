@@ -7,6 +7,7 @@
 import {
   clinicDayKey,
   clinicMonth,
+  clinicToday,
   clinicWallDateTime,
   clinicWallTimeToInstant,
   formatClinicDate,
@@ -14,11 +15,12 @@ import {
   formatClinicTime,
   getClinicTimeZone,
   learnClinicTimeZone,
+  setClinicConfig,
   setClinicTimeZone,
 } from '@/utils/clinicTime';
 import { formatDate, formatDateTime } from '@/utils/format';
 
-afterEach(() => setClinicTimeZone(null));
+afterEach(() => setClinicConfig(null));
 
 describe('setClinicTimeZone', () => {
   it('acepta una zona IANA válida', () => {
@@ -150,5 +152,84 @@ describe('clinicDayKey', () => {
       '2026-03-15',
     );
     expect(clinicDayKey('2026-03-15T22:00:00-04:00', 'Asia/Tokyo')).toBe('2026-03-16');
+  });
+});
+
+describe('setClinicConfig: zona y formatos de la sesión (`clinic` de /auth/mobile/*)', () => {
+  // 15:00 UTC = 11:00 en Caracas = 00:00 del día 16 en Tokio.
+  const instant = '2026-03-15T15:00:00.000Z';
+  const caracas = {
+    time_zone: 'America/Caracas',
+    date_format: 'DD/MM/YYYY',
+    time_format: '24h',
+  } as const;
+
+  it('aplica la zona de la clínica', () => {
+    setClinicConfig(caracas);
+    expect(getClinicTimeZone()).toBe('America/Caracas');
+    expect(formatClinicTime(instant)).toBe('11:00');
+  });
+
+  it('date_format decide el orden de la fecha (también en días de calendario)', () => {
+    setClinicConfig(caracas);
+    expect(formatClinicDate(instant)).toBe('15/03/2026');
+    expect(formatDate('2026-03-15')).toBe('15/03/2026');
+
+    setClinicConfig({ ...caracas, date_format: 'MM/DD/YYYY' });
+    expect(formatClinicDate(instant)).toBe('03/15/2026');
+
+    setClinicConfig({ ...caracas, date_format: 'YYYY-MM-DD' });
+    expect(formatClinicDate(instant)).toBe('2026-03-15');
+    expect(formatDate('2026-03-15')).toBe('2026-03-15');
+  });
+
+  it('time_format 12h muestra la hora con a. m. / p. m.', () => {
+    setClinicConfig({ ...caracas, time_format: '12h' });
+    expect(formatClinicTime(instant)).toMatch(/^11:00\s?a\.?\s?m\.?$/i);
+    expect(formatClinicDateTime(instant)).toMatch(/11:00\s?a\.?\s?m\.?$/i);
+    expect(formatClinicTime('2026-03-15T19:30:00Z')).toMatch(/^3:30\s?p\.?\s?m\.?$/i);
+
+    setClinicConfig({ ...caracas, time_zone: 'Asia/Tokyo', time_format: '12h' });
+    expect(formatClinicTime(instant)).toMatch(/^12:00\s?a\.?\s?m\.?$/i);
+  });
+
+  it('sin configuración: zona del dispositivo, DD/MM/YYYY y 24 h (defaults del backend)', () => {
+    setClinicConfig({
+      ...caracas,
+      time_zone: 'Asia/Tokyo',
+      time_format: '12h',
+      date_format: 'YYYY-MM-DD',
+    });
+
+    setClinicConfig(null);
+
+    expect(getClinicTimeZone()).toBeUndefined();
+    expect(formatDate('2026-03-15')).toBe('15/03/2026');
+    expect(formatClinicTime(instant, 'America/Caracas')).toBe('11:00');
+  });
+
+  it('valores desconocidos caen en los defaults', () => {
+    setClinicConfig({
+      time_zone: 'Marte/Olympus',
+      date_format: 'DD-MM',
+      time_format: '36h',
+    });
+
+    expect(getClinicTimeZone()).toBeUndefined();
+    expect(formatDate('2026-03-15')).toBe('15/03/2026');
+    expect(formatClinicTime(instant, 'America/Caracas')).toBe('11:00');
+  });
+});
+
+describe('clinicToday', () => {
+  // 1 de abril 02:00 UTC = 31 de marzo 22:00 en Caracas = 1 de abril 11:00 en Tokio.
+  const boundary = new Date('2026-04-01T02:00:00Z');
+
+  it('"hoy" de la clínica, no el del teléfono', () => {
+    setClinicConfig({ time_zone: 'America/Caracas' });
+    expect(clinicToday(boundary)).toBe('2026-03-31');
+
+    setClinicConfig({ time_zone: 'Asia/Tokyo' });
+    expect(clinicToday(boundary)).toBe('2026-04-01');
   });
 });

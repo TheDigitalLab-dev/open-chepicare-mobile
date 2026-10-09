@@ -8,15 +8,41 @@
  *
  * Las respuestas de citas traen `scheduled_at` con el offset de la clínica
  * (`2026-03-15T09:00:00-04:00`) y la zona en `time_zone`. Orden de la zona
- * para mostrar: la de la cita → la conocida (Configuración General para el
- * admin, o la última que trajo una cita, ver `learnClinicTimeZone`) → la del
- * dispositivo.
+ * para mostrar: la de la cita → la conocida (la de la sesión, o la última que
+ * trajo una cita, ver `learnClinicTimeZone`) → la del dispositivo.
+ *
+ * La zona y los formatos (`date_format`, `time_format`) llegan con la sesión
+ * (`clinic` de `/auth/mobile/*`, ver `services/clinicConfig`) y se guardan para
+ * arrancar sin red. Solo en el primer arranque sin red ni sesión previa se usa
+ * la zona del dispositivo, con los formatos por defecto del backend.
  */
+
+import type { ClinicDateFormat, ClinicTimeFormat } from '@/types/models';
 
 const LOCALE = 'es-CO';
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 let clinicTimeZone: string | undefined;
+
+const DATE_FORMATS: readonly ClinicDateFormat[] = [
+  'DD/MM/YYYY',
+  'MM/DD/YYYY',
+  'YYYY-MM-DD',
+];
+const TIME_FORMATS: readonly ClinicTimeFormat[] = ['24h', '12h'];
+// Defaults de Configuración General en el backend.
+const DEFAULT_DATE_FORMAT: ClinicDateFormat = 'DD/MM/YYYY';
+const DEFAULT_TIME_FORMAT: ClinicTimeFormat = '24h';
+
+let dateFormat: ClinicDateFormat = DEFAULT_DATE_FORMAT;
+let timeFormat: ClinicTimeFormat = DEFAULT_TIME_FORMAT;
+
+/** Lo que `clinicTime` necesita de la configuración de la clínica. */
+export interface ClinicTimeConfig {
+  time_zone?: string | null;
+  date_format?: string | null;
+  time_format?: string | null;
+}
 
 function isValidTimeZone(tz: string): boolean {
   try {
@@ -27,9 +53,19 @@ function isValidTimeZone(tz: string): boolean {
   }
 }
 
-/** Fija la zona de la clínica (IANA). `null` o inválida → la del dispositivo. */
+/** Fija solo la zona de la clínica (IANA). `null` o inválida → la del dispositivo. */
 export function setClinicTimeZone(tz: string | null | undefined): void {
   clinicTimeZone = tz && isValidTimeZone(tz) ? tz : undefined;
+}
+
+/**
+ * Aplica la zona y los formatos de la clínica. `null` vuelve a los defaults:
+ * zona del dispositivo, DD/MM/YYYY y 24 h. Valores desconocidos → default.
+ */
+export function setClinicConfig(config: ClinicTimeConfig | null): void {
+  setClinicTimeZone(config?.time_zone);
+  dateFormat = DATE_FORMATS.find((f) => f === config?.date_format) ?? DEFAULT_DATE_FORMAT;
+  timeFormat = TIME_FORMATS.find((f) => f === config?.time_format) ?? DEFAULT_TIME_FORMAT;
 }
 
 export function getClinicTimeZone(): string | undefined {
@@ -37,8 +73,8 @@ export function getClinicTimeZone(): string | undefined {
 }
 
 /**
- * Adopta la zona que trae una respuesta (`time_zone` de las citas). Es la única
- * fuente para propietarios y veterinarios sin acceso a Configuración General.
+ * Adopta la zona que trae una respuesta (`time_zone` de las citas): la mantiene
+ * al día si la clínica la cambia durante la sesión.
  * Una zona ausente o inválida no borra la conocida.
  */
 export function learnClinicTimeZone(tz: string | null | undefined): void {
@@ -67,17 +103,22 @@ function format(d: Date, options: Intl.DateTimeFormatOptions, timeZone?: string)
   return new Intl.DateTimeFormat(LOCALE, { ...options, timeZone }).format(d);
 }
 
-const DATE_OPTIONS: Intl.DateTimeFormatOptions = {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-};
-// 24 h: formato por defecto de Configuración General (time_format "24h").
-const TIME_OPTIONS: Intl.DateTimeFormatOptions = {
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-};
+/** Hora según `time_format` de la clínica: "14:30" o "2:30 p. m.". */
+function timeOptions(): Intl.DateTimeFormatOptions {
+  return timeFormat === '12h'
+    ? { hour: 'numeric', minute: '2-digit', hourCycle: 'h12' }
+    : { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };
+}
+
+/** Día, mes y año en el orden de `date_format` ("15/03/2026"). */
+function formatDay(year: number, month: number, day: number): string {
+  const yyyy = String(year);
+  const mm = String(month).padStart(2, '0');
+  const dd = String(day).padStart(2, '0');
+  if (dateFormat === 'MM/DD/YYYY') return `${mm}/${dd}/${yyyy}`;
+  if (dateFormat === 'YYYY-MM-DD') return `${yyyy}-${mm}-${dd}`;
+  return `${dd}/${mm}/${yyyy}`;
+}
 
 /**
  * Fecha en la zona de la clínica. Un valor "YYYY-MM-DD" es un día de
@@ -88,19 +129,18 @@ const TIME_OPTIONS: Intl.DateTimeFormatOptions = {
 export function formatClinicDate(iso?: string | null, timeZone?: string | null): string {
   if (!iso) return '—';
   const m = DATE_ONLY.exec(iso);
-  if (m) {
-    const calendarDay = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-    return format(calendarDay, DATE_OPTIONS, 'UTC');
-  }
+  if (m) return formatDay(Number(m[1]), Number(m[2]), Number(m[3]));
   const d = parseInstant(iso);
-  return d ? format(d, DATE_OPTIONS, zoneFor(timeZone)) : iso;
+  if (!d) return iso;
+  const p = wallParts(d, zoneFor(timeZone));
+  return formatDay(p.year, p.month, p.day);
 }
 
 /** Hora "HH:MM" en la zona de la clínica (o la de la cita, si se indica). */
 export function formatClinicTime(iso?: string | null, timeZone?: string | null): string {
   if (!iso) return '—';
   const d = parseInstant(iso);
-  return d ? format(d, TIME_OPTIONS, zoneFor(timeZone)) : iso;
+  return d ? format(d, timeOptions(), zoneFor(timeZone)) : iso;
 }
 
 /** "15 mar, 11:00" en la zona de la clínica (o la de la cita, si se indica). */
@@ -113,7 +153,7 @@ export function formatClinicDateTime(
   if (!d) return iso;
   return format(
     d,
-    { day: '2-digit', month: 'short', ...TIME_OPTIONS },
+    { day: '2-digit', month: 'short', ...timeOptions() },
     zoneFor(timeZone),
   );
 }
@@ -181,6 +221,11 @@ export function clinicWallTimeToInstant(
   let instant = wallAsUtc - offsetAt(wallAsUtc);
   instant = wallAsUtc - offsetAt(instant);
   return new Date(instant).toISOString();
+}
+
+/** "Hoy" de la clínica ("YYYY-MM-DD"): fecha por defecto de los formularios. */
+export function clinicToday(now: Date = new Date()): string {
+  return clinicDayKey(now.toISOString());
 }
 
 /** Mes y año actuales de la clínica (para pedir los días disponibles). */

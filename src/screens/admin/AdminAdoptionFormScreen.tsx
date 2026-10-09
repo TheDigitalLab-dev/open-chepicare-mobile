@@ -20,14 +20,9 @@ import { createAdminAdoption, listAdminOwners, type AdminOwner } from '@/service
 import { listAdoptionPets } from '@/services/public';
 import { ApiError } from '@/types/api';
 import type { AdoptionPet } from '@/types/models';
+import { clinicToday } from '@/utils/clinicTime';
 
 type Nav = NativeStackNavigationProp<AdminPatientsStackParamList>;
-
-function todayDate(): string {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-}
 
 function ownerLabel(o: AdminOwner): string {
   return o.full_name ?? `${o.first_name} ${o.last_name}`.trim();
@@ -51,7 +46,7 @@ function AdoptionForm({ pets }: { pets: AdoptionPet[] }) {
   const ownerSearch = useRemoteSearch(searchOwners);
   const [adopter, setAdopter] = useState<AdminOwner | null>(null);
   const adopterId = adopter?.id;
-  const [date, setDate] = useState(() => todayDate());
+  const [date, setDate] = useState(() => clinicToday());
   const [notes, setNotes] = useState('');
 
   const [submitting, setSubmitting] = useState(false);

@@ -8,15 +8,10 @@ import { RemoteSearchPicker } from '@/components/domain/RemoteSearchPicker';
 import { createAdminConsultation, listAdminPets } from '@/services/admin';
 import { ApiError } from '@/types/api';
 import type { Pet } from '@/types/models';
+import { clinicToday } from '@/utils/clinicTime';
 
 const petId = (p: Pet) => p.id;
 const petName = (p: Pet) => p.name;
-
-function todayDate(): string {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-}
 
 /** Búsqueda de pacientes en el servidor (la lista del backend es paginada). */
 const searchPets = (query: string) => listAdminPets({ search: query || undefined });
@@ -27,7 +22,7 @@ function ConsultationForm() {
 
   const [form, setForm] = useState({
     petId: undefined as number | undefined,
-    date: todayDate(),
+    date: clinicToday(),
     diagnosis: '',
     treatment: '',
     notes: '',

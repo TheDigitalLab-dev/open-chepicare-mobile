@@ -238,7 +238,8 @@ export function AdminAppointmentWizardScreen() {
   const navigation = useNavigation<Nav>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
-  // Mes de la clínica (no del teléfono): el backend calcula "hoy" en su zona.
+  // Mes de la clínica (no del teléfono): el backend calcula "hoy" en su zona. La
+  // zona llega con la sesión (`clinic`), así que ya está al abrir el asistente.
   const [{ month, year }] = useState(() => clinicMonth());
 
   // Dueños y servicios se buscan en el servidor: las listas son paginadas y la

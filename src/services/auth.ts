@@ -1,19 +1,22 @@
 /**
  * Servicio de autenticación (F4) contra la superficie Bearer del backend:
  * `/auth/mobile/*` (separada del flujo web por cookies). Ver
- * `../pawcare/docs/mobile-auth-plan/auth.html`.
+ * `../pawcare-web/docs/mobile-auth-plan/auth.html`.
  *
  * Contrato:
  *  - login/register/refresh devuelven `{ success, user, auth: { access_token,
  *    refresh_token, token_type, expires_in } }`.
  *  - El access viaja como `Authorization: Bearer`; el refresh se rota en cada uso.
  *  - `user` trae `user_type` ("Owner" | "User"); de ahí se deriva el rol.
+ *  - login/register/refresh y `/me` traen `clinic` (zona y formatos de la
+ *    clínica): se aplica y se guarda al recibirla (ver `clinicConfig`).
  */
-import type { AuthUser, Owner, StaffUser } from '@/types/models';
+import type { AuthUser, ClinicConfig, Owner, StaffUser } from '@/types/models';
 import { ApiError } from '@/types/api';
 import * as secureStore from '@/utils/secureStore';
 import type { OwnerRegistration } from '@/screens/auth/RegisterScreen';
 import { api, registerSessionRefresher, registerTokenProvider } from './api';
+import { applyClinicConfig } from './clinicConfig';
 
 const BASE = '/auth/mobile';
 
@@ -40,6 +43,7 @@ interface AuthEnvelope {
   success: boolean;
   user: ApiUser;
   auth: AuthTokenPair;
+  clinic?: ClinicConfig;
 }
 
 // --- Normalización ---------------------------------------------------------
@@ -55,6 +59,7 @@ export function toAuthUser(raw: ApiUser): AuthUser {
 
 async function persistTokens(env: AuthEnvelope): Promise<AuthUser> {
   await storeTokenPair(env.auth);
+  await applyClinicConfig(env.clinic);
   return toAuthUser(env.user);
 }
 
@@ -80,7 +85,8 @@ export async function register(data: OwnerRegistration): Promise<AuthUser> {
 
 /** Restaura la sesión al arrancar: valida el access (auto-refresh ante 401). */
 export async function fetchCurrentUser(): Promise<AuthUser> {
-  const res = await api.get<{ user: ApiUser }>(`${BASE}/me`);
+  const res = await api.get<{ user: ApiUser; clinic?: ClinicConfig }>(`${BASE}/me`);
+  await applyClinicConfig(res.clinic);
   return toAuthUser(res.user);
 }
 
@@ -159,6 +165,7 @@ async function renewTokens(): Promise<boolean> {
       { auth: false, skipRefresh: true },
     );
     await storeTokenPair(env.auth);
+    await applyClinicConfig(env.clinic);
     return true;
   } catch (err) {
     const rejected =

@@ -9,7 +9,7 @@
  */
 import * as authService from '@/services/auth';
 import * as adminService from '@/services/admin';
-import { fetchClinicTimeZone } from '@/services/clinicSettings';
+import { getClinicConfig } from '@/services/clinicConfig';
 import * as secureStore from '@/utils/secureStore';
 import { ApiError } from '@/types/api';
 import type { Pet } from '@/types/models';
@@ -60,31 +60,20 @@ async function ownedPets(): Promise<Pet[]> {
   return pets.filter((p) => p.proprietary_id != null);
 }
 
+/** Zona de la clínica que trae la sesión (`clinic` de `/auth/mobile/*`). */
+function sessionTimeZone(): string {
+  const tz = getClinicConfig()?.time_zone;
+  if (!tz) throw new Error('La sesión no trajo la configuración de la clínica');
+  return tz;
+}
+
 beforeAll(async () => {
   await authService.login('admin@pawcare.com', 'password123');
-  setClinicTimeZone(await fetchClinicTimeZone());
 });
 
 afterAll(async () => {
   setClinicTimeZone(null);
   await secureStore.clearTokens();
-});
-
-describe('fetchClinicTimeZone', () => {
-  it('el admin lee la zona horaria de Configuración General', async () => {
-    const tz = await fetchClinicTimeZone();
-    expect(tz).toEqual(expect.any(String));
-    expect(() => new Intl.DateTimeFormat('es', { timeZone: tz! })).not.toThrow();
-  });
-
-  it('sin permiso (veterinario) devuelve null sin lanzar', async () => {
-    await authService.login('vet@pawcare.com', 'password123');
-    try {
-      await expect(fetchClinicTimeZone()).resolves.toBeNull();
-    } finally {
-      await authService.login('admin@pawcare.com', 'password123');
-    }
-  });
 });
 
 describe('citas: hora de la clínica, solapes y eliminación', () => {
@@ -106,7 +95,7 @@ describe('citas: hora de la clínica, solapes y eliminación', () => {
   }, 60000);
 
   it('la respuesta trae la hora con el offset, la zona y el origen de la cita', async () => {
-    const tz = await fetchClinicTimeZone();
+    const tz = sessionTimeZone();
     const slot = await findFreeSlot();
     const [pet] = await ownedPets();
     const created = await adminService.createAdminAppointment({
@@ -134,7 +123,7 @@ describe('citas: hora de la clínica, solapes y eliminación', () => {
   }, 60000);
 
   it('una hora con offset explícito es un instante absoluto', async () => {
-    const tz = (await fetchClinicTimeZone())!;
+    const tz = sessionTimeZone();
     const slot = await findFreeSlot();
     const [pet] = await ownedPets();
     const created = await adminService.createAdminAppointment({
@@ -161,7 +150,6 @@ describe('citas: hora de la clínica, solapes y eliminación', () => {
       expect(getClinicTimeZone()).toBe(list[0]!.time_zone);
     } finally {
       await authService.login('admin@pawcare.com', 'password123');
-      setClinicTimeZone(await fetchClinicTimeZone());
     }
   }, 60000);
 
