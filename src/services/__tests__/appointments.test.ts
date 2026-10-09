@@ -6,20 +6,31 @@ import * as authService from '@/services/auth';
 import * as appointmentsService from '@/services/appointments';
 import * as petsService from '@/services/pets';
 import * as secureStore from '@/utils/secureStore';
+import {
+  formatClinicTime,
+  getClinicTimeZone,
+  setClinicTimeZone,
+} from '@/utils/clinicTime';
+
+const OFFSET_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/;
 
 beforeAll(async () => {
   await authService.login('owner1@example.com', 'password123');
 });
 
 afterAll(async () => {
+  setClinicTimeZone(null);
   await secureStore.clearTokens();
 });
 
 describe('appointmentsService (lecturas reales)', () => {
   it('lista las citas del owner', async () => {
+    setClinicTimeZone(null);
     const list = await appointmentsService.listAppointments();
     expect(Array.isArray(list)).toBe(true);
     if (list.length > 0) {
+      expect(list[0]!.scheduled_at).toMatch(OFFSET_ISO);
+      expect(getClinicTimeZone()).toBe(list[0]!.time_zone);
       const detail = await appointmentsService.getAppointment(list[0]!.id);
       expect(detail.id).toBe(list[0]!.id);
       expect(detail).toHaveProperty('status');
@@ -71,13 +82,29 @@ describe('appointmentsService crear→cancelar (real)', () => {
       notes: 'Cita de prueba (integración)',
     });
 
-    expect(created.id).toEqual(expect.any(Number));
-    expect(created.status).toBe('pending');
+    // Se cancela aunque falle una aserción: una cita pendiente que quede
+    // ocupa el hueco y rompe las siguientes ejecuciones.
+    try {
+      expect(created.id).toEqual(expect.any(Number));
+      expect(created.status).toBe('pending');
 
-    const cancelled = await appointmentsService.cancelAppointment(
-      created.id,
-      'Prueba de integración',
-    );
-    expect(cancelled.status).toBe('cancelled');
+      // Contrato de zona horaria: el propietario no puede leer Configuración
+      // General, así que la zona viene en cada cita y la app la adopta.
+      expect(created.scheduled_at).toMatch(OFFSET_ISO);
+      expect(created.time_zone).toEqual(expect.any(String));
+      expect(getClinicTimeZone()).toBe(created.time_zone);
+      // La hora sin offset que envió el asistente es la que se muestra, aunque
+      // el dispositivo esté en otra zona.
+      setClinicTimeZone('Asia/Tokyo');
+      expect(formatClinicTime(created.scheduled_at, created.time_zone)).toBe(
+        vet.start_time ?? '09:00',
+      );
+    } finally {
+      const cancelled = await appointmentsService.cancelAppointment(
+        created.id,
+        'Prueba de integración',
+      );
+      expect(cancelled.status).toBe('cancelled');
+    }
   }, 30000);
 });

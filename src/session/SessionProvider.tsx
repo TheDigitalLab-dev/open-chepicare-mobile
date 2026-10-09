@@ -54,8 +54,9 @@ async function clearLocalUserData(): Promise<void> {
 
 /**
  * Zona horaria de la clínica para mostrar las citas. Solo el staff con permiso
- * de configuración puede leerla; si no, queda la del dispositivo. Nunca
- * bloquea el inicio de sesión.
+ * de configuración puede leerla aquí; para el resto, la adoptan los servicios
+ * de citas desde el `time_zone` de cada respuesta (hasta entonces, la del
+ * dispositivo). Nunca bloquea el inicio de sesión.
  */
 async function loadClinicTimeZone(user: AuthUser): Promise<void> {
   if (user.type !== 'User') {

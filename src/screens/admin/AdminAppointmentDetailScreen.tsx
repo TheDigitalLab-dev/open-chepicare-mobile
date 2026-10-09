@@ -33,7 +33,7 @@ function Body({ appointment }: { appointment: Appointment }) {
     <>
       <DetailHero
         title={appointment.pet?.name ?? 'Mascota'}
-        subtitle={formatDateTime(appointment.scheduled_at)}
+        subtitle={formatDateTime(appointment.scheduled_at, appointment.time_zone)}
       >
         <Badge
           label={APPOINTMENT_STATUS_LABEL[appointment.status]}

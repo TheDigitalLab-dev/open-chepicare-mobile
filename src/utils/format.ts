@@ -14,6 +14,7 @@ export function formatMoney(amount: number, currency = 'COP'): string {
   return `${prefix}${amount.toLocaleString('es-CO')}`;
 }
 
-export function formatDateTime(iso?: string | null): string {
-  return formatClinicDateTime(iso);
+/** `timeZone`: la de la cita (`appointment.time_zone`), si la trae. */
+export function formatDateTime(iso?: string | null, timeZone?: string | null): string {
+  return formatClinicDateTime(iso, timeZone);
 }

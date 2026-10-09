@@ -73,7 +73,7 @@ export function AppointmentsListScreen() {
     ({ item: a }: ListRenderItemInfo<Appointment>) => (
       <AppointmentCard
         petName={a.pet?.name ?? 'Mascota'}
-        dateLabel={formatDateTime(a.scheduled_at)}
+        dateLabel={formatDateTime(a.scheduled_at, a.time_zone)}
         vetName={vetName(a)}
         statusLabel={APPOINTMENT_STATUS_LABEL[a.status]}
         statusVariant={STATUS_VARIANT[a.status]}

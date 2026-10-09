@@ -16,9 +16,13 @@ import type { Pet } from '@/types/models';
 import {
   clinicMonth,
   clinicWallDateTime,
+  clinicWallTimeToInstant,
   formatClinicTime,
+  getClinicTimeZone,
   setClinicTimeZone,
 } from '@/utils/clinicTime';
+
+const OFFSET_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/;
 
 interface FreeSlot {
   day: string;
@@ -98,6 +102,66 @@ describe('citas: hora de la clínica, solapes y eliminación', () => {
       expect(formatClinicTime(created.scheduled_at)).toBe(slot.time);
     } finally {
       await adminService.deleteAdminAppointment(created.id);
+    }
+  }, 60000);
+
+  it('la respuesta trae la hora con el offset, la zona y el origen de la cita', async () => {
+    const tz = await fetchClinicTimeZone();
+    const slot = await findFreeSlot();
+    const [pet] = await ownedPets();
+    const created = await adminService.createAdminAppointment({
+      pet_id: pet!.id,
+      service_id: slot.serviceId,
+      owner_id: pet!.proprietary_id!,
+      assigned_to_id: slot.vetId,
+      scheduled_at: clinicWallDateTime(slot.day, slot.time),
+    });
+    try {
+      expect(created.scheduled_at).toMatch(OFFSET_ISO);
+      expect(created.time_zone).toBe(tz);
+      // El backend fija el origen: personal desde la app.
+      expect(created.source).toBe('staff_mobile');
+      // Se muestra en la zona de la cita aunque la conocida (o el teléfono) sea otra.
+      setClinicTimeZone('Asia/Tokyo');
+      expect(formatClinicTime(created.scheduled_at, created.time_zone)).toBe(slot.time);
+      const detail = await adminService.getAdminAppointment(created.id);
+      expect(detail.time_zone).toBe(tz);
+      expect(formatClinicTime(detail.scheduled_at, detail.time_zone)).toBe(slot.time);
+    } finally {
+      setClinicTimeZone(tz);
+      await adminService.deleteAdminAppointment(created.id);
+    }
+  }, 60000);
+
+  it('una hora con offset explícito es un instante absoluto', async () => {
+    const tz = (await fetchClinicTimeZone())!;
+    const slot = await findFreeSlot();
+    const [pet] = await ownedPets();
+    const created = await adminService.createAdminAppointment({
+      pet_id: pet!.id,
+      service_id: slot.serviceId,
+      owner_id: pet!.proprietary_id!,
+      assigned_to_id: slot.vetId,
+      scheduled_at: clinicWallTimeToInstant(slot.day, slot.time, tz),
+    });
+    try {
+      expect(formatClinicTime(created.scheduled_at, created.time_zone)).toBe(slot.time);
+    } finally {
+      await adminService.deleteAdminAppointment(created.id);
+    }
+  }, 60000);
+
+  it('el veterinario (sin acceso a Configuración General) adopta la zona de las citas', async () => {
+    await authService.login('vet@pawcare.com', 'password123');
+    try {
+      setClinicTimeZone(null);
+      const list = await adminService.listAdminAppointments();
+      expect(list.length).toBeGreaterThan(0);
+      expect(list[0]!.time_zone).toEqual(expect.any(String));
+      expect(getClinicTimeZone()).toBe(list[0]!.time_zone);
+    } finally {
+      await authService.login('admin@pawcare.com', 'password123');
+      setClinicTimeZone(await fetchClinicTimeZone());
     }
   }, 60000);
 

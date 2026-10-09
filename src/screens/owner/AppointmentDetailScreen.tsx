@@ -115,7 +115,10 @@ function Details({
         <Row label="Mascota" value={appointment.pet?.name ?? '—'} />
         <Row label="Veterinario" value={vet} />
         <Row label="Servicio" value={appointment.service?.name ?? '—'} />
-        <Row label="Fecha" value={formatDateTime(appointment.scheduled_at)} />
+        <Row
+          label="Fecha"
+          value={formatDateTime(appointment.scheduled_at, appointment.time_zone)}
+        />
       </Card>
 
       {appointment.notes ? (

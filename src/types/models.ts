@@ -73,6 +73,13 @@ export const APPOINTMENT_STATUS_LABEL: Record<AppointmentStatus, string> = {
 
 // payment_status de la cita (distinto del estado del modelo Payment).
 export type AppointmentPaymentStatus = 'unpaid' | 'paid' | 'refunded';
+/** Origen de la cita; lo fija el backend en cada camino de creación. */
+export type AppointmentSource =
+  | 'staff'
+  | 'staff_mobile'
+  | 'portal'
+  | 'portal_mobile'
+  | 'system';
 export const APPOINTMENT_PAYMENT_STATUS_LABEL: Record<AppointmentPaymentStatus, string> =
   {
     unpaid: 'Sin pagar',
@@ -217,7 +224,12 @@ export interface Appointment {
   service_id: number;
   owner_id: number;
   assigned_to_id: number | null;
+  /** ISO 8601 con el offset de la clínica para esa fecha ("…T09:00:00-04:00"). */
   scheduled_at: string;
+  /** Zona IANA de la clínica ("America/Caracas"): mostrar la hora en esta zona. */
+  time_zone?: string | null;
+  /** Solo en las respuestas del personal; `null` en citas anteriores a la columna. */
+  source?: AppointmentSource | null;
   duration_minutes?: number | null;
   status: AppointmentStatus;
   payment_status: AppointmentPaymentStatus;

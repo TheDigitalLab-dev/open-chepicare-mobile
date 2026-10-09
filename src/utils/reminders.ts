@@ -6,7 +6,11 @@
  * El `identifier` de cada aviso es estable (p. ej. `appt-10-24h`): reprogramar
  * con el mismo identificador reemplaza al anterior — sin duplicados.
  */
-import { formatClinicDateTime } from './clinicTime';
+import {
+  clinicDayKey,
+  clinicWallTimeToInstant,
+  formatClinicDateTime,
+} from './clinicTime';
 
 export interface ReminderSpec {
   identifier: string;
@@ -21,6 +25,8 @@ export interface ReminderSpec {
 interface AppointmentLike {
   id: number;
   scheduled_at: string;
+  /** Zona de la clínica que trae la cita. */
+  time_zone?: string | null;
   status: string;
   pet?: { name: string } | null;
   service?: { name: string } | null;
@@ -35,16 +41,9 @@ interface VaccinationLike {
 const HOUR_MS = 60 * 60 * 1000;
 const SKIP_STATUSES = new Set(['cancelled', 'completed']);
 
-/** Día civil LOCAL (YYYY-MM-DD) — el usuario piensa en su hora, no en UTC. */
-function localDayKey(d: Date): string {
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${mm}-${dd}`;
-}
-
 // Hora de la cita en la zona de la clínica (la del aviso, no la del teléfono).
-function formatWhen(iso: string): string {
-  return formatClinicDateTime(iso);
+function formatWhen(iso: string, timeZone?: string | null): string {
+  return formatClinicDateTime(iso, timeZone);
 }
 
 /** Avisos 24 h y 2 h antes de cada cita futura no cancelada/completada. */
@@ -61,7 +60,7 @@ export function appointmentReminders(
     if (Number.isNaN(at) || at <= now) continue;
 
     const who = [appt.pet?.name, appt.service?.name].filter(Boolean).join(' · ');
-    const body = `${who ? `${who} — ` : ''}${formatWhen(appt.scheduled_at)}`;
+    const body = `${who ? `${who} — ` : ''}${formatWhen(appt.scheduled_at, appt.time_zone)}`;
 
     for (const [suffix, offsetH, lead] of [
       ['24h', 24, 'mañana'],
@@ -179,35 +178,39 @@ export function pendingPaymentReminders(
 interface AgendaAppointmentLike {
   id: number;
   scheduled_at: string;
+  time_zone?: string | null;
   status: string;
 }
 
-/** A3/V2 — agenda del día para el personal: resumen mañana a las 7:30. */
+/**
+ * A3/V2 — agenda del día para el personal: resumen mañana a las 7:30. "Mañana"
+ * y las 7:30 son de la clínica (la zona que traen las citas o la conocida).
+ */
 export function clinicAgendaReminders(
   appointments: AgendaAppointmentLike[],
   nowIso: string,
 ): ReminderSpec[] {
   const now = new Date(nowIso);
   if (Number.isNaN(now.getTime())) return [];
-  const tomorrow = new Date(now.getTime());
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const dayKey = localDayKey(tomorrow);
+  const zone = appointments.find((a) => a.time_zone)?.time_zone;
+  // Mediodía de hoy en la clínica + 24 h cae siempre en el día siguiente.
+  const today = clinicDayKey(now.toISOString(), zone);
+  const noonToday = Date.parse(clinicWallTimeToInstant(today, '12:00', zone));
+  const dayKey = clinicDayKey(new Date(noonToday + 24 * HOUR_MS).toISOString(), zone);
 
   const count = appointments.filter((a) => {
     if (SKIP_STATUSES.has(a.status)) return false;
-    const at = new Date(a.scheduled_at);
-    return !Number.isNaN(at.getTime()) && localDayKey(at) === dayKey;
+    if (Number.isNaN(Date.parse(a.scheduled_at))) return false;
+    return clinicDayKey(a.scheduled_at, zone) === dayKey;
   }).length;
   if (count === 0) return [];
 
-  const trigger = new Date(tomorrow.getTime());
-  trigger.setHours(7, 30, 0, 0);
   return [
     {
       identifier: `agenda-${dayKey}`,
       title: '📋 Agenda de hoy',
       body: `${count} ${count === 1 ? 'cita programada' : 'citas programadas'} para hoy en la clínica.`,
-      triggerAt: trigger.toISOString(),
+      triggerAt: clinicWallTimeToInstant(dayKey, '07:30', zone),
       category: 'agenda',
     },
   ];

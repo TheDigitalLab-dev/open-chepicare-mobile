@@ -5,12 +5,15 @@
  * en la zona de la clínica.
  */
 import {
+  clinicDayKey,
   clinicMonth,
   clinicWallDateTime,
+  clinicWallTimeToInstant,
   formatClinicDate,
   formatClinicDateTime,
   formatClinicTime,
   getClinicTimeZone,
+  learnClinicTimeZone,
   setClinicTimeZone,
 } from '@/utils/clinicTime';
 import { formatDate, formatDateTime } from '@/utils/format';
@@ -80,5 +83,72 @@ describe('clinicMonth', () => {
 describe('clinicWallDateTime', () => {
   it('envía la hora de pared SIN offset (el backend la interpreta en la clínica)', () => {
     expect(clinicWallDateTime('2026-03-15', '09:30')).toBe('2026-03-15T09:30:00');
+  });
+});
+
+describe('respuestas con el offset de la clínica y `time_zone` (contrato e8ad843)', () => {
+  // Las respuestas de citas traen la hora con el offset de la clínica.
+  const withOffset = '2026-03-15T09:00:00-04:00';
+
+  it('interpreta el offset: es el mismo instante que su equivalente en UTC', () => {
+    setClinicTimeZone('America/Caracas');
+    expect(formatClinicTime(withOffset)).toBe('09:00');
+    expect(formatClinicTime(withOffset)).toBe(
+      formatClinicTime('2026-03-15T13:00:00.000Z'),
+    );
+  });
+
+  it('la zona de la cita manda sobre la conocida y sobre la del dispositivo', () => {
+    setClinicTimeZone('Asia/Tokyo');
+    expect(formatClinicTime(withOffset, 'America/Caracas')).toBe('09:00');
+    expect(formatClinicDateTime(withOffset, 'America/Caracas')).toContain('09:00');
+    expect(formatClinicDate(withOffset, 'America/Caracas')).toContain('15');
+    expect(formatDateTime(withOffset, 'America/Caracas')).toBe(
+      formatClinicDateTime(withOffset, 'America/Caracas'),
+    );
+  });
+
+  it('una zona de la cita inválida o ausente cae en la zona conocida', () => {
+    setClinicTimeZone('Asia/Tokyo');
+    expect(formatClinicTime(withOffset, 'Marte/Olympus')).toBe('22:00');
+    expect(formatClinicTime(withOffset, null)).toBe('22:00');
+  });
+
+  it('learnClinicTimeZone adopta la zona de una respuesta, pero no la borra si falta', () => {
+    learnClinicTimeZone('America/Caracas');
+    expect(getClinicTimeZone()).toBe('America/Caracas');
+    learnClinicTimeZone(undefined);
+    learnClinicTimeZone('Marte/Olympus');
+    expect(getClinicTimeZone()).toBe('America/Caracas');
+  });
+});
+
+describe('clinicWallTimeToInstant', () => {
+  it('convierte la hora de pared de la clínica en un instante con offset explícito', () => {
+    expect(clinicWallTimeToInstant('2026-03-15', '09:30', 'America/Caracas')).toBe(
+      '2026-03-15T13:30:00.000Z',
+    );
+    expect(clinicWallTimeToInstant('2026-03-15', '09:30', 'Asia/Tokyo')).toBe(
+      '2026-03-15T00:30:00.000Z',
+    );
+  });
+
+  it('respeta el horario de verano de la fecha (New York)', () => {
+    expect(clinicWallTimeToInstant('2026-01-15', '09:00', 'America/New_York')).toBe(
+      '2026-01-15T14:00:00.000Z',
+    );
+    expect(clinicWallTimeToInstant('2026-07-15', '09:00', 'America/New_York')).toBe(
+      '2026-07-15T13:00:00.000Z',
+    );
+  });
+});
+
+describe('clinicDayKey', () => {
+  it('el día civil de la clínica para un instante', () => {
+    // 02:00 UTC del 16 = 22:00 del 15 en Caracas.
+    expect(clinicDayKey('2026-03-16T02:00:00.000Z', 'America/Caracas')).toBe(
+      '2026-03-15',
+    );
+    expect(clinicDayKey('2026-03-15T22:00:00-04:00', 'Asia/Tokyo')).toBe('2026-03-16');
   });
 });

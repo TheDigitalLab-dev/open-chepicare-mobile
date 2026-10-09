@@ -14,6 +14,7 @@ import type {
   Pet,
   Vaccination,
 } from '@/types/models';
+import { learnClinicTimeZone, learnFromAppointments } from '@/utils/clinicTime';
 import { api } from './api';
 
 /** Registro de adopción del admin (adoptions-list / show). */
@@ -126,7 +127,8 @@ export async function listAdminAppointments(): Promise<Appointment[]> {
   const res = await api.get<{ appointments: Appointment[] }>('/admin/appointments-list', {
     params: { scope: 'all', per_page: 100 },
   });
-  return res.appointments;
+  // La zona de las citas sirve también al veterinario sin acceso a Configuración General.
+  return learnFromAppointments(res.appointments);
 }
 
 export async function listAdminPayments(): Promise<Payment[]> {
@@ -396,6 +398,7 @@ export async function createAdminAppointment(
     '/admin/appointments',
     { appointment: input },
   );
+  learnClinicTimeZone(appointment.time_zone);
   return appointment;
 }
 
@@ -407,6 +410,7 @@ export async function getAdminAppointment(id: number): Promise<Appointment> {
   const { appointment } = await api.get<{ appointment: Appointment }>(
     `/admin/appointments/${id}`,
   );
+  learnClinicTimeZone(appointment.time_zone);
   return appointment;
 }
 
