@@ -25,11 +25,11 @@ import {
   getAdminAvailableVets,
   getAdminTimeSlots,
   listAdminOwners,
-  listAdminPetsByOwner,
   listAdminServices,
   type AdminOwner,
   type AdminService,
 } from '@/services/admin';
+import { useOwnerPets } from '@/hooks/useOwnerPets';
 import { useRemoteSearch, type RemoteSearchState } from '@/hooks/useRemoteSearch';
 import { ApiError, toApiError } from '@/types/api';
 import { clinicMonth, clinicWallDateTime } from '@/utils/clinicTime';
@@ -264,23 +264,9 @@ export function AdminAppointmentWizardScreen() {
 
   // Todas las mascotas del dueño elegido (antes se filtraba la primera página
   // de todas las mascotas de la clínica y faltaban las demás).
-  const [ownerPets, setOwnerPets] = useState<Pet[]>([]);
-  const [petsLoading, setPetsLoading] = useState(false);
-  const [petsError, setPetsError] = useState<ApiError | null>(null);
+  const ownerPets = useOwnerPets(sel.ownerId);
 
-  const selectOwner = async (ownerId: number) => {
-    patch({ ownerId, petId: undefined });
-    setOwnerPets([]);
-    setPetsLoading(true);
-    setPetsError(null);
-    try {
-      setOwnerPets(await listAdminPetsByOwner(ownerId));
-    } catch (e) {
-      setPetsError(toApiError(e));
-    } finally {
-      setPetsLoading(false);
-    }
-  };
+  const selectOwner = (ownerId: number) => patch({ ownerId, petId: undefined });
 
   const selectDay = async (d: string) => {
     patch({ day: d, vetId: undefined, time: undefined });
@@ -374,21 +360,15 @@ export function AdminAppointmentWizardScreen() {
       {submitError ? <InfoBanner tone="destructive" message={submitError} /> : null}
 
       {step === 0 ? (
-        <OwnerStep
-          owners={owners}
-          selectedId={sel.ownerId}
-          onSelect={(id) => void selectOwner(id)}
-        />
+        <OwnerStep owners={owners} selectedId={sel.ownerId} onSelect={selectOwner} />
       ) : null}
 
       {step === 1 ? (
         <PetStep
-          loading={petsLoading}
-          error={petsError}
-          onRetry={() => {
-            if (sel.ownerId !== undefined) void selectOwner(sel.ownerId);
-          }}
-          ownerPets={ownerPets}
+          loading={ownerPets.loading}
+          error={ownerPets.error}
+          onRetry={() => void ownerPets.reload()}
+          ownerPets={ownerPets.pets}
           selectedId={sel.petId}
           onSelect={(id) => patch({ petId: id })}
         />
