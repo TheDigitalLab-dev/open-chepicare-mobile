@@ -49,6 +49,8 @@ describe('useRemoteSearch', () => {
     const { result } = renderHook(() => useRemoteSearch(searchOwners, 10));
     await waitFor(() => expect(result.current.error).not.toBeNull());
     expect(result.current.error?.kind).toBe('unauthorized');
+    // El indicador de carga se libera también cuando la búsqueda falla.
+    expect(result.current.loading).toBe(false);
 
     await authService.login('admin@pawcare.com', 'password123');
     await act(() => result.current.reload());

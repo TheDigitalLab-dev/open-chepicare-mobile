@@ -37,15 +37,19 @@ export function useRemoteSearch<T>(
 
   const run = useCallback(async (q: string) => {
     const id = ++requestId.current;
+    // Solo la última búsqueda (y con el hook montado) puede tocar el estado.
+    const isLatest = () => mounted.current && id === requestId.current;
     setLoading(true);
     setError(null);
     try {
       const result = await searchRef.current(q.trim());
-      if (mounted.current && id === requestId.current) setData(result);
+      if (isLatest()) setData(result);
     } catch (e) {
-      if (mounted.current && id === requestId.current) setError(toApiError(e));
+      if (isLatest()) setError(toApiError(e));
     } finally {
-      if (mounted.current && id === requestId.current) setLoading(false);
+      // Se resuelve en el finally (también si la búsqueda falla). Si otra más
+      // nueva tomó el relevo, el indicador sigue activo hasta que esa termine.
+      if (mounted.current) setLoading(id !== requestId.current);
     }
   }, []);
 
