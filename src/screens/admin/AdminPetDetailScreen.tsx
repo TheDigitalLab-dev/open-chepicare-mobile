@@ -7,7 +7,8 @@ import { AsyncBoundary, Button, PetAvatar } from '@/components/ui';
 import { DetailHero, ListRow } from '@/components/domain';
 import type { AdminPatientsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
-import { listAdminPets } from '@/services/admin';
+import { getAdminPet } from '@/services/admin';
+import { ApiError } from '@/types/api';
 import { formatDate } from '@/utils/format';
 import { SEX_LABEL, SPECIES_EMOJI, SPECIES_LABEL, type Pet } from '@/types/models';
 
@@ -55,8 +56,16 @@ export function AdminPetDetailScreen() {
   const { params } = useRoute<Rt>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
-  const { data, loading, error, reload } = useAsync(() => listAdminPets());
-  const pet = (data ?? []).find((p) => p.id === params.id) ?? null;
+  // Detalle por id (antes se buscaba en la primera página de la lista).
+  const { data, loading, error, reload } = useAsync(async () => {
+    try {
+      return await getAdminPet(params.id);
+    } catch (e) {
+      if (e instanceof ApiError && e.kind === 'notFound') return null;
+      throw e;
+    }
+  });
+  const pet = data ?? null;
 
   return (
     <MobileShell
@@ -68,7 +77,7 @@ export function AdminPetDetailScreen() {
         loading={loading && data === null}
         error={error}
         onRetry={reload}
-        empty={data !== null && pet === null}
+        empty={!loading && !error && pet === null}
         emptyIcon="paw"
         emptyTitle="Paciente no encontrado"
       >

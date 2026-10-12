@@ -25,6 +25,7 @@ import {
 } from '@/services/appointments';
 import { listPets } from '@/services/pets';
 import { ApiError, toApiError } from '@/types/api';
+import { clinicMonth, clinicWallDateTime } from '@/utils/clinicTime';
 import { formatDate } from '@/utils/format';
 import { generateTimeSlots } from '@/utils/schedule';
 import { SPECIES_EMOJI, SPECIES_LABEL, type AvailableVet } from '@/types/models';
@@ -54,10 +55,9 @@ export function AppointmentWizardScreen() {
   const navigation = useNavigation<Nav>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
-  const [{ month, year }] = useState(() => {
-    const now = new Date();
-    return { month: now.getMonth() + 1, year: now.getFullYear() };
-  });
+  // Mes de la clínica (no del teléfono): el backend calcula "hoy" en su zona. La
+  // zona llega con la sesión (`clinic`), así que ya está al abrir el asistente.
+  const [{ month, year }] = useState(() => clinicMonth());
 
   const pets = useAsync(() => listPets());
   const services = useAsync(() => listServices());
@@ -128,7 +128,7 @@ export function AppointmentWizardScreen() {
         pet_id: petId,
         service_id: serviceId,
         assigned_to_id: vetId,
-        scheduled_at: `${day}T${time}:00`,
+        scheduled_at: clinicWallDateTime(day, time),
       });
       back?.();
     } catch (e) {

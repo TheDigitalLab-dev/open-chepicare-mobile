@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,17 +7,20 @@ import { AppHeader, MobileShell } from '@/components/layout';
 import { AsyncBoundary, Fab, PetAvatar, SearchBar } from '@/components/ui';
 import { ListRow } from '@/components/domain';
 import type { AdminPatientsStackParamList } from '@/navigation/types';
-import { useAsync } from '@/hooks/useAsync';
+import { useRemoteSearch } from '@/hooks/useRemoteSearch';
 import { listAdminPets } from '@/services/admin';
 import { formatDate } from '@/utils/format';
 import { SPECIES_EMOJI, SPECIES_LABEL, type Pet } from '@/types/models';
 
 type Nav = NativeStackNavigationProp<AdminPatientsStackParamList>;
 
+const searchPets = (query: string) => listAdminPets({ search: query || undefined });
+
 export function AdminPetsListScreen() {
   const navigation = useNavigation<Nav>();
-  const [query, setQuery] = useState('');
-  const { data, loading, error, reload } = useAsync(() => listAdminPets());
+  // Búsqueda en el servidor: la lista es paginada y filtrar en el cliente solo
+  // encontraba entre los primeros 25 pacientes.
+  const { query, setQuery, data, loading, error, reload } = useRemoteSearch(searchPets);
 
   useFocusEffect(
     useCallback(() => {
@@ -25,17 +28,7 @@ export function AdminPetsListScreen() {
     }, [reload]),
   );
 
-  const pets = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    const list = data ?? [];
-    return term
-      ? list.filter(
-          (p) =>
-            p.name.toLowerCase().includes(term) ||
-            (p.breed ?? '').toLowerCase().includes(term),
-        )
-      : list;
-  }, [data, query]);
+  const pets = data ?? [];
 
   const fab = useMemo(
     () => (
@@ -68,14 +61,14 @@ export function AdminPetsListScreen() {
       <SearchBar
         value={query}
         onChangeText={setQuery}
-        placeholder="Buscar por nombre o raza…"
+        placeholder="Buscar paciente o dueño…"
       />
 
       <AsyncBoundary
         loading={loading && data === null}
         error={error}
-        onRetry={reload}
-        empty={pets.length === 0}
+        onRetry={() => void reload()}
+        empty={!loading && pets.length === 0}
         emptyIcon="paw"
         emptyTitle="Sin pacientes"
         emptyDescription="No se encontraron mascotas con ese criterio."

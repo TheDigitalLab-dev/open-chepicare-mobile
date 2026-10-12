@@ -92,7 +92,7 @@ INDEX = (
             corepack enable
             yarn install
 
-            # 2) Backend en marcha (repo ../pawcare) en el puerto 3000
+            # 2) Backend en marcha (repo ../pawcare-web) en el puerto 3000
             #    El emulador Android lo alcanza vía http://10.0.2.2:3000 (default de dev).
 
             # 3) Arrancar Metro / Expo
@@ -829,9 +829,9 @@ TESTING = (
         "negocio ni respuestas del servidor.</p>",
         callout(
             "info",
-            "Credenciales sembradas: <code>owner1@example.com</code> y "
-            "<code>vet@pawcare.com</code> con <code>password123</code>; "
-            "<code>admin@pawcare.com</code> con <code>admin12345</code>.",
+            "Credenciales sembradas: <code>owner1@example.com</code>, "
+            "<code>admin@pawcare.com</code>, <code>vet@pawcare.com</code> "
+            "(todas <code>password123</code>).",
         ),
     )
     + section(

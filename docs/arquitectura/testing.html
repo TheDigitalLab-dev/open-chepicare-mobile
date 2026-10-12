@@ -95,7 +95,7 @@ footer.pager{display:flex;justify-content:space-between;margin-top:52px;
 <p class="subtitle">Integración real contra el backend, sin mocks.</p>
 <section id="filosofia"><h2>Integración real, sin mocks</h2>
 <p>Los tests de hooks, servicios y utilidades son de <b>integración real</b> contra el backend en ejecución (<code>http://localhost:3000</code>). Lo único que se sustituye son shims de plataforma que no existen en Node (<code>expo-secure-store</code>, <code>AsyncStorage</code>) — nunca lógica de negocio ni respuestas del servidor.</p>
-<div class="callout info"><span class="ic">ℹ️</span><div>Credenciales sembradas: <code>owner1@example.com</code> y <code>vet@pawcare.com</code> con <code>password123</code>; <code>admin@pawcare.com</code> con <code>admin12345</code>.</div></div>
+<div class="callout info"><span class="ic">ℹ️</span><div>Credenciales sembradas: <code>owner1@example.com</code>, <code>admin@pawcare.com</code>, <code>vet@pawcare.com</code> (todas <code>password123</code>).</div></div>
 </section><section id="harness"><h2>Cómo corren</h2>
 <table><thead><tr><th>Pieza</th><th>Detalle</th></tr></thead><tbody><tr><td><code>yarn test</code></td><td>Apunta a <code>localhost:3000</code> vía <code>EXPO_PUBLIC_API_BASE_URL</code>.</td></tr><tr><td><code>undici</code></td><td>Provee <code>fetch</code> real en el entorno Node de Jest.</td></tr><tr><td><code>node:sqlite</code></td><td>SQLite real para los tests de la capa local.</td></tr><tr><td>RNTL</td><td>Tests de componentes cuando aplica.</td></tr></tbody></table>
 <div class="callout warn"><span class="ic">⚠️</span><div>Correr toda la suite de golpe puede disparar el <b>rate-limit</b> del backend en <code>/auth</code> por exceso de logins.</div></div>

@@ -1,5 +1,5 @@
 /**
- * Integración REAL del perfil contra `../pawcare`.
+ * Integración REAL del perfil contra `../pawcare-web`.
  * Idempotente: re-guarda los mismos datos y revierte, para no corromper la
  * cuenta sembrada compartida (otros tests dependen de ella).
  */
@@ -58,7 +58,11 @@ describe('profileService.deleteAccount', () => {
     // El backend hace *soft delete*: responde 204 y marca `deleted_at`.
     await expect(profileService.deleteAccount()).resolves.toBeUndefined();
 
-    const after = await authService.login(email, password);
-    expect((after as unknown as Record<string, unknown>).deleted_at).toBeTruthy();
+    // Una cuenta eliminada ya no puede iniciar sesión (401 genérico, como
+    // credenciales inválidas: no revela que existió).
+    await expect(authService.login(email, password)).rejects.toMatchObject({
+      status: 401,
+      kind: 'unauthorized',
+    });
   }, 30000);
 });

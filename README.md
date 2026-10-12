@@ -3,7 +3,7 @@
 App móvil **Android** (Expo / React Native) para una clínica veterinaria a
 domicilio. Una sola app sirve a tres audiencias — **público** (sin sesión),
 **dueño** de mascotas y **staff** clínico — y **todas** las pantallas consumen
-datos reales del backend Rails [`pawcare`](../pawcare) a través de su servicio de
+datos reales del backend Rails [`pawcare-web`](https://github.com/TheDigitalLab-dev/pawcare-web) (clon hermano en `../pawcare-web`) a través de su servicio de
 dominio (sin datos mockeados).
 
 > **Open source y self-hosted:** la URL del backend se elige en tiempo de
@@ -36,7 +36,7 @@ testing.
 
 - **Node ≥ 20** y **Yarn 4** (vía Corepack).
 - **Android**: un emulador (AVD) o un dispositivo con **Expo Go**.
-- El backend [`pawcare`](../pawcare) corriendo (por defecto en
+- El backend [`pawcare-web`](https://github.com/TheDigitalLab-dev/pawcare-web) (clon hermano en `../pawcare-web`) corriendo (por defecto en
   `http://localhost:3000`).
 
 ## 🚀 Instalación y arranque
@@ -45,7 +45,7 @@ testing.
 corepack enable
 yarn install
 
-# 1) Levanta el backend (repo ../pawcare) en el puerto 3000.
+# 1) Levanta el backend (repo ../pawcare-web) en el puerto 3000.
 #    El emulador Android alcanza el localhost del host en 10.0.2.2,
 #    por eso el valor de desarrollo por defecto es http://10.0.2.2:3000.
 
@@ -61,8 +61,27 @@ Para cambiar de servidor sin recompilar: en la app, pantalla de bienvenida →
 | Rol    | Login                  | Contraseña    |
 | ------ | ---------------------- | ------------- |
 | Dueño  | `owner1@example.com`   | `password123` |
-| Staff  | `admin@pawcare.com`    | `admin12345`  |
+| Staff  | `admin@pawcare.com`    | `password123` |
 | Vet    | `vet@pawcare.com`      | `password123` |
+
+Las crea `bin/rails db:seed` en pawcare-web. Si tu BD es anterior y el admin aún
+tiene la contraseña vieja del seed, vuelve a correr `db:seed` (fuera de
+producción la actualiza a `password123`).
+
+## 🕒 Zona horaria y formatos de la clínica
+
+Las horas de las citas, el mes inicial y el "hoy" de los asistentes, las fechas
+por defecto de los formularios y los recordatorios usan la **zona y los formatos
+de la clínica** (`time_zone`, `date_format`, `time_format`), no los del teléfono.
+El backend los envía en `clinic` con `/auth/mobile/me`, login, registro y refresh
+(cualquier rol). La app los guarda en AsyncStorage (`services/clinicConfig.ts`)
+para arrancar sin red. Cerrar sesión no los borra, porque no son datos del usuario;
+cambiar de servidor, sí.
+
+Única excepción: en el **primer arranque sin red y sin ninguna sesión previa**
+todavía no hay configuración. En ese caso se usa la zona del dispositivo con los
+formatos por defecto del backend (DD/MM/YYYY, 24 h) hasta el primer inicio de
+sesión.
 
 ## 🧪 Scripts
 

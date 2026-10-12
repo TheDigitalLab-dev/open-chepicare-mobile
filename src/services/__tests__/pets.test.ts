@@ -1,5 +1,5 @@
 /**
- * Integración REAL del servicio de Mascotas contra `../pawcare`.
+ * Integración REAL del servicio de Mascotas contra `../pawcare-web`.
  * Inicia sesión con un owner sembrado y opera sobre sus mascotas reales.
  */
 import * as authService from '@/services/auth';

@@ -1,5 +1,5 @@
 /**
- * Servicio de Mascotas (owner) contra el backend real `../pawcare`.
+ * Servicio de Mascotas (owner) contra el backend real `../pawcare-web`.
  * Endpoints (PetsController, JSON): GET/POST `/pets`, GET/PATCH/DELETE `/pets/:id`.
  * Requiere sesión de Owner (Bearer). Espejo de `pet_json`.
  */

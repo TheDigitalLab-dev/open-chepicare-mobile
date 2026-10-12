@@ -10,29 +10,29 @@ import {
   Button,
   FilterChips,
   InfoBanner,
-  SectionTitle,
   TextField,
 } from '@/components/ui';
 import type { AdminPatientsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
+import { useRemoteSearch } from '@/hooks/useRemoteSearch';
+import { RemoteSearchPicker } from '@/components/domain';
 import { createAdminAdoption, listAdminOwners, type AdminOwner } from '@/services/admin';
 import { listAdoptionPets } from '@/services/public';
 import { ApiError } from '@/types/api';
 import type { AdoptionPet } from '@/types/models';
+import { clinicToday } from '@/utils/clinicTime';
 
 type Nav = NativeStackNavigationProp<AdminPatientsStackParamList>;
-
-function todayDate(): string {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-}
 
 function ownerLabel(o: AdminOwner): string {
   return o.full_name ?? `${o.first_name} ${o.last_name}`.trim();
 }
 
-function AdoptionForm({ pets, owners }: { pets: AdoptionPet[]; owners: AdminOwner[] }) {
+/** Búsqueda de adoptantes en el servidor (la lista del backend es paginada). */
+const searchOwners = (query: string) => listAdminOwners({ search: query || undefined });
+const ownerId = (o: AdminOwner) => o.id;
+
+function AdoptionForm({ pets }: { pets: AdoptionPet[] }) {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
@@ -40,10 +40,13 @@ function AdoptionForm({ pets, owners }: { pets: AdoptionPet[]; owners: AdminOwne
   // Solo se guarda la elección explícita; el default (primer elemento) se
   // deriva en render para no copiar props a estado.
   const [petChoice, setPetChoice] = useState<number>();
-  const [adopterChoice, setAdopterChoice] = useState<number>();
   const petId = petChoice ?? pets[0]?.id;
-  const adopterId = adopterChoice ?? owners[0]?.id;
-  const [date, setDate] = useState(() => todayDate());
+  // El adoptante se elige explícitamente (antes quedaba el primero de la
+  // primera página por defecto).
+  const ownerSearch = useRemoteSearch(searchOwners);
+  const [adopter, setAdopter] = useState<AdminOwner | null>(null);
+  const adopterId = adopter?.id;
+  const [date, setDate] = useState(() => clinicToday());
   const [notes, setNotes] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
@@ -94,11 +97,16 @@ function AdoptionForm({ pets, owners }: { pets: AdoptionPet[]; owners: AdminOwne
         />
       </View>
 
-      <SectionTitle>Adoptante</SectionTitle>
-      <FilterChips
-        options={owners.map((o) => ({ id: String(o.id), label: ownerLabel(o) }))}
-        selectedId={adopterId !== undefined ? String(adopterId) : ''}
-        onSelect={(id) => setAdopterChoice(Number(id))}
+      <RemoteSearchPicker
+        label="Adoptante"
+        search={ownerSearch}
+        getId={ownerId}
+        getLabel={ownerLabel}
+        selected={adopter}
+        onSelect={setAdopter}
+        placeholder="Buscar por nombre, correo o documento"
+        emptyIcon="person"
+        emptyTitle="Sin dueños"
       />
 
       <TextField
@@ -127,11 +135,9 @@ export function AdminAdoptionFormScreen() {
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
   const pets = useAsync(() => listAdoptionPets());
-  const owners = useAsync(() => listAdminOwners());
 
-  const loading =
-    (pets.loading && pets.data === null) || (owners.loading && owners.data === null);
-  const ready = pets.data !== null && owners.data !== null;
+  const loading = pets.loading && pets.data === null;
+  const ready = pets.data !== null;
 
   return (
     <MobileShell
@@ -141,17 +147,14 @@ export function AdminAdoptionFormScreen() {
     >
       <AsyncBoundary
         loading={loading}
-        error={pets.error ?? owners.error}
-        onRetry={() => {
-          pets.reload();
-          owners.reload();
-        }}
+        error={pets.error}
+        onRetry={() => void pets.reload()}
         empty={ready && (pets.data ?? []).length === 0}
         emptyIcon="paw"
         emptyTitle="Sin mascotas en adopción"
         emptyDescription="No hay mascotas disponibles para adopción."
       >
-        {ready ? <AdoptionForm pets={pets.data!} owners={owners.data!} /> : null}
+        {ready ? <AdoptionForm pets={pets.data!} /> : null}
       </AsyncBoundary>
     </MobileShell>
   );

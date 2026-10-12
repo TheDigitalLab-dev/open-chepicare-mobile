@@ -13,6 +13,8 @@ export interface ForgotPasswordScreenProps {
   submitting?: boolean;
   /** Mensaje de confirmación tras enviar (el backend siempre responde 200). */
   sent?: boolean;
+  /** Error que sí se informa (límite de intentos, sin red); no revela cuentas. */
+  errorMessage?: string;
 }
 
 /** Solicitud de recuperación — solo campo email. */
@@ -21,6 +23,7 @@ export function ForgotPasswordScreen({
   onSubmit,
   submitting,
   sent,
+  errorMessage,
 }: ForgotPasswordScreenProps) {
   const { colors } = useTheme();
   const [email, setEmail] = useState('');
@@ -42,6 +45,7 @@ export function ForgotPasswordScreen({
         />
       ) : (
         <>
+          {errorMessage ? <InfoBanner tone="destructive" message={errorMessage} /> : null}
           <Text style={[styles.intro, { color: colors.mutedForeground }]}>
             Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
           </Text>

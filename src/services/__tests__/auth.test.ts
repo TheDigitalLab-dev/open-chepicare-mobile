@@ -1,5 +1,5 @@
 /**
- * Integración REAL del servicio de auth contra el backend `../pawcare`
+ * Integración REAL del servicio de auth contra el backend `../pawcare-web`
  * (`/auth/mobile/*`). No hay respuestas mockeadas: cada test pega al servidor
  * en ejecución y usa las credenciales sembradas (`db/seeds`).
  *
@@ -55,5 +55,16 @@ describe('authService.logout', () => {
 
     expect(await secureStore.getAccessToken()).toBeNull();
     expect(await secureStore.getRefreshToken()).toBeNull();
+  });
+});
+
+describe('permiso de vacunación (can_vaccinate)', () => {
+  it('la sesión del staff trae can_vaccinate (el admin del seed lo tiene activo)', async () => {
+    await authService.login('admin@pawcare.com', 'password123');
+
+    const me = await authService.fetchCurrentUser();
+
+    expect(me.type).toBe('User');
+    expect(me.type === 'User' ? me.can_vaccinate : undefined).toBe(true);
   });
 });

@@ -5,7 +5,8 @@ import { AsyncBoundary, Badge, type BadgeVariant } from '@/components/ui';
 import { DetailHero, ListRow } from '@/components/domain';
 import type { AdminAgendaStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
-import { listAdminAppointments } from '@/services/admin';
+import { getAdminAppointment } from '@/services/admin';
+import { ApiError } from '@/types/api';
 import { formatDateTime } from '@/utils/format';
 import {
   APPOINTMENT_STATUS_LABEL,
@@ -32,7 +33,7 @@ function Body({ appointment }: { appointment: Appointment }) {
     <>
       <DetailHero
         title={appointment.pet?.name ?? 'Mascota'}
-        subtitle={formatDateTime(appointment.scheduled_at)}
+        subtitle={formatDateTime(appointment.scheduled_at, appointment.time_zone)}
       >
         <Badge
           label={APPOINTMENT_STATUS_LABEL[appointment.status]}
@@ -56,8 +57,17 @@ export function AdminAppointmentDetailScreen() {
   const { params } = useRoute<Rt>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
-  const { data, loading, error, reload } = useAsync(() => listAdminAppointments());
-  const appointment = (data ?? []).find((a) => a.id === params.id) ?? null;
+  // Detalle directo (la lista trae como máximo 100 citas). Una cita eliminada
+  // (borrado lógico) responde 404 y se muestra como no encontrada.
+  const { data, loading, error, reload } = useAsync(async () => {
+    try {
+      return await getAdminAppointment(params.id);
+    } catch (e) {
+      if (e instanceof ApiError && e.kind === 'notFound') return null;
+      throw e;
+    }
+  });
+  const appointment = data ?? null;
 
   return (
     <MobileShell
@@ -69,7 +79,7 @@ export function AdminAppointmentDetailScreen() {
         loading={loading && data === null}
         error={error}
         onRetry={reload}
-        empty={data !== null && appointment === null}
+        empty={!loading && !error && appointment === null}
         emptyIcon="calendar"
         emptyTitle="Cita no encontrada"
       >

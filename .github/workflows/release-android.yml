@@ -20,7 +20,7 @@
 # El versionCode ahora es manual: subirlo en app.json (expo.android.versionCode)
 # antes de cada release.
 #
-# Los tests de integración NO corren aquí: requieren el backend de ../pawcare
+# Los tests de integración NO corren aquí: requieren el backend de ../pawcare-web
 # vivo y sembrado; son compuerta local pre-commit (ver AGENTS.md). CI valida
 # typecheck + lint + formato antes de compilar.
 #
