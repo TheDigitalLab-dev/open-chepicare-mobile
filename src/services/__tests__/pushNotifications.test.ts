@@ -2,7 +2,13 @@
  * Push del asistente: interpretación del `data` que envía el backend
  * (categoría `asistente`) y destino al tocar la notificación.
  */
-import { assistantPushTarget, parseAssistantPush } from '@/services/pushNotifications';
+import {
+  assistantPushTarget,
+  parseAssistantPush,
+  registerThisDevice,
+  unregisterThisDevice,
+} from '@/services/pushNotifications';
+import * as secureStore from '@/utils/secureStore';
 
 const dictationReady = {
   category: 'asistente',
@@ -69,5 +75,14 @@ describe('assistantPushTarget', () => {
       screen: 'chat',
       conversationId: 5,
     });
+  });
+});
+
+describe('registerThisDevice', () => {
+  it('sin token Expo disponible (sin projectId de EAS) no registra ni guarda nada', async () => {
+    await expect(registerThisDevice()).resolves.toBeNull();
+    expect(await secureStore.getPushToken()).toBeNull();
+    // Dar de baja sin token registrado es inocuo.
+    await expect(unregisterThisDevice()).resolves.toBeUndefined();
   });
 });

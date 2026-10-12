@@ -30,8 +30,9 @@ import {
   AdminVaccinationFormScreen,
   AdminVaccinationSchedulesScreen,
   AdminVaccinationsListScreen,
+  AssistantChatScreen,
 } from '@/screens/admin';
-import { ServerSettingsScreen } from '@/screens/auth';
+import { PairingScanScreen, ServerSettingsScreen } from '@/screens/auth';
 import { NotificationPrefsScreen, NotificationsScreen } from '@/screens/common';
 import type {
   AdminAgendaStackParamList,
@@ -57,6 +58,10 @@ function AdminPatientsStack() {
     <PatientsStack.Navigator screenOptions={{ headerShown: false }}>
       <PatientsStack.Screen name="AdminPetsList" component={AdminPetsListScreen} />
       <PatientsStack.Screen name="AdminPetDetail" component={AdminPetDetailScreen} />
+      <PatientsStack.Screen
+        name="AdminPetConsultation"
+        component={AdminConsultationDetailScreen}
+      />
       <PatientsStack.Screen name="AdminPetForm" component={AdminPetFormScreen} />
       <PatientsStack.Screen
         name="AdminMedicalProfile"
@@ -149,6 +154,8 @@ function AdminMoreStack() {
         component={AdminMedicalReportDetailScreen}
       />
       <MoreStack.Screen name="AdminServerSettings" component={ServerSettingsScreen} />
+      <MoreStack.Screen name="PairingScan" component={PairingScanScreen} />
+      <MoreStack.Screen name="AssistantChat" component={AssistantChatScreen} />
     </MoreStack.Navigator>
   );
 }

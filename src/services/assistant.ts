@@ -16,6 +16,7 @@ import type {
   AiConversationWithMessages,
   AiMessageStatus,
   AiToolCall,
+  AudioFile,
   AudioSource,
   CreateVoiceDictationInput,
   PaginationMeta,
@@ -97,6 +98,102 @@ export function pendingProposals(toolCalls: AiToolCall[]): AiToolCall[] {
 }
 
 // --- Audio --------------------------------------------------------------------
+
+/** Límite del servidor: notas de hasta 15 min (≤ 25 MB). */
+export const MAX_RECORDING_SECONDS = 15 * 60;
+
+const AUDIO_MIME: Record<string, string> = {
+  m4a: 'audio/mp4',
+  mp4: 'audio/mp4',
+  aac: 'audio/aac',
+  webm: 'audio/webm',
+  ogg: 'audio/ogg',
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+};
+
+/** Archivo a subir a partir de la URI local que deja expo-audio al detenerse. */
+export function audioFileFromRecording(uri: string): AudioFile {
+  const last = uri.split('/').pop() ?? '';
+  const ext = last.includes('.') ? (last.split('.').pop() ?? '').toLowerCase() : '';
+  const type = AUDIO_MIME[ext];
+  if (!type) return { uri, name: 'nota-de-voz.m4a', type: 'audio/mp4' };
+  return { uri, name: last, type };
+}
+
+/** `m:ss` para el cronómetro de la grabación. */
+export function formatRecordingDuration(millis: number): string {
+  const total = Math.floor(millis / 1000);
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+const TOOL_LABELS: Record<string, string> = {
+  search_pets: 'Buscar mascotas',
+  get_pet_clinical_history: 'Consultar historia clínica',
+  list_services: 'Consultar servicios',
+  create_consultation: 'Crear la consulta',
+  update_consultation: 'Actualizar la consulta',
+  add_prescription: 'Agregar receta',
+  request_lab_exam: 'Solicitar examen',
+  register_vaccination: 'Registrar vacuna',
+  register_deworming: 'Registrar desparasitación',
+  update_medical_profile: 'Actualizar perfil médico',
+  schedule_follow_up: 'Agendar control',
+};
+
+/** Nombre en español de una acción del agente (tool MCP). */
+export function toolCallLabel(toolName: string): string {
+  return TOOL_LABELS[toolName] ?? toolName.replace(/_/g, ' ');
+}
+
+const SUMMARY_FIELDS = [
+  'product_name',
+  'vaccine_name',
+  'exam_name',
+  'diagnosis',
+  'reason',
+  'scheduled_at',
+  'query',
+] as const;
+
+function asText(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
+/** Resumen corto de lo que propone/hizo el agente (para revisar sin abrir el JSON). */
+export function toolCallSummary(call: Pick<AiToolCall, 'tool_name' | 'input'>): string {
+  const input = call.input ?? {};
+  const parts: string[] = [];
+  if (Array.isArray(input.items)) {
+    for (const item of input.items as Record<string, unknown>[]) {
+      const name = asText(item?.medication_name);
+      if (name) parts.push([name, asText(item.dose)].filter(Boolean).join(' '));
+    }
+  }
+  const allergies = Array.isArray(input.add_allergies)
+    ? (input.add_allergies as unknown[]).map(asText).filter(Boolean)
+    : [];
+  if (allergies.length > 0) parts.push(`Alergias: ${allergies.join(', ')}`);
+  const diseases = Array.isArray(input.add_chronic_diseases)
+    ? (input.add_chronic_diseases as unknown[]).map(asText).filter(Boolean)
+    : [];
+  if (diseases.length > 0) parts.push(`Crónicas: ${diseases.join(', ')}`);
+  for (const field of SUMMARY_FIELDS) {
+    const text = asText(input[field]);
+    if (text) parts.push(text);
+  }
+  return parts.join(' · ');
+}
+
+export const TOOL_CALL_STATUS_LABEL: Record<AiToolCall['status'], string> = {
+  executed: 'Aplicada',
+  proposed: 'Por confirmar',
+  rejected: 'Rechazada',
+  failed: 'Falló',
+  denied: 'Sin permiso',
+};
 
 function audioForm(audio: AudioSource): FormData {
   const form = new FormData();

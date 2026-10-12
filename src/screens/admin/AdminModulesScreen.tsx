@@ -7,6 +7,7 @@ import { Avatar, Button, SectionTitle } from '@/components/ui';
 import { AdminModuleGrid, ListRow, ThemeToggle } from '@/components/domain';
 import type { AdminMoreStackParamList } from '@/navigation/types';
 import { useAuth } from '@/hooks/useAuth';
+import { useAssistant } from '@/session/AssistantProvider';
 
 type Nav = NativeStackNavigationProp<AdminMoreStackParamList>;
 
@@ -16,6 +17,7 @@ const SERVER_ICON = <Avatar fallback="🌐" />;
 export function AdminModulesScreen() {
   const navigation = useNavigation<Nav>();
   const { signOut } = useAuth();
+  const { availability } = useAssistant();
 
   const confirmLogout = () => {
     Alert.alert('Cerrar sesión', '¿Deseas cerrar sesión?', [
@@ -63,6 +65,17 @@ export function AdminModulesScreen() {
             icon: 'document-text',
             onPress: () => navigation.navigate('AdminMedicalReportsList'),
           },
+          // Solo si el servidor tiene IA y el usuario puede usar el asistente.
+          ...(availability.canChat
+            ? [
+                {
+                  id: 'assistant',
+                  label: 'Asistente IA',
+                  icon: 'sparkles' as const,
+                  onPress: () => navigation.navigate('AssistantChat'),
+                },
+              ]
+            : []),
         ]}
       />
 
@@ -81,6 +94,11 @@ export function AdminModulesScreen() {
           subtitle="Elige a qué backend se conecta la app"
           leading={SERVER_ICON}
           onPress={() => navigation.navigate('AdminServerSettings')}
+        />
+        <ListRow
+          title="Emparejar con código QR"
+          subtitle="Conecta la app a otro servidor PawCare"
+          onPress={() => navigation.navigate('PairingScan')}
         />
       </View>
 

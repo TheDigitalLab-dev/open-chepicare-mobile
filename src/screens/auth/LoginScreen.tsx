@@ -12,6 +12,8 @@ export interface LoginScreenProps {
   onCreateAccount?: () => void;
   /** Acceso a la configuración del servidor (antes vivía en Welcome). */
   onOpenServerSettings?: () => void;
+  /** Emparejar con el QR que genera la web (servidor + sesión en un paso). */
+  onScanPairingQr?: () => void;
   submitting?: boolean;
   /** Error general (p. ej. credenciales inválidas). */
   errorMessage?: string;
@@ -27,6 +29,7 @@ export function LoginScreen({
   onForgotPassword,
   onCreateAccount,
   onOpenServerSettings,
+  onScanPairingQr,
   submitting,
   errorMessage,
 }: LoginScreenProps) {
@@ -51,6 +54,7 @@ export function LoginScreen({
           placeholder="tu@email.com"
           value={login}
           onChangeText={setLogin}
+          keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
           textContentType="username"
@@ -92,12 +96,20 @@ export function LoginScreen({
         <Button label="Crear cuenta" variant="ghost" onPress={onCreateAccount} />
       </View>
 
-      <Button
-        label="Configurar servidor"
-        variant="ghost"
-        fullWidth
-        onPress={onOpenServerSettings}
-      />
+      <View style={styles.server}>
+        <Button
+          label="Emparejar con código QR"
+          variant="outline"
+          fullWidth
+          onPress={onScanPairingQr}
+        />
+        <Button
+          label="Configurar servidor"
+          variant="ghost"
+          fullWidth
+          onPress={onOpenServerSettings}
+        />
+      </View>
     </MobileShell>
   );
 }
@@ -110,4 +122,5 @@ const styles = StyleSheet.create({
   form: { gap: 12 },
   submit: { marginTop: 4 },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  server: { gap: 4 },
 });

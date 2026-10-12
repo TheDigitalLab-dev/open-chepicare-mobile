@@ -167,3 +167,69 @@ describe('assistant: IA deshabilitada en el servidor (real)', () => {
     }
   });
 });
+
+describe('assistant: grabación y presentación', () => {
+  it('convierte la URI de expo-audio en el archivo a subir', () => {
+    expect(assistant.audioFileFromRecording('file:///cache/Audio/rec-1.m4a')).toEqual({
+      uri: 'file:///cache/Audio/rec-1.m4a',
+      name: 'rec-1.m4a',
+      type: 'audio/mp4',
+    });
+    expect(assistant.audioFileFromRecording('file:///x/nota.webm').type).toBe(
+      'audio/webm',
+    );
+    expect(assistant.audioFileFromRecording('file:///x/sin-extension')).toMatchObject({
+      name: 'nota-de-voz.m4a',
+      type: 'audio/mp4',
+    });
+  });
+
+  it('nombra en español cada acción del agente', () => {
+    expect(assistant.toolCallLabel('register_deworming')).toBe(
+      'Registrar desparasitación',
+    );
+    expect(assistant.toolCallLabel('create_consultation')).toBe('Crear la consulta');
+    // Una tool nueva del servidor se muestra legible aunque la app no la conozca.
+    expect(assistant.toolCallLabel('send_owner_summary')).toBe('send owner summary');
+  });
+
+  it('formatea la duración de la grabación', () => {
+    expect(assistant.formatRecordingDuration(0)).toBe('0:00');
+    expect(assistant.formatRecordingDuration(65_400)).toBe('1:05');
+    expect(assistant.MAX_RECORDING_SECONDS).toBe(15 * 60);
+  });
+});
+
+describe('assistant: resumen de propuestas', () => {
+  const call = (tool_name: string, input: Record<string, unknown>) =>
+    ({ tool_name, input }) as Parameters<typeof assistant.toolCallSummary>[0];
+
+  it('resume lo clínicamente relevante de cada acción', () => {
+    expect(
+      assistant.toolCallSummary(
+        call('register_deworming', { pet_id: 1, product_name: 'Drontal' }),
+      ),
+    ).toBe('Drontal');
+    expect(
+      assistant.toolCallSummary(
+        call('add_prescription', {
+          consultation_id: 3,
+          items: [
+            { medication_name: 'Amoxicilina', dose: '250 mg' },
+            { medication_name: 'Meloxicam' },
+          ],
+        }),
+      ),
+    ).toBe('Amoxicilina 250 mg · Meloxicam');
+    expect(
+      assistant.toolCallSummary(
+        call('update_medical_profile', { pet_id: 1, add_allergies: ['Penicilina'] }),
+      ),
+    ).toBe('Alergias: Penicilina');
+    expect(assistant.toolCallSummary(call('search_pets', { query: 'Max' }))).toBe('Max');
+  });
+
+  it('sin datos reconocibles devuelve cadena vacía', () => {
+    expect(assistant.toolCallSummary(call('list_services', {}))).toBe('');
+  });
+});

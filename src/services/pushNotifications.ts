@@ -15,6 +15,10 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import type { AssistantPushData } from '@/types/assistant';
+import * as secureStore from '@/utils/secureStore';
+import { registerPushDevice, unregisterPushDevice } from './devices';
+import { createNotificationPrefs } from './notificationPrefs';
+import { initDatabase } from '@/db/database';
 
 export const ASSISTANT_CHANNEL_ID = 'asistente';
 
@@ -123,4 +127,50 @@ export async function describeThisDevice(): Promise<{
         : 'Android (PawCare)',
     ...(token ? { expo_push_token: token } : {}),
   };
+}
+
+/**
+ * Categorías apagadas por el usuario en la app. "campanas" (marketing) es
+ * opt-in: la app no la ofrece, así que siempre va deshabilitada.
+ */
+function disabledCategories(): string[] {
+  try {
+    const prefs = createNotificationPrefs(initDatabase()).all();
+    return ['campanas', ...prefs.filter((p) => !p.enabled).map((p) => p.category)];
+  } catch {
+    return ['campanas'];
+  }
+}
+
+/**
+ * Registra este dispositivo para push con la sesión actual. Devuelve el token
+ * registrado o null si el dispositivo no puede recibir push (no lanza).
+ */
+export async function registerThisDevice(): Promise<string | null> {
+  const token = await getExpoPushToken();
+  if (!token) return null;
+  try {
+    await registerPushDevice({
+      expo_push_token: token,
+      platform: Platform.OS === 'ios' ? 'ios' : 'android',
+      disabled_categories: disabledCategories(),
+    });
+    await secureStore.setPushToken(token);
+    return token;
+  } catch {
+    return null;
+  }
+}
+
+/** Da de baja el token de este dispositivo (antes de cerrar sesión). No lanza. */
+export async function unregisterThisDevice(): Promise<void> {
+  const token = await secureStore.getPushToken();
+  if (!token) return;
+  try {
+    await unregisterPushDevice(token);
+  } catch {
+    // Sin red: el servidor desactiva tokens inválidos al enviar.
+  } finally {
+    await secureStore.clearPushToken();
+  }
 }

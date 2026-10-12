@@ -10,6 +10,7 @@ import { useAsync } from '@/hooks/useAsync';
 import { listAdminPets } from '@/services/admin';
 import { formatDate } from '@/utils/format';
 import { SEX_LABEL, SPECIES_EMOJI, SPECIES_LABEL, type Pet } from '@/types/models';
+import { VoiceDictationSection } from './components/VoiceDictationSection';
 
 type Nav = NativeStackNavigationProp<AdminPatientsStackParamList>;
 type Rt = RouteProp<AdminPatientsStackParamList, 'AdminPetDetail'>;
@@ -46,6 +47,11 @@ function Body({ pet }: { pet: Pet }) {
           onPress={() => navigation.navigate('AdminMedicalProfile', { petId: pet.id })}
         />
       </View>
+
+      <VoiceDictationSection
+        petId={pet.id}
+        onOpenConsultation={(id) => navigation.navigate('AdminPetConsultation', { id })}
+      />
     </>
   );
 }
