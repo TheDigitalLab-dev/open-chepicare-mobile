@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { AppHeader, MobileShell } from '@/components/layout';
 import { Button, InfoBanner, SectionTitle, TextField } from '@/components/ui';
 import { useRemoteSearch } from '@/hooks/useRemoteSearch';
-import { RemoteSearchPicker } from '@/components/domain/RemoteSearchPicker';
+import { RemoteSearchPicker } from '@/components/domain';
 import { createAdminConsultation, listAdminPets } from '@/services/admin';
 import { ApiError } from '@/types/api';
 import type { Pet } from '@/types/models';

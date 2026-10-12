@@ -5,7 +5,7 @@ import { AppHeader, MobileShell } from '@/components/layout';
 import { Button, InfoBanner, TextField } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useRemoteSearch } from '@/hooks/useRemoteSearch';
-import { RemoteSearchPicker } from '@/components/domain/RemoteSearchPicker';
+import { RemoteSearchPicker } from '@/components/domain';
 import { createAdminVaccination, listAdminPets } from '@/services/admin';
 import { ApiError } from '@/types/api';
 import type { Pet } from '@/types/models';

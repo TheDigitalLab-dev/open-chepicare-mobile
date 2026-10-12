@@ -15,7 +15,7 @@ import {
 import type { AdminPatientsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
 import { useRemoteSearch } from '@/hooks/useRemoteSearch';
-import { RemoteSearchPicker } from '@/components/domain/RemoteSearchPicker';
+import { RemoteSearchPicker } from '@/components/domain';
 import { createAdminAdoption, listAdminOwners, type AdminOwner } from '@/services/admin';
 import { listAdoptionPets } from '@/services/public';
 import { ApiError } from '@/types/api';
