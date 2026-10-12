@@ -6,6 +6,7 @@ import * as authService from '@/services/auth';
 import * as secureStore from '@/utils/secureStore';
 import { purgeLocalData } from '@/db/database';
 import { cancelAllLocalAlarms } from '@/services/alarms';
+import { restoreClinicConfig } from '@/services/clinicConfig';
 import { unregisterThisDevice } from '@/services/pushNotifications';
 
 /** Rol efectivo que decide el árbol de navegación (RNF-SEC-002). */
@@ -42,6 +43,20 @@ export interface SessionContextValue {
 
 const SessionContext = createContext<SessionContextValue | undefined>(undefined);
 
+/**
+ * Teléfono compartido: ni los datos clínicos locales ni las alarmas del usuario
+ * saliente deben sobrevivir a su sesión (cierre manual o sesión revocada). La
+ * configuración de la clínica (zona y formatos) no es del usuario y se conserva.
+ */
+async function clearLocalUserData(): Promise<void> {
+  try {
+    purgeLocalData();
+  } catch {
+    // La base local no estaba abierta: nada que purgar.
+  }
+  await cancelAllLocalAlarms();
+}
+
 /** Deriva el rol de navegación a partir del tipo de cuenta. */
 function roleForUser(user: AuthUser): SessionRole {
   return user.type === 'Owner' ? 'owner' : 'admin';
@@ -57,14 +72,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
 
-    // Cuando el refresh falla dentro de una petición cualquiera, volvemos a público.
+    // El servidor rechazó el refresh (contraseña cambiada o restablecida en otro
+    // dispositivo, cuenta desactivada o eliminada): los tokens ya se borraron;
+    // se limpian los datos locales y se vuelve a público.
     authService.setOnSessionExpired(() => {
       if (!active) return;
       setUser(null);
       setRole('public');
+      void clearLocalUserData();
     });
 
     (async () => {
+      // Zona y formatos de la clínica guardados en la última sesión: listos antes
+      // de la primera pantalla, aunque no haya red. `/me` (o el login) los
+      // actualiza. Sin caché (primer arranque sin red), la zona del dispositivo.
+      await restoreClinicConfig();
       try {
         if (!(await secureStore.hasSession())) return;
         const restored = await authService.fetchCurrentUser();
@@ -106,14 +128,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         // El teléfono deja de recibir push de esta cuenta (requiere sesión).
         await unregisterThisDevice();
         await authService.logout();
-        // Teléfono compartido: ni los datos clínicos locales ni las alarmas del
-        // usuario saliente deben sobrevivir a su sesión.
-        try {
-          purgeLocalData();
-        } catch {
-          // La base local no estaba abierta: nada que purgar.
-        }
-        await cancelAllLocalAlarms();
+        await clearLocalUserData();
         setUser(null);
         setRole('public');
       },

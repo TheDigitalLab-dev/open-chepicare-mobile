@@ -2,7 +2,8 @@
  * Contrato de la superficie Bearer `/auth/mobile/*` del backend (login,
  * registro, refresh y canje del QR de emparejamiento comparten el sobre).
  */
-import type { StaffUser } from './models';
+import type { AuthTokenPair } from './api';
+import type { ClinicConfig, StaffUser } from './models';
 
 /** Usuario tal como lo serializa el backend (`as_json` + `user_type`). */
 export interface ApiUser extends Record<string, unknown> {
@@ -18,10 +19,7 @@ export interface ApiUser extends Record<string, unknown> {
 export interface AuthEnvelope {
   success: boolean;
   user: ApiUser;
-  auth: {
-    access_token: string;
-    refresh_token: string;
-    token_type: 'Bearer';
-    expires_in: number;
-  };
+  auth: AuthTokenPair;
+  /** Zona horaria y formatos de la clínica (si el backend los envía). */
+  clinic?: ClinicConfig;
 }

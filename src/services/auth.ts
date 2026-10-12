@@ -1,19 +1,23 @@
 /**
  * Servicio de autenticación (F4) contra la superficie Bearer del backend:
  * `/auth/mobile/*` (separada del flujo web por cookies). Ver
- * `../pawcare/docs/mobile-auth-plan/auth.html`.
+ * `../pawcare-web/docs/mobile-auth-plan/auth.html`.
  *
  * Contrato:
  *  - login/register/refresh devuelven `{ success, user, auth: { access_token,
  *    refresh_token, token_type, expires_in } }`.
  *  - El access viaja como `Authorization: Bearer`; el refresh se rota en cada uso.
  *  - `user` trae `user_type` ("Owner" | "User"); de ahí se deriva el rol.
+ *  - login/register/refresh y `/me` traen `clinic` (zona y formatos de la
+ *    clínica): se aplica y se guarda al recibirla (ver `clinicConfig`).
  */
 import type { ApiUser, AuthEnvelope } from '@/types/auth';
-import type { AuthUser, Owner, StaffUser } from '@/types/models';
+import type { AuthUser, ClinicConfig, Owner, StaffUser } from '@/types/models';
+import { ApiError, type AuthTokenPair } from '@/types/api';
 import * as secureStore from '@/utils/secureStore';
 import type { OwnerRegistration } from '@/screens/auth/RegisterScreen';
 import { api, registerSessionRefresher, registerTokenProvider } from './api';
+import { applyClinicConfig } from './clinicConfig';
 
 const BASE = '/auth/mobile';
 
@@ -29,14 +33,13 @@ export function toAuthUser(raw: ApiUser): AuthUser {
 }
 
 /**
- * Guarda los tokens de un sobre de autenticación y devuelve el usuario. Lo usan
- * login/registro y el canje del QR de emparejamiento (`services/pairing`).
+ * Guarda los tokens de un sobre de autenticación, aplica la configuración de
+ * la clínica y devuelve el usuario. Lo usan login/registro y el canje del QR
+ * de emparejamiento (`services/pairing`).
  */
 export async function startSession(env: AuthEnvelope): Promise<AuthUser> {
-  await secureStore.setTokens({
-    access: env.auth.access_token,
-    refresh: env.auth.refresh_token,
-  });
+  await storeTokenPair(env.auth);
+  await applyClinicConfig(env.clinic);
   return toAuthUser(env.user);
 }
 
@@ -62,7 +65,8 @@ export async function register(data: OwnerRegistration): Promise<AuthUser> {
 
 /** Restaura la sesión al arrancar: valida el access (auto-refresh ante 401). */
 export async function fetchCurrentUser(): Promise<AuthUser> {
-  const res = await api.get<{ user: ApiUser }>(`${BASE}/me`);
+  const res = await api.get<{ user: ApiUser; clinic?: ClinicConfig }>(`${BASE}/me`);
+  await applyClinicConfig(res.clinic);
   return toAuthUser(res.user);
 }
 
@@ -105,8 +109,33 @@ export function setOnSessionExpired(fn: () => void): void {
   onSessionExpired = fn;
 }
 
-/** Rota tokens usando el refresh guardado. Devuelve true si conviene reintentar. */
-async function refreshSession(): Promise<boolean> {
+/** Guarda el par que entrega el backend (login, refresh o cambio de contraseña). */
+export async function storeTokenPair(pair: AuthTokenPair): Promise<void> {
+  await secureStore.setTokens({ access: pair.access_token, refresh: pair.refresh_token });
+}
+
+/**
+ * Rota tokens usando el refresh guardado. Devuelve true si conviene reintentar.
+ *
+ * - El backend rota (y revoca) el refresh en cada uso: si dos peticiones
+ *   renovaran a la vez, la segunda usaría un refresh revocado y cerraría la
+ *   sesión. Por eso hay UNA renovación en vuelo compartida por todas.
+ * - Si el servidor rechaza el refresh (revocado por cambio/restablecimiento de
+ *   contraseña, cuenta desactivada o eliminada, vencido) se borran los tokens y
+ *   se avisa una sola vez a la capa de sesión.
+ * - Un fallo transitorio (sin red, timeout, 5xx, 429) NO cierra la sesión: la
+ *   petición falla y el usuario puede reintentar.
+ */
+let refreshInFlight: Promise<boolean> | null = null;
+
+function refreshSession(): Promise<boolean> {
+  refreshInFlight ??= renewTokens().finally(() => {
+    refreshInFlight = null;
+  });
+  return refreshInFlight;
+}
+
+async function renewTokens(): Promise<boolean> {
   const refresh = await secureStore.getRefreshToken();
   if (!refresh) return false;
   try {
@@ -115,14 +144,19 @@ async function refreshSession(): Promise<boolean> {
       { refresh_token: refresh },
       { auth: false, skipRefresh: true },
     );
-    await secureStore.setTokens({
-      access: env.auth.access_token,
-      refresh: env.auth.refresh_token,
-    });
+    await storeTokenPair(env.auth);
+    await applyClinicConfig(env.clinic);
     return true;
-  } catch {
-    await secureStore.clearTokens();
-    onSessionExpired();
+  } catch (err) {
+    const rejected =
+      err instanceof ApiError &&
+      (err.kind === 'unauthorized' ||
+        err.kind === 'forbidden' ||
+        err.kind === 'validation');
+    if (rejected) {
+      await secureStore.clearTokens();
+      onSessionExpired();
+    }
     return false;
   }
 }

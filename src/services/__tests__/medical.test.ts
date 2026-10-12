@@ -1,5 +1,5 @@
 /**
- * Integración REAL de los registros médicos del owner contra `../pawcare`.
+ * Integración REAL de los registros médicos del owner contra `../pawcare-web`.
  * Usa la primera mascota real del owner sembrado.
  */
 import * as authService from '@/services/auth';

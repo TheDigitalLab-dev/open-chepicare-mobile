@@ -1,5 +1,5 @@
 /**
- * Servicio Admin (staff) contra el backend real `../pawcare`.
+ * Servicio Admin (staff) contra el backend real `../pawcare-web`.
  * Endpoints JSON del namespace /admin/*-list (índices) + métricas.
  * Requiere sesión de staff (User) con Bearer.
  */
@@ -14,6 +14,8 @@ import type {
   Pet,
   Vaccination,
 } from '@/types/models';
+import type { PaginationMeta, QueryParams, SearchOptions } from '@/types/api';
+import { learnClinicTimeZone, learnFromAppointments } from '@/utils/clinicTime';
 import { api } from './api';
 
 /** Registro de adopción del admin (adoptions-list / show). */
@@ -66,9 +68,45 @@ export async function getAdminMedicalReport(id: number): Promise<MedicalReport> 
   return medical_report;
 }
 
-export async function listAdminPets(): Promise<Pet[]> {
-  const res = await api.get<{ pets: Pet[] }>('/admin/pets-list');
+// --- Listas paginadas ------------------------------------------------------
+//
+// El backend pagina (25 por defecto, máximo 100 por página). Los selectores no
+// pueden quedarse con la primera página: buscan en el servidor (`search`) o,
+// para conjuntos acotados (las mascotas de UN dueño), recorren todas las
+// páginas.
+
+const MAX_PER_PAGE = 100;
+
+/** Recorre todas las páginas de un índice paginado. */
+async function fetchAllPages<K extends string, T>(
+  path: string,
+  key: K,
+  params: QueryParams,
+): Promise<T[]> {
+  const items: T[] = [];
+  for (let page = 1; ; page += 1) {
+    const res = await api.get<Partial<Record<K, T[]>> & { pagination?: PaginationMeta }>(
+      path,
+      { params: { ...params, page, per_page: MAX_PER_PAGE } },
+    );
+    items.push(...(res[key] ?? []));
+    if (!res.pagination || page >= res.pagination.total_pages) return items;
+  }
+}
+
+export async function listAdminPets(options: SearchOptions = {}): Promise<Pet[]> {
+  const res = await api.get<{ pets: Pet[] }>('/admin/pets-list', {
+    params: { search: options.search || undefined },
+  });
   return res.pets;
+}
+
+/** Todas las mascotas activas de un dueño (todas las páginas). */
+export async function listAdminPetsByOwner(ownerId: number): Promise<Pet[]> {
+  return fetchAllPages<'pets', Pet>('/admin/pets-list', 'pets', {
+    proprietary_id: ownerId,
+    proprietary_type: 'Owner',
+  });
 }
 
 export async function listAdminAppointments(): Promise<Appointment[]> {
@@ -78,7 +116,8 @@ export async function listAdminAppointments(): Promise<Appointment[]> {
   const res = await api.get<{ appointments: Appointment[] }>('/admin/appointments-list', {
     params: { scope: 'all', per_page: 100 },
   });
-  return res.appointments;
+  // La zona de las citas sirve también al veterinario sin acceso a Configuración General.
+  return learnFromAppointments(res.appointments);
 }
 
 export async function listAdminPayments(): Promise<Payment[]> {
@@ -157,8 +196,12 @@ export interface AdminOwner {
   email: string;
 }
 
-export async function listAdminOwners(): Promise<AdminOwner[]> {
-  const res = await api.get<{ owners: AdminOwner[] }>('/admin/owners-list');
+export async function listAdminOwners(
+  options: SearchOptions = {},
+): Promise<AdminOwner[]> {
+  const res = await api.get<{ owners: AdminOwner[] }>('/admin/owners-list', {
+    params: { search: options.search || undefined },
+  });
   return res.owners;
 }
 
@@ -227,6 +270,8 @@ export async function registerAdminPayment(
 
 export interface AdminConsultationInput {
   pet_id: number;
+  /** Cita que se atiende: el backend la marca completada (no cancelada, misma mascota). */
+  appointment_id?: number;
   consultation_date: string;
   diagnosis?: string;
   treatment?: string;
@@ -278,9 +323,12 @@ export interface AdminService {
   duration_minutes?: number | null;
 }
 
-export async function listAdminServices(): Promise<AdminService[]> {
+export async function listAdminServices(
+  options: SearchOptions = {},
+): Promise<AdminService[]> {
   const { services } = await api.get<{ services: AdminService[] }>(
     '/admin/services-list',
+    { params: { search: options.search || undefined } },
   );
   return services;
 }
@@ -339,9 +387,26 @@ export async function createAdminAppointment(
     '/admin/appointments',
     { appointment: input },
   );
+  learnClinicTimeZone(appointment.time_zone);
   return appointment;
 }
 
+/**
+ * Detalle de una cita (incluye pagos y `allowed_status_transitions`). Una cita
+ * eliminada (borrado lógico) responde 404.
+ */
+export async function getAdminAppointment(id: number): Promise<Appointment> {
+  const { appointment } = await api.get<{ appointment: Appointment }>(
+    `/admin/appointments/${id}`,
+  );
+  learnClinicTimeZone(appointment.time_zone);
+  return appointment;
+}
+
+/**
+ * "Eliminar" es un borrado lógico: los pagos abiertos se cancelan. El backend
+ * lo bloquea (422 con el motivo) si la cita tiene consulta o pagos cobrados.
+ */
 export async function deleteAdminAppointment(id: number): Promise<void> {
   await api.delete<unknown>(`/admin/appointments/${id}`);
 }

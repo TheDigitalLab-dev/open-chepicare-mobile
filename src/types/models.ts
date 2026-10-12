@@ -1,5 +1,5 @@
 /**
- * Modelos del dominio (presentacionales) basados en el schema real de `../pawcare`.
+ * Modelos del dominio (presentacionales) basados en el schema real de `../pawcare-web`.
  * Los enums Rails son enteros; aquí se modelan como uniones de string + mapas de
  * etiqueta en español para la UI. Campos marcados opcionales = "según contrato API".
  */
@@ -73,6 +73,13 @@ export const APPOINTMENT_STATUS_LABEL: Record<AppointmentStatus, string> = {
 
 // payment_status de la cita (distinto del estado del modelo Payment).
 export type AppointmentPaymentStatus = 'unpaid' | 'paid' | 'refunded';
+/** Origen de la cita; lo fija el backend en cada camino de creación. */
+export type AppointmentSource =
+  | 'staff'
+  | 'staff_mobile'
+  | 'portal'
+  | 'portal_mobile'
+  | 'system';
 export const APPOINTMENT_PAYMENT_STATUS_LABEL: Record<AppointmentPaymentStatus, string> =
   {
     unpaid: 'Sin pagar',
@@ -105,6 +112,10 @@ export type StaffRole =
   | 'assistant'
   | 'finances'
   | 'hr';
+// Formatos de Configuración General (`date_format`, `time_format`).
+export type ClinicDateFormat = 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
+export type ClinicTimeFormat = '24h' | '12h';
+
 // --- Entidades -------------------------------------------------------------
 
 export interface Owner {
@@ -133,9 +144,35 @@ export interface StaffUser {
   username: string;
   role: StaffRole;
   specialty?: string;
+  /** Habilitado para registrar vacunas (el backend rechaza si es false). */
+  can_vaccinate?: boolean;
 }
 
 export type AuthUser = Owner | StaffUser;
+
+/**
+ * Configuración de la clínica que el backend entrega a toda sesión Bearer
+ * (`clinic` en `/auth/mobile/me`, login, register y refresh). Sin datos
+ * sensibles. Espejo de `Auth::GetClinicConfig`.
+ */
+export interface ClinicConfig {
+  name: string;
+  /** Zona IANA (p. ej. "America/Caracas"). */
+  time_zone: string;
+  date_format: ClinicDateFormat;
+  time_format: ClinicTimeFormat;
+  language: string;
+  default_appointment_duration: number;
+  allow_outside_hours: boolean;
+  max_advance_days: number;
+}
+
+/** Lo que `clinicTime` necesita de la configuración de la clínica. */
+export interface ClinicTimeConfig {
+  time_zone?: string | null;
+  date_format?: string | null;
+  time_format?: string | null;
+}
 
 // Espejo de `pet_json` (app/controllers/concerns/pet_jsonable.rb).
 export interface Pet {
@@ -152,6 +189,21 @@ export interface Pet {
   photo_url?: string | null;
   proprietary_id?: number;
   proprietary_type?: 'Owner' | 'User';
+  /** Dueño embebido (solo en las respuestas admin con include_proprietary). */
+  proprietary?: PetProprietary | null;
+}
+
+// Espejo de `pet_json(include_proprietary: true)[:proprietary]`.
+export interface PetProprietary {
+  id: number;
+  type?: 'Owner' | 'User';
+  first_name: string;
+  last_name: string;
+  full_name?: string;
+  email: string;
+  /** Solo si el dueño es un Owner. */
+  identity_document?: string | null;
+  phone?: string | null;
 }
 
 export interface PetMedicalProfile {
@@ -207,12 +259,19 @@ export interface Appointment {
   service_id: number;
   owner_id: number;
   assigned_to_id: number | null;
+  /** ISO 8601 con el offset de la clínica para esa fecha ("…T09:00:00-04:00"). */
   scheduled_at: string;
+  /** Zona IANA de la clínica ("America/Caracas"): mostrar la hora en esta zona. */
+  time_zone?: string | null;
+  /** Solo en las respuestas del personal; `null` en citas anteriores a la columna. */
+  source?: AppointmentSource | null;
   duration_minutes?: number | null;
   status: AppointmentStatus;
   payment_status: AppointmentPaymentStatus;
   notes?: string | null;
   cancellation_reason?: string | null;
+  /** Solo en /admin/appointments*: estados a los que puede pasar la cita. */
+  allowed_status_transitions?: AppointmentStatus[];
   pet: AppointmentPet | null;
   service: AppointmentService | null;
   assigned_to: AppointmentVet | null;

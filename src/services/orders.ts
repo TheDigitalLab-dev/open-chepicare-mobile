@@ -1,5 +1,5 @@
 /**
- * Servicio de pedidos de tienda (público, sin autenticación) contra `../pawcare`.
+ * Servicio de pedidos de tienda (público, sin autenticación) contra `../pawcare-web`.
  * Endpoints JSON: POST /public/product_orders y /public/product_orders/:id/upload_proof.
  */
 import { api } from './api';

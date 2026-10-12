@@ -1,10 +1,10 @@
 /**
  * Credenciales sembradas del backend (SOLO tests de integración).
  *
- * El admin del seed cambió de contraseña entre ramas del backend: `admin12345`
- * (main) y `password123` (rama feat/voice-dictation-mcp, que además migra la
- * anterior). Se prueban ambas en orden contra el backend REAL: no se simula
- * nada, solo se elige la credencial que el servidor en ejecución acepta.
+ * El seed actual del admin usa `password123`; BD de desarrollo anteriores aún
+ * pueden tener `admin12345` (hasta volver a correr `db:seed`). Se prueban en ese
+ * orden contra el backend REAL: no se simula nada, solo se elige la credencial
+ * que el servidor en ejecución acepta.
  */
 import { ApiError } from '@/types/api';
 import type { AuthUser } from '@/types/models';
@@ -13,7 +13,7 @@ import * as authService from '@/services/auth';
 const BASE = () => process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
 export const ADMIN_LOGIN = 'admin@pawcare.com';
-const ADMIN_PASSWORDS = ['admin12345', 'password123'];
+const ADMIN_PASSWORDS = ['password123', 'admin12345'];
 
 /** Inicia sesión como el admin del seed con el servicio real de la app. */
 export async function loginSeedAdmin(): Promise<AuthUser> {

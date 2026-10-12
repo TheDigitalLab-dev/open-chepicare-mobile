@@ -1,5 +1,5 @@
 /**
- * Integración REAL del servicio de pedidos de tienda contra `../pawcare`.
+ * Integración REAL del servicio de pedidos de tienda contra `../pawcare-web`.
  * Los pedidos públicos no requieren autenticación.
  */
 import * as ordersService from '@/services/orders';

@@ -1,10 +1,18 @@
 /**
- * Servicio de Citas (owner) contra el backend real `../pawcare`.
+ * Servicio de Citas (owner) contra el backend real `../pawcare-web`.
  * Controllers JSON: owner_appointments, owner_services, owner_availability.
  * Requiere sesión de Owner (Bearer).
  */
 import type { Appointment, AvailableVet, Service } from '@/types/models';
+import { learnClinicTimeZone, learnFromAppointments } from '@/utils/clinicTime';
 import { api } from './api';
+
+// Cada respuesta de cita trae la zona de la clínica (`time_zone`): es la única
+// fuente para el propietario, que no puede leer Configuración General.
+function learned(appointment: Appointment): Appointment {
+  learnClinicTimeZone(appointment.time_zone);
+  return appointment;
+}
 
 export interface AppointmentInput {
   pet_id: number;
@@ -33,14 +41,14 @@ export async function listAppointments(
       },
     },
   );
-  return appointments;
+  return learnFromAppointments(appointments);
 }
 
 export async function getAppointment(id: number): Promise<Appointment> {
   const { appointment } = await api.get<{ appointment: Appointment }>(
     `/owner-appointments/${id}`,
   );
-  return appointment;
+  return learned(appointment);
 }
 
 export async function createAppointment(input: AppointmentInput): Promise<Appointment> {
@@ -48,14 +56,14 @@ export async function createAppointment(input: AppointmentInput): Promise<Appoin
     '/owner-appointments',
     { appointment: input },
   );
-  return appointment;
+  return learned(appointment);
 }
 
 export async function confirmAppointment(id: number): Promise<Appointment> {
   const { appointment } = await api.post<{ appointment: Appointment }>(
     `/owner-appointments/${id}/confirm`,
   );
-  return appointment;
+  return learned(appointment);
 }
 
 export async function cancelAppointment(
@@ -66,7 +74,7 @@ export async function cancelAppointment(
     `/owner-appointments/${id}/cancel`,
     { cancellation_reason: cancellationReason },
   );
-  return appointment;
+  return learned(appointment);
 }
 
 // --- Datos para agendar -----------------------------------------------------

@@ -42,6 +42,23 @@ describe('appointmentReminders', () => {
     expect(specs[0]!.body).toContain('Consulta general');
   });
 
+  it('el texto usa la hora de la clínica que trae la cita (`time_zone`)', () => {
+    const specs = appointmentReminders(
+      [
+        {
+          id: 13,
+          scheduled_at: '2026-07-16T11:00:00-04:00',
+          time_zone: 'America/Caracas',
+          status: 'confirmed',
+          ...base,
+        },
+      ],
+      NOW,
+    );
+    expect(specs[0]!.triggerAt).toBe('2026-07-15T15:00:00.000Z');
+    expect(specs[0]!.body).toContain('11:00');
+  });
+
   it('omite los avisos cuyo momento ya pasó (cita en menos de 24 h)', () => {
     const specs = appointmentReminders(
       [{ id: 11, scheduled_at: '2026-07-15T08:00:00.000Z', status: 'pending', ...base }],
@@ -168,6 +185,35 @@ describe('clinicAgendaReminders', () => {
     const trigger = new Date(specs[0]!.triggerAt);
     expect(trigger.getHours()).toBe(7);
     expect(trigger.getMinutes()).toBe(30);
+  });
+
+  it('cuenta los días y programa las 7:30 en la zona de la clínica (`time_zone`)', () => {
+    // NOW = 14 jul 08:00 en Caracas; mañana en la clínica es el 15.
+    const tz = 'America/Caracas';
+    const specs = clinicAgendaReminders(
+      [
+        // 15 jul 22:00 en Caracas (16 jul 02:00 UTC): cuenta para el 15.
+        {
+          id: 1,
+          scheduled_at: '2026-07-15T22:00:00-04:00',
+          status: 'confirmed',
+          time_zone: tz,
+        },
+        // 16 jul 00:30 en Caracas: no es del 15.
+        {
+          id: 2,
+          scheduled_at: '2026-07-16T00:30:00-04:00',
+          status: 'pending',
+          time_zone: tz,
+        },
+      ],
+      NOW,
+    );
+    expect(specs).toHaveLength(1);
+    expect(specs[0]!.identifier).toBe('agenda-2026-07-15');
+    expect(specs[0]!.body).toContain('1 cita');
+    // 7:30 en Caracas = 11:30 UTC.
+    expect(specs[0]!.triggerAt).toBe('2026-07-15T11:30:00.000Z');
   });
 
   it('sin citas mañana, no hay resumen', () => {

@@ -77,7 +77,7 @@ export function AdminAppointmentsListScreen() {
     ({ item: a }: ListRenderItemInfo<Appointment>) => (
       <AppointmentCard
         petName={a.pet?.name ?? 'Mascota'}
-        dateLabel={formatDateTime(a.scheduled_at)}
+        dateLabel={formatDateTime(a.scheduled_at, a.time_zone)}
         vetName={
           a.assigned_to
             ? `${a.assigned_to.first_name} ${a.assigned_to.last_name}`

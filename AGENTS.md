@@ -9,8 +9,9 @@ escribir cualquier código.
 
 - **Prohibido** mock data, fake data, pantallas falsas o placeholders en código de
   producción. Nada de `src/data/mock.ts` ni equivalentes.
-- Toda pantalla visible consume **datos reales** del backend (`../pawcare`, que
-  está corriendo) a través de su servicio de dominio.
+- Toda pantalla visible consume **datos reales** del backend Rails **pawcare-web**
+  (repo `TheDigitalLab-dev/pawcare-web`, clonado al lado de este en
+  `../pawcare-web`, que está corriendo) a través de su servicio de dominio.
 - Todo lo visible (botones, listas, formularios) debe **funcionar de verdad**.
 - Un servicio por dominio en `src/services/<dominio>.ts` contra las rutas reales.
   Los tipos viven en `src/types`. Las pantallas NO se importan desde servicios.
@@ -29,10 +30,11 @@ escribir cualquier código.
   de negocio ni respuestas del servidor. Ver `jest.setup.ts`. Para el asistente
   IA, el único doble es el del **CLI de terceros** `claude`
   (`src/testing/agent-bin/claude`), que llama de verdad al MCP del backend.
-- Credenciales sembradas (de `../pawcare/db/seeds`): `owner1@example.com`,
-  `admin@pawcare.com` (password `admin12345` en main; `password123` desde la rama
-  del asistente IA — usa `loginSeedAdmin()` de `src/testing/seedCredentials`),
-  `vet@pawcare.com` — el resto con `password123`.
+- Credenciales sembradas (de `../pawcare-web/db/seeds`): `owner1@example.com`,
+  `admin@pawcare.com`, `vet@pawcare.com` — todas con `password123`. Con una BD
+  creada antes de que el seed del admin usara `password123`, basta con volver a
+  correr `bin/rails db:seed` en pawcare-web (fuera de producción actualiza la
+  contraseña anterior del seed); no hace falta tocar la BD a mano.
 
 ## Compuertas de calidad — antes de CADA commit
 

@@ -19,6 +19,7 @@ export { PaymentCard, type PaymentCardProps } from './PaymentCard';
 export { ProductCard, type ProductCardProps } from './ProductCard';
 export { ThemeToggle } from './ThemeToggle';
 export { NotificationsBell } from './NotificationsBell';
+export { RemoteSearchPicker, type RemoteSearchPickerProps } from './RemoteSearchPicker';
 export { ToolCallRow, type ToolCallRowProps } from './ToolCallRow';
 export { VoiceDictationCard, type VoiceDictationCardProps } from './VoiceDictationCard';
 export { ChatMessageBubble, type ChatMessageBubbleProps } from './ChatMessageBubble';

@@ -50,18 +50,31 @@ function kindFromStatus(status: number): ApiErrorKind {
   if (status === 404) return 'notFound';
   if (status === 409) return 'conflict';
   if (status === 422) return 'validation';
+  if (status === 429) return 'rateLimited';
   if (status >= 500) return 'server';
   return 'unknown';
 }
 
-function messageFor(kind: ApiErrorKind, fallback?: string): string {
+// Errores 401 del login con significado propio. Cualquier otro 401 (token
+// vencido o revocado, refresh inválido) es "sesión expirada".
+const UNAUTHORIZED_MESSAGES: Record<string, string> = {
+  'Invalid credentials': 'Credenciales inválidas.',
+  'Account is inactive': 'Tu cuenta está inactiva. Contacta a la clínica.',
+};
+
+function messageFor(kind: ApiErrorKind, fallback?: string, raw?: string): string {
   switch (kind) {
     case 'network':
       return 'Sin conexión. Verifica tu red e inténtalo de nuevo.';
     case 'timeout':
       return 'La operación tardó demasiado. Inténtalo de nuevo.';
     case 'unauthorized':
-      return 'Tu sesión expiró. Inicia sesión nuevamente.';
+      return (
+        (raw ? UNAUTHORIZED_MESSAGES[raw] : undefined) ??
+        'Tu sesión expiró. Inicia sesión nuevamente.'
+      );
+    case 'rateLimited':
+      return 'Demasiados intentos. Espera un minuto antes de volver a intentarlo.';
     case 'forbidden':
       return 'No tienes permiso para realizar esta acción.';
     case 'notFound':
@@ -99,6 +112,22 @@ const RAILS_MESSAGE_TRANSLATIONS: [RegExp, string][] = [
   [/is not included in the list/i, 'no es una opción válida'],
   [/^Invalid credentials$/i, 'Credenciales inválidas.'],
   [/^Unauthorized$/i, 'No autorizado.'],
+  [/^Too many requests$/i, 'Demasiados intentos. Espera un minuto.'],
+  [
+    /^Veterinarian is not authorized to vaccinate$/i,
+    'Tu usuario no está habilitado para registrar vacunas.',
+  ],
+  [/^Appointment is cancelled$/i, 'La cita vinculada está cancelada.'],
+  [
+    /^Appointment does not belong to this pet$/i,
+    'La cita vinculada no pertenece a esta mascota.',
+  ],
+  [/^Appointment could not be completed$/i, 'No se pudo completar la cita vinculada.'],
+  [/^Appointment not found$/i, 'No se encontró la cita.'],
+  // full_messages de Appointment: el backend antepone el atributo en inglés
+  // ("Scheduled at se cruza con…", "Status no puede pasar de…").
+  [/^Scheduled at /, 'La fecha y hora '],
+  [/^Status /, 'El estado '],
 ];
 
 function translateRailsMessage(text: string): string {
@@ -112,6 +141,8 @@ function translateRailsMessage(text: string): string {
 /** Extrae fieldErrors y mensaje de un body de error de Rails (formato flexible). */
 function parseErrorBody(body: unknown): {
   message?: string;
+  /** Texto original del backend (sin traducir), para distinguir 401s. */
+  raw?: string;
   fieldErrors?: FieldErrors;
   code?: string;
 } {
@@ -120,26 +151,37 @@ function parseErrorBody(body: unknown): {
   // { error: "msg", code: "ai_disabled" } — código estable para que la UI decida.
   const code = typeof obj.code === 'string' ? obj.code : undefined;
   // { errors: { campo: ["msg"] } }
+  let fieldErrors: FieldErrors | undefined;
   if (obj.errors && typeof obj.errors === 'object' && !Array.isArray(obj.errors)) {
-    const fieldErrors: FieldErrors = {};
+    fieldErrors = {};
     for (const [k, v] of Object.entries(obj.errors as Record<string, unknown>)) {
       const msgs = Array.isArray(v) ? v.map(String) : [String(v)];
       fieldErrors[k] = msgs.map(translateRailsMessage);
     }
-    return { fieldErrors };
   }
-  // { errors: ["msg", …] } (validaciones de acciones sin campo asociado)
-  if (Array.isArray(obj.errors) && obj.errors.length > 0) {
+
+  // { error: "msg" } (owner-appointments manda `error` y `errors` a la vez;
+  // `error` es null cuando el detalle viene en `errors`).
+  if (typeof obj.error === 'string' && obj.error.length > 0) {
     return {
-      message: obj.errors.map((e) => translateRailsMessage(String(e))).join('. '),
+      message: translateRailsMessage(obj.error),
+      raw: obj.error,
+      fieldErrors,
+      code,
     };
   }
-  // { error: "msg" } o { message: "msg" }
-  if (typeof obj.error === 'string')
-    return { message: translateRailsMessage(obj.error), code };
-  if (typeof obj.message === 'string')
-    return { message: translateRailsMessage(obj.message) };
-  return {};
+  // { errors: ["msg", …] } (full_messages: citas, consultas, vacunas…)
+  if (Array.isArray(obj.errors)) {
+    const messages = obj.errors
+      .filter((m): m is string => typeof m === 'string' && m.length > 0)
+      .map(translateRailsMessage);
+    if (messages.length > 0) return { message: messages.join('. ') };
+  }
+  // { message: "msg" }
+  if (typeof obj.message === 'string') {
+    return { message: translateRailsMessage(obj.message), fieldErrors };
+  }
+  return { fieldErrors };
 }
 
 function devLog(...args: unknown[]): void {
@@ -183,9 +225,10 @@ async function rawRequest(
     }
   }
 
+  let sentToken: string | null = null;
   if (auth) {
-    const token = await getToken();
-    if (token) finalHeaders.Authorization = `Bearer ${token}`;
+    sentToken = await getToken();
+    if (sentToken) finalHeaders.Authorization = `Bearer ${sentToken}`;
   }
 
   const controller = new AbortController();
@@ -211,8 +254,16 @@ async function rawRequest(
   }
   clearTimeout(timer);
 
-  // 401 → intentar refresh una sola vez y reintentar.
+  // 401 → reintentar UNA sola vez. Si mientras esta petición viajaba otra ya
+  // renovó la sesión (o se cambió la contraseña y llegó un par nuevo), basta
+  // con reintentar con el token actual: renovar otra vez gastaría un refresh
+  // ya rotado. Si no, se renueva (la capa de sesión comparte una sola
+  // renovación entre peticiones concurrentes).
   if (res.status === 401 && auth && !options.skipRefresh && !isRetry) {
+    const current = await getToken();
+    if (current && current !== sentToken) {
+      return rawRequest(method, path, body, options, true);
+    }
     const ok = await refreshSession();
     if (ok) return rawRequest(method, path, body, options, true);
   }
@@ -230,19 +281,25 @@ async function request<T>(
   const parsed = await parseJsonSafe(res);
 
   if (!res.ok) {
-    const kind = kindFromStatus(res.status);
-    const { message, fieldErrors, code } = parseErrorBody(parsed);
-    devLog('error', res.status, kind);
-    throw new ApiError({
-      message: messageFor(kind, message),
-      status: res.status,
-      kind,
-      fieldErrors,
-      code,
-    });
+    const err = buildApiError(res.status, parsed);
+    devLog('error', res.status, err.kind);
+    throw err;
   }
 
   return parsed as T;
+}
+
+/** Convierte un status HTTP de error + body de Rails en el `ApiError` de la UI. */
+export function buildApiError(status: number, body: unknown): ApiError {
+  const kind = kindFromStatus(status);
+  const { message, raw, fieldErrors, code } = parseErrorBody(body);
+  return new ApiError({
+    message: messageFor(kind, message, raw),
+    status,
+    kind,
+    fieldErrors,
+    code,
+  });
 }
 
 // --- API pública ----------------------------------------------------------
