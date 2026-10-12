@@ -61,7 +61,7 @@ Para cambiar de servidor sin recompilar: en la app, pantalla de bienvenida →
 | Rol    | Login                  | Contraseña    |
 | ------ | ---------------------- | ------------- |
 | Dueño  | `owner1@example.com`   | `password123` |
-| Staff  | `admin@pawcare.com`    | `password123` |
+| Staff  | `admin@pawcare.com`    | `admin12345`  |
 | Vet    | `vet@pawcare.com`      | `password123` |
 
 ## 🧪 Scripts
@@ -70,9 +70,13 @@ Para cambiar de servidor sin recompilar: en la app, pantalla de bienvenida →
 | ----------------- | --------------------------------------------------------------- |
 | `yarn start`      | Inicia Metro / Expo.                                            |
 | `yarn test`       | Tests de **integración reales** contra `http://localhost:3000`. |
-| `yarn typecheck`  | TypeScript en modo estricto (`tsc --noEmit`).                   |
+| `yarn typecheck`  | TypeScript 7 (compilador nativo) estricto (`tsc --noEmit`).     |
 | `yarn lint`       | ESLint.                                                          |
 | `yarn format`     | Prettier (escritura).                                           |
+
+> TypeScript 7 no expone el API JS que usa typescript-eslint: `.yarnrc.yml`
+> (`packageExtensions`) le da a ESLint una copia anidada de TypeScript 6; `tsc`
+> usa el 7 de la raíz. Retirarlo cuando typescript-eslint soporte TS ≥ 7.
 
 > Correr **toda** la suite de golpe puede disparar el _rate-limit_ del backend en
 > `/auth` por exceso de logins; conviene correr por dominios.

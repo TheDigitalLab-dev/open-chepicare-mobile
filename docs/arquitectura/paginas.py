@@ -829,9 +829,9 @@ TESTING = (
         "negocio ni respuestas del servidor.</p>",
         callout(
             "info",
-            "Credenciales sembradas: <code>owner1@example.com</code>, "
-            "<code>admin@pawcare.com</code>, <code>vet@pawcare.com</code> "
-            "(todas <code>password123</code>).",
+            "Credenciales sembradas: <code>owner1@example.com</code> y "
+            "<code>vet@pawcare.com</code> con <code>password123</code>; "
+            "<code>admin@pawcare.com</code> con <code>admin12345</code>.",
         ),
     )
     + section(
