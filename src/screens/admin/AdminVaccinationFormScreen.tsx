@@ -10,6 +10,7 @@ import { createAdminVaccination, listAdminPets } from '@/services/admin';
 import { ApiError } from '@/types/api';
 import type { Pet } from '@/types/models';
 import { clinicToday } from '@/utils/clinicTime';
+import { canRegisterVaccinations } from '@/utils/permissions';
 
 const petId = (p: Pet) => p.id;
 const petName = (p: Pet) => p.name;
@@ -34,7 +35,7 @@ function VaccinationForm() {
   const petSearch = useRemoteSearch(searchPets);
   // El backend exige can_vaccinate al veterinario que registra la vacuna.
   const { user } = useAuth();
-  const canVaccinate = user?.type === 'User' && user.can_vaccinate !== false;
+  const canVaccinate = canRegisterVaccinations(user);
   const [pet, setPet] = useState<Pet | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
