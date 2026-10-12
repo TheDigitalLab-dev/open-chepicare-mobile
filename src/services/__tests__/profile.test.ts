@@ -55,7 +55,7 @@ describe('profileService.deleteAccount', () => {
     expect(before).toMatchObject({ email });
     expect((before as unknown as Record<string, unknown>).deleted_at).toBeFalsy();
 
-    // El backend hace *soft delete*: responde 204 y marca `deleted_at`.
+    // El backend hace *soft delete* (204).
     await expect(profileService.deleteAccount()).resolves.toBeUndefined();
 
     // Una cuenta eliminada ya no puede iniciar sesión (401 genérico, como

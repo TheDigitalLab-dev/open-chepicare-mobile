@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ThemeProvider, type ThemePreference } from '@/theme';
 import { SessionProvider } from '@/session/SessionProvider';
+import { AssistantProvider } from '@/session/AssistantProvider';
 import { RootNavigator } from '@/navigation/RootNavigator';
 import { loadServerUrl } from '@/config/serverConfig';
 
@@ -42,7 +43,9 @@ export default function App() {
           onPreferenceChange={persistThemePreference}
         >
           <SessionProvider>
-            <RootNavigator />
+            <AssistantProvider>
+              <RootNavigator />
+            </AssistantProvider>
           </SessionProvider>
         </ThemeProvider>
       </SafeAreaProvider>

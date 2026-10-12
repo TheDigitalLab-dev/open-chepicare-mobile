@@ -8,6 +8,7 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import {
   ForgotPasswordScreen,
   LoginScreen,
+  PairingScanScreen,
   RegisterScreen,
   ResetPasswordScreen,
   ServerSettingsScreen,
@@ -82,6 +83,7 @@ function LoginRoute() {
       onForgotPassword={() => navigation.navigate('ForgotPassword')}
       onCreateAccount={() => navigation.navigate('Register')}
       onOpenServerSettings={() => navigation.navigate('ServerSettings')}
+      onScanPairingQr={() => navigation.navigate('PairingScan')}
     />
   );
 }
@@ -210,6 +212,7 @@ export function AuthStack() {
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordRoute} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordRoute} />
       <Stack.Screen name="ServerSettings" component={ServerSettingsScreen} />
+      <Stack.Screen name="PairingScan" component={PairingScanScreen} />
     </Stack.Navigator>
   );
 }

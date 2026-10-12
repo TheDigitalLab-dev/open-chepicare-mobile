@@ -1,0 +1,81 @@
+#!/usr/bin/env node
+/*
+ * Doble de prueba del CLI de TERCEROS `claude` (Claude Code), SOLO para los
+ * tests de integración de la app. Sustituye únicamente al modelo de lenguaje:
+ * todo lo demás es el backend real.
+ *
+ * El backend lo invoca como haría con el CLI real (`claude -p --mcp-config
+ * <json> ...`). Este script lee esa configuración y llama DE VERDAD al servidor
+ * MCP embebido de PawCare con el token del usuario que escribió:
+ *   1. `search_pets` (riesgo read)    → se ejecuta.
+ *   2. `register_deworming` (confirm) → queda como propuesta revisable.
+ * Así los tests ejercitan permisos, política "Borrador revisable", auditoría
+ * (`ai_tool_calls`) y confirmación/rechazo reales sin claves de IA.
+ *
+ * `--version` responde como el CLI (lo usa el botón "Probar").
+ */
+'use strict';
+
+const fs = require('node:fs');
+
+const args = process.argv.slice(2);
+if (args[0] === '--version') {
+  process.stdout.write('0.0.0 (PawCare test agent)\n');
+  process.exit(0);
+}
+
+function fail(message) {
+  process.stdout.write(
+    JSON.stringify({ type: 'result', subtype: 'error_during_execution', is_error: true, result: message }),
+  );
+  process.exit(1);
+}
+
+async function main() {
+  const configIndex = args.indexOf('--mcp-config');
+  if (configIndex === -1) fail('falta --mcp-config');
+  const config = JSON.parse(fs.readFileSync(args[configIndex + 1], 'utf8'));
+  const server = Object.values(config.mcpServers)[0];
+
+  let id = 0;
+  async function rpc(method, params) {
+    id += 1;
+    const res = await fetch(server.url, {
+      method: 'POST',
+      headers: { ...server.headers, 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' },
+      body: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
+    });
+    const body = await res.json();
+    if (body.error) throw new Error(`${method}: ${body.error.message}`);
+    return body.result;
+  }
+
+  await rpc('initialize', {
+    protocolVersion: '2025-06-18',
+    capabilities: {},
+    clientInfo: { name: 'pawcare-test-agent', version: '0.0.0' },
+  });
+  const found = await rpc('tools/call', { name: 'search_pets', arguments: { query: 'Max', limit: 1 } });
+  const text = (found.content || []).map((c) => c.text || '').join('');
+  const match = text.match(/"id"\s*:\s*(\d+)/);
+  if (!match) fail(`search_pets sin resultados: ${text}`);
+  const petId = Number(match[1]);
+
+  await rpc('tools/call', {
+    name: 'register_deworming',
+    arguments: { pet_id: petId, product_name: 'Prueba QA desparasitante' },
+  });
+
+  process.stdout.write(
+    JSON.stringify({
+      type: 'result',
+      subtype: 'success',
+      is_error: false,
+      num_turns: 3,
+      result: `Propuse registrar una desparasitación para la mascota #${petId}. Revísala y confírmala.`,
+      session_id: 'pawcare-test-agent',
+    }),
+  );
+}
+
+main().catch((e) => fail(String(e && e.message ? e.message : e)));

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, View } from 'react-native';
 
 import { useTheme } from '@/theme';
@@ -20,7 +21,9 @@ import {
  */
 export function ServerSettingsScreen() {
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  // Todas las pilas que registran esta pantalla registran también PairingScan.
+  const navigation =
+    useNavigation<NativeStackNavigationProp<{ PairingScan: undefined }>>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
   const [url, setUrl] = useState(() => getApiBaseUrl());
@@ -72,7 +75,13 @@ export function ServerSettingsScreen() {
     >
       <InfoBanner
         tone="info"
-        message="Pawcare es de código abierto. Conecta la app a tu propio servidor escribiendo su dirección."
+        message="Pawcare es de código abierto. Conecta la app a tu propio servidor escaneando el código QR de la web o escribiendo su dirección."
+      />
+
+      <Button
+        label="Escanear código QR"
+        fullWidth
+        onPress={() => navigation.navigate('PairingScan')}
       />
 
       <SectionTitle>Dirección del servidor</SectionTitle>

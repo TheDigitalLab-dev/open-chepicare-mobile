@@ -13,6 +13,8 @@ export type AuthStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { token?: string };
   ServerSettings: undefined;
+  /** Escáner de QR; con params viene de un deep link `pawcare://pair?...`. */
+  PairingScan: { v?: string; server?: string; code?: string } | undefined;
 };
 
 // El árbol raíz cuando no hay sesión es el público (incluye Auth → ResetPassword).
@@ -99,6 +101,8 @@ export type OwnerProfileStackParamList = {
   EditProfile: undefined;
   ChangePassword: undefined;
   NotificationPrefs: undefined;
+  ServerSettings: undefined;
+  PairingScan: undefined;
 };
 
 // --- Admin -----------------------------------------------------------------
@@ -117,6 +121,7 @@ export type AdminHomeStackParamList = {
 export type AdminPatientsStackParamList = {
   AdminPetsList: undefined;
   AdminPetDetail: { id: number };
+  AdminPetConsultation: { id: number };
   AdminPetForm: { id?: number };
   AdminMedicalProfile: { petId: number };
   AdminAdoptionsList: undefined;
@@ -148,6 +153,8 @@ export type AdminMoreStackParamList = {
   AdminMedicalReportsList: undefined;
   AdminMedicalReportDetail: { id: number };
   AdminServerSettings: undefined;
+  PairingScan: undefined;
+  AssistantChat: { conversationId?: number } | undefined;
 };
 
 // --- Helpers de props ------------------------------------------------------

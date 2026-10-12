@@ -7,6 +7,7 @@ import * as secureStore from '@/utils/secureStore';
 import { purgeLocalData } from '@/db/database';
 import { cancelAllLocalAlarms } from '@/services/alarms';
 import { restoreClinicConfig } from '@/services/clinicConfig';
+import { unregisterThisDevice } from '@/services/pushNotifications';
 
 /** Rol efectivo que decide el árbol de navegación (RNF-SEC-002). */
 export type SessionRole = 'public' | 'owner' | 'admin';
@@ -31,6 +32,11 @@ export interface SessionContextValue {
     passwordConfirmation: string,
   ) => Promise<void>;
   signOut: () => Promise<void>;
+  /**
+   * Adopta una sesión ya guardada por otro flujo (canje del QR de
+   * emparejamiento): los tokens ya están en SecureStore.
+   */
+  adoptSession: (user: AuthUser) => void;
   /** Re-lee el usuario de sesión desde /me (tras editar el perfil). */
   refreshUser: () => Promise<void>;
 }
@@ -119,10 +125,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       resetPassword: (token, password, passwordConfirmation) =>
         authService.resetPassword(token, password, passwordConfirmation),
       signOut: async () => {
+        // El teléfono deja de recibir push de esta cuenta (requiere sesión).
+        await unregisterThisDevice();
         await authService.logout();
         await clearLocalUserData();
         setUser(null);
         setRole('public');
+      },
+      adoptSession: (authed) => {
+        setUser(authed);
+        setRole(roleForUser(authed));
       },
       refreshUser: async () => {
         const fresh = await authService.fetchCurrentUser();

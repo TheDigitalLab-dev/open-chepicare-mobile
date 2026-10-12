@@ -10,6 +10,7 @@ import { useAsync } from '@/hooks/useAsync';
 import { getAdminConsultation } from '@/services/admin';
 import { formatDateTime } from '@/utils/format';
 import type { Consultation } from '@/types/models';
+import { VoiceDictationSection } from './components/VoiceDictationSection';
 
 type Rt = RouteProp<AdminMoreStackParamList, 'AdminConsultationDetail'>;
 
@@ -78,7 +79,16 @@ export function AdminConsultationDetailScreen() {
         emptyIcon="medkit"
         emptyTitle="Consulta no encontrada"
       >
-        {consultation ? <Body consultation={consultation} /> : null}
+        {consultation ? (
+          <>
+            <Body consultation={consultation} />
+            <VoiceDictationSection
+              petId={consultation.pet_id}
+              consultationId={consultation.id}
+              onApplied={() => void reload()}
+            />
+          </>
+        ) : null}
       </AsyncBoundary>
     </MobileShell>
   );

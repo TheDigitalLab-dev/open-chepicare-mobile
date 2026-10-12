@@ -38,6 +38,11 @@ export const NOTIFICATION_CATEGORIES: NotificationCategory[] = [
     description: 'Resumen del día y novedades de la clínica (personal).',
   },
   {
+    key: 'asistente',
+    label: 'Asistente IA',
+    description: 'Dictados procesados y respuestas del asistente (personal).',
+  },
+  {
     key: 'conectividad',
     label: 'Conexión',
     description: 'Avisos de modo sin conexión y sincronización.',

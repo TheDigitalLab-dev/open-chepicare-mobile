@@ -22,10 +22,14 @@ escribir cualquier código.
 - Aplica a: hooks (`src/hooks`), servicios (`src/services`), repositorios y
   utilidades de negocio.
 - Los tests son de **integración REAL** contra el backend en ejecución. `yarn test`
-  apunta a `http://localhost:3000`. **Cero respuestas de API mockeadas.**
+  apunta a `http://localhost:3000` (otro backend: `EXPO_PUBLIC_API_BASE_URL=http://localhost:3001 yarn test`).
+  **Cero respuestas de API mockeadas.**
 - Lo único que se permite sustituir son los **shims de plataforma nativa** que no
-  existen en el entorno Node de Jest (`expo-secure-store`, `AsyncStorage`) — nunca
-  lógica de negocio ni respuestas del servidor. Ver `jest.setup.ts`.
+  existen en el entorno Node de Jest (`expo-secure-store`, `AsyncStorage`, el
+  `WebSocket` de React Native sobre el WebSocket real de undici) — nunca lógica
+  de negocio ni respuestas del servidor. Ver `jest.setup.ts`. Para el asistente
+  IA, el único doble es el del **CLI de terceros** `claude`
+  (`src/testing/agent-bin/claude`), que llama de verdad al MCP del backend.
 - Credenciales sembradas (de `../pawcare-web/db/seeds`): `owner1@example.com`,
   `admin@pawcare.com`, `vet@pawcare.com` — todas con `password123`. Con una BD
   creada antes de que el seed del admin usara `password123`, basta con volver a

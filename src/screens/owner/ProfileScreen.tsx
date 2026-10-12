@@ -102,6 +102,20 @@ export function ProfileScreen() {
         />
       </View>
 
+      <SectionTitle>Servidor</SectionTitle>
+      <View style={{ gap: 8 }}>
+        <ListRow
+          title="Emparejar con código QR"
+          subtitle="Conecta la app a otro servidor PawCare"
+          onPress={() => navigation.navigate('PairingScan')}
+        />
+        <ListRow
+          title="Configurar servidor"
+          subtitle="Elige a qué backend se conecta la app"
+          onPress={() => navigation.navigate('ServerSettings')}
+        />
+      </View>
+
       <SectionTitle>Apariencia</SectionTitle>
       <View style={{ gap: 8 }}>
         <ThemeToggle />

@@ -10,6 +10,7 @@ import * as SecureStore from 'expo-secure-store';
 // Las claves de SecureStore deben ser alfanuméricas + ".", "-", "_".
 const ACCESS_KEY = 'pawcare.access_token';
 const REFRESH_KEY = 'pawcare.refresh_token';
+const PUSH_TOKEN_KEY = 'pawcare.expo_push_token';
 
 export interface TokenPair {
   access: string;
@@ -40,4 +41,17 @@ export async function clearTokens(): Promise<void> {
 
 export async function hasSession(): Promise<boolean> {
   return (await getAccessToken()) !== null;
+}
+
+/** Token Expo registrado en el servidor (para darlo de baja al cerrar sesión). */
+export async function getPushToken(): Promise<string | null> {
+  return SecureStore.getItemAsync(PUSH_TOKEN_KEY);
+}
+
+export async function setPushToken(token: string): Promise<void> {
+  await SecureStore.setItemAsync(PUSH_TOKEN_KEY, token);
+}
+
+export async function clearPushToken(): Promise<void> {
+  await SecureStore.deleteItemAsync(PUSH_TOKEN_KEY);
 }

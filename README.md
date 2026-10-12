@@ -83,6 +83,27 @@ todavía no hay configuración. En ese caso se usa la zona del dispositivo con l
 formatos por defecto del backend (DD/MM/YYYY, 24 h) hasta el primer inicio de
 sesión.
 
+## 🤖 Asistente IA, emparejamiento QR y push
+
+Requiere el backend con el asistente IA (pawcare-web, PR #59). Guía de uso:
+[docs/user-manual/asistente-ia.md](docs/user-manual/asistente-ia.md).
+
+| Pieza | Dónde |
+| --- | --- |
+| Capacidades del servidor (`GET /auth/mobile/capabilities`) | `services/server.ts`, `session/AssistantProvider.tsx` |
+| Dictado de consulta (expo-audio → `POST /admin/voice_dictations` + audio) | `services/assistant.ts`, `hooks/useVoiceDictation.ts`, `hooks/useVoiceRecorder.ts` |
+| Chat texto/voz | `hooks/useAiChat.ts`, `screens/admin/AssistantChatScreen.tsx` |
+| Tiempo real (ActionCable `/cable`, `Authorization: Bearer`) + polling de respaldo | `services/aiUpdates.ts`, `hooks/useAiUpdates.ts` |
+| QR `pawcare://pair?v=1&server=…&code=…` (expo-camera) | `services/pairing.ts`, `hooks/usePairing.ts`, `screens/auth/PairingScanScreen.tsx` |
+| Push Expo (`/auth/mobile/devices`, categoría `asistente`) | `services/pushNotifications.ts`, `hooks/usePushNotifications.ts` |
+
+- La URL del servidor se guarda en **almacenamiento seguro** (SecureStore) y se
+  puede cambiar en runtime (QR o Configurar servidor); `EXPO_PUBLIC_API_BASE_URL`
+  es el valor por defecto del build.
+- Push remoto necesita un build de desarrollo/producción con `projectId` de EAS
+  (`extra.eas.projectId` en app.json o `EXPO_PUBLIC_EAS_PROJECT_ID`). Sin él la
+  app no registra token y sigue funcionando con tiempo real + polling.
+
 ## 🧪 Scripts
 
 | Comando           | Qué hace                                                         |

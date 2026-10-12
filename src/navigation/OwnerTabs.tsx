@@ -32,6 +32,7 @@ import {
   VaccinationsScreen,
 } from '@/screens/owner';
 import { NotificationPrefsScreen, NotificationsScreen } from '@/screens/common';
+import { PairingScanScreen, ServerSettingsScreen } from '@/screens/auth';
 import type {
   OwnerAppointmentsStackParamList,
   OwnerHomeStackParamList,
@@ -108,6 +109,8 @@ function OwnerProfileStack() {
       <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
       <ProfileStack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <ProfileStack.Screen name="NotificationPrefs" component={NotificationPrefsScreen} />
+      <ProfileStack.Screen name="ServerSettings" component={ServerSettingsScreen} />
+      <ProfileStack.Screen name="PairingScan" component={PairingScanScreen} />
     </ProfileStack.Navigator>
   );
 }

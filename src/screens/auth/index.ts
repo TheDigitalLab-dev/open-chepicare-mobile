@@ -16,3 +16,4 @@ export {
   type ResetPasswordScreenProps,
 } from './ResetPasswordScreen';
 export { ServerSettingsScreen } from './ServerSettingsScreen';
+export { PairingScanScreen } from './PairingScanScreen';

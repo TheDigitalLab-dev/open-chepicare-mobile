@@ -11,6 +11,7 @@
  *  - login/register/refresh y `/me` traen `clinic` (zona y formatos de la
  *    clínica): se aplica y se guarda al recibirla (ver `clinicConfig`).
  */
+import type { ApiUser, AuthEnvelope } from '@/types/auth';
 import type { AuthUser, ClinicConfig, Owner, StaffUser } from '@/types/models';
 import { ApiError, type AuthTokenPair } from '@/types/api';
 import * as secureStore from '@/utils/secureStore';
@@ -19,24 +20,6 @@ import { api, registerSessionRefresher, registerTokenProvider } from './api';
 import { applyClinicConfig } from './clinicConfig';
 
 const BASE = '/auth/mobile';
-
-/** Usuario tal como lo serializa el backend (`as_json` + `user_type`). */
-interface ApiUser extends Record<string, unknown> {
-  id: number;
-  user_type: 'Owner' | 'User';
-  first_name: string;
-  last_name: string;
-  email: string;
-  username: string;
-  role?: StaffUser['role'];
-}
-
-interface AuthEnvelope {
-  success: boolean;
-  user: ApiUser;
-  auth: AuthTokenPair;
-  clinic?: ClinicConfig;
-}
 
 // --- Normalización ---------------------------------------------------------
 
@@ -49,7 +32,12 @@ export function toAuthUser(raw: ApiUser): AuthUser {
   return { ...rest, type: 'Owner' } as unknown as Owner;
 }
 
-async function persistTokens(env: AuthEnvelope): Promise<AuthUser> {
+/**
+ * Guarda los tokens de un sobre de autenticación, aplica la configuración de
+ * la clínica y devuelve el usuario. Lo usan login/registro y el canje del QR
+ * de emparejamiento (`services/pairing`).
+ */
+export async function startSession(env: AuthEnvelope): Promise<AuthUser> {
   await storeTokenPair(env.auth);
   await applyClinicConfig(env.clinic);
   return toAuthUser(env.user);
@@ -63,7 +51,7 @@ export async function login(login: string, password: string): Promise<AuthUser> 
     { login, password },
     { auth: false },
   );
-  return persistTokens(env);
+  return startSession(env);
 }
 
 export async function register(data: OwnerRegistration): Promise<AuthUser> {
@@ -72,7 +60,7 @@ export async function register(data: OwnerRegistration): Promise<AuthUser> {
     { owner: data },
     { auth: false },
   );
-  return persistTokens(env);
+  return startSession(env);
 }
 
 /** Restaura la sesión al arrancar: valida el access (auto-refresh ante 401). */

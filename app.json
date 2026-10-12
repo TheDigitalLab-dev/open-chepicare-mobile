@@ -16,7 +16,12 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "versionCode": 1,
-      "permissions": ["POST_NOTIFICATIONS", "RECEIVE_BOOT_COMPLETED"],
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
+        "RECORD_AUDIO",
+        "CAMERA"
+      ],
       "usesCleartextTraffic": true
     },
     "plugins": [
@@ -24,6 +29,22 @@
       "expo-font",
       "expo-sqlite",
       "expo-image",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "PawCare usa el micrófono para que dictes consultas y envíes notas de voz al asistente.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "PawCare usa la cámara para escanear el código QR que conecta la app con tu servidor.",
+          "microphonePermission": "PawCare usa el micrófono para que dictes consultas y envíes notas de voz al asistente.",
+          "recordAudioAndroid": true,
+          "barcodeScannerEnabled": true
+        }
+      ],
       [
         "expo-notifications",
         {

@@ -48,6 +48,7 @@ function kindFromStatus(status: number): ApiErrorKind {
   if (status === 401) return 'unauthorized';
   if (status === 403) return 'forbidden';
   if (status === 404) return 'notFound';
+  if (status === 409) return 'conflict';
   if (status === 422) return 'validation';
   if (status === 429) return 'rateLimited';
   if (status >= 500) return 'server';
@@ -80,6 +81,8 @@ function messageFor(kind: ApiErrorKind, fallback?: string, raw?: string): string
       return 'No se encontró el recurso solicitado.';
     case 'validation':
       return fallback ?? 'Revisa los datos ingresados.';
+    case 'conflict':
+      return fallback ?? 'La operación no está disponible en este momento.';
     case 'server':
       return 'Ocurrió un error en el servidor. Inténtalo más tarde.';
     default:
@@ -141,10 +144,12 @@ function parseErrorBody(body: unknown): {
   /** Texto original del backend (sin traducir), para distinguir 401s. */
   raw?: string;
   fieldErrors?: FieldErrors;
+  code?: string;
 } {
   if (!body || typeof body !== 'object') return {};
   const obj = body as Record<string, unknown>;
-
+  // { error: "msg", code: "ai_disabled" } — código estable para que la UI decida.
+  const code = typeof obj.code === 'string' ? obj.code : undefined;
   // { errors: { campo: ["msg"] } }
   let fieldErrors: FieldErrors | undefined;
   if (obj.errors && typeof obj.errors === 'object' && !Array.isArray(obj.errors)) {
@@ -158,7 +163,12 @@ function parseErrorBody(body: unknown): {
   // { error: "msg" } (owner-appointments manda `error` y `errors` a la vez;
   // `error` es null cuando el detalle viene en `errors`).
   if (typeof obj.error === 'string' && obj.error.length > 0) {
-    return { message: translateRailsMessage(obj.error), raw: obj.error, fieldErrors };
+    return {
+      message: translateRailsMessage(obj.error),
+      raw: obj.error,
+      fieldErrors,
+      code,
+    };
   }
   // { errors: ["msg", …] } (full_messages: citas, consultas, vacunas…)
   if (Array.isArray(obj.errors)) {
@@ -282,12 +292,13 @@ async function request<T>(
 /** Convierte un status HTTP de error + body de Rails en el `ApiError` de la UI. */
 export function buildApiError(status: number, body: unknown): ApiError {
   const kind = kindFromStatus(status);
-  const { message, raw, fieldErrors } = parseErrorBody(body);
+  const { message, raw, fieldErrors, code } = parseErrorBody(body);
   return new ApiError({
     message: messageFor(kind, message, raw),
     status,
     kind,
     fieldErrors,
+    code,
   });
 }
 
