@@ -55,10 +55,12 @@ describe('profileService.deleteAccount', () => {
     expect(before).toMatchObject({ email });
     expect((before as unknown as Record<string, unknown>).deleted_at).toBeFalsy();
 
-    // El backend hace *soft delete*: responde 204 y marca `deleted_at`.
+    // El backend hace *soft delete* (204) y una cuenta eliminada ya no puede
+    // iniciar sesión: responde 401 como con credenciales inválidas.
     await expect(profileService.deleteAccount()).resolves.toBeUndefined();
 
-    const after = await authService.login(email, password);
-    expect((after as unknown as Record<string, unknown>).deleted_at).toBeTruthy();
+    await expect(authService.login(email, password)).rejects.toMatchObject({
+      status: 401,
+    });
   }, 30000);
 });
