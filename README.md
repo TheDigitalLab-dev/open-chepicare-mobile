@@ -61,7 +61,7 @@ Para cambiar de servidor sin recompilar: en la app, pantalla de bienvenida →
 | Rol    | Login                  | Contraseña    |
 | ------ | ---------------------- | ------------- |
 | Dueño  | `owner1@example.com`   | `password123` |
-| Staff  | `admin@pawcare.com`    | `password123` |
+| Staff  | `admin@pawcare.com`    | `admin12345`  |
 | Vet    | `vet@pawcare.com`      | `password123` |
 
 ## 🧪 Scripts

@@ -39,6 +39,21 @@ if (
   globalPerf.performance.markResourceTiming = noop;
 }
 
+// undici limpia sus listeners de abort con `disposable[Symbol.dispose]()` sobre
+// lo que devuelve `events.addAbortListener` (realm principal de Node). Dentro
+// del sandbox de Jest `Symbol.dispose` no existe, así que la limpieza revienta
+// con "removeAbortListener is not a function". Se toma el símbolo real del
+// propio disposable de Node.
+if (typeof (Symbol as { dispose?: symbol }).dispose !== 'symbol') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const events = require('node:events') as {
+    addAbortListener: (signal: AbortSignal, fn: () => void) => object;
+  };
+  const disposable = events.addAbortListener(new AbortController().signal, noop);
+  const [disposeSymbol] = Object.getOwnPropertySymbols(disposable);
+  if (disposeSymbol) Object.defineProperty(Symbol, 'dispose', { value: disposeSymbol });
+}
+
 // El preset de React Native reemplaza `fetch` por un polyfill que no hace red
 // real en Node. Restauramos un cliente HTTP real (undici) para que los tests
 // peguen DE VERDAD al backend.
