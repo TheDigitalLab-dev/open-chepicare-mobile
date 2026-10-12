@@ -1,5 +1,5 @@
 /**
- * Integración REAL de patrocinios del owner contra `../pawcare`.
+ * Integración REAL de patrocinios del owner contra `../pawcare-web`.
  */
 import * as authService from '@/services/auth';
 import * as sponsorshipsService from '@/services/sponsorships';

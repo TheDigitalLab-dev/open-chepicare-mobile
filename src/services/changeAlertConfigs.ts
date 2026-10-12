@@ -5,6 +5,7 @@
  */
 import type { Appointment, LabExam, MedicalReport, Payment } from '@/types/models';
 import type { AdoptionRecord } from '@/services/admin';
+import { formatClinicDateTime } from '@/utils/clinicTime';
 
 import type { ChangeAlertConfig } from './changeAlerts';
 
@@ -12,12 +13,23 @@ function apptWho(appt: Appointment): string {
   return [appt.pet?.name, appt.service?.name].filter(Boolean).join(' · ');
 }
 
+// Hora de la cita en la zona de la clínica (la que trae la cita).
 function apptWhen(appt: Appointment): string {
-  const d = new Date(appt.scheduled_at);
-  return `${d.toLocaleDateString('es-VE', { day: 'numeric', month: 'short' })} · ${d.toLocaleTimeString(
-    'es-VE',
-    { hour: '2-digit', minute: '2-digit' },
-  )}`;
+  return formatClinicDateTime(appt.scheduled_at, appt.time_zone);
+}
+
+/**
+ * Instante normalizado (UTC) de la cita: el backend pasó de responder "…Z" a
+ * responder con el offset de la clínica; el mismo instante no es un cambio.
+ */
+function apptInstant(scheduledAt: string | undefined): string | undefined {
+  if (!scheduledAt) return scheduledAt;
+  const ms = Date.parse(scheduledAt);
+  return Number.isNaN(ms) ? scheduledAt : new Date(ms).toISOString();
+}
+
+function apptState(appt: Appointment): string {
+  return `${appt.status}|${apptInstant(appt.scheduled_at)}`;
 }
 
 /** O2 — la cita del dueño cambió (estado o fecha) desde el consultorio. */
@@ -25,7 +37,7 @@ export const ownerAppointmentAlerts: ChangeAlertConfig<Appointment> = {
   entity: 'owner-appointments',
   category: 'citas',
   idOf: (a) => String(a.id),
-  stateOf: (a) => `${a.status}|${a.scheduled_at}`,
+  stateOf: apptState,
   describe(event, appt) {
     if (event.kind !== 'changed' || !event.prevState) return null;
     const [prevStatus, prevAt] = event.prevState.split('|');
@@ -40,7 +52,9 @@ export const ownerAppointmentAlerts: ChangeAlertConfig<Appointment> = {
       const title = titles[appt.status];
       return title ? { title, body } : null;
     }
-    if (appt.scheduled_at !== prevAt) return { title: '📅 Cita reprogramada', body };
+    if (apptInstant(appt.scheduled_at) !== apptInstant(prevAt)) {
+      return { title: '📅 Cita reprogramada', body };
+    }
     return null;
   },
 };
@@ -72,7 +86,7 @@ export const adminAppointmentAlerts: ChangeAlertConfig<Appointment> = {
   entity: 'admin-appointments',
   category: 'agenda',
   idOf: (a) => String(a.id),
-  stateOf: (a) => `${a.status}|${a.scheduled_at}`,
+  stateOf: apptState,
   describe(event, appt) {
     const body = `${apptWho(appt)} — ${apptWhen(appt)}`;
     if (event.kind === 'created') {

@@ -1,5 +1,5 @@
 /**
- * Integración REAL del servicio de Pagos contra `../pawcare`.
+ * Integración REAL del servicio de Pagos contra `../pawcare-web`.
  */
 import * as authService from '@/services/auth';
 import * as paymentsService from '@/services/payments';

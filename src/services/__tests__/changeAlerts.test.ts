@@ -107,6 +107,41 @@ describe('processChangeAlerts', () => {
     expect(createNotificationCenter(exec).list()[0]!.title).toContain('reprogramada');
   });
 
+  it('la misma hora con el offset de la clínica no es una reprogramación', () => {
+    // Antes de e8ad843 el backend respondía en UTC ("...Z"); ahora responde con
+    // el offset de la clínica. Es el mismo instante: no debe avisar.
+    processChangeAlerts(exec, [appointment({})], ownerAppointmentAlerts);
+    processChangeAlerts(
+      exec,
+      [
+        appointment({
+          scheduled_at: '2026-07-20T10:00:00-04:00',
+          time_zone: 'America/Caracas',
+        }),
+      ],
+      ownerAppointmentAlerts,
+    );
+
+    expect(createNotificationCenter(exec).list()).toHaveLength(0);
+  });
+
+  it('el aviso muestra la hora en la zona de la cita', () => {
+    processChangeAlerts(exec, [appointment({})], ownerAppointmentAlerts);
+    processChangeAlerts(
+      exec,
+      [
+        appointment({
+          status: 'confirmed',
+          scheduled_at: '2026-07-20T10:00:00-04:00',
+          time_zone: 'America/Caracas',
+        }),
+      ],
+      ownerAppointmentAlerts,
+    );
+
+    expect(createNotificationCenter(exec).list()[0]!.body).toContain('10:00');
+  });
+
   it('el mismo estado no genera avisos repetidos (dedupe)', () => {
     processChangeAlerts(exec, [appointment({})], ownerAppointmentAlerts);
     processChangeAlerts(

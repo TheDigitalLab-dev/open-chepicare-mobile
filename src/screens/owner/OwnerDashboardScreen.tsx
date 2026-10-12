@@ -132,7 +132,10 @@ export function OwnerDashboardScreen() {
               <SectionTitle>Próxima cita</SectionTitle>
               <AppointmentCard
                 petName={nextAppointment.pet?.name ?? 'Mascota'}
-                dateLabel={formatDateTime(nextAppointment.scheduled_at)}
+                dateLabel={formatDateTime(
+                  nextAppointment.scheduled_at,
+                  nextAppointment.time_zone,
+                )}
                 vetName={
                   nextAppointment.assigned_to
                     ? `${nextAppointment.assigned_to.first_name} ${nextAppointment.assigned_to.last_name}`

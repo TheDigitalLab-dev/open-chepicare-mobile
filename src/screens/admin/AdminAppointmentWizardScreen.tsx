@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,11 +12,12 @@ import {
   Button,
   FilterChips,
   InfoBanner,
+  SearchBar,
   SectionTitle,
 } from '@/components/ui';
 import { ListRow, StepIndicator } from '@/components/domain';
 import type { AdminAgendaStackParamList } from '@/navigation/types';
-import { useAsync, type AsyncState } from '@/hooks/useAsync';
+import { useAsync } from '@/hooks/useAsync';
 
 import {
   createAdminAppointment,
@@ -24,18 +25,20 @@ import {
   getAdminAvailableVets,
   getAdminTimeSlots,
   listAdminOwners,
-  listAdminPets,
   listAdminServices,
   type AdminOwner,
+  type AdminService,
 } from '@/services/admin';
+import { useOwnerPets } from '@/hooks/useOwnerPets';
+import { useRemoteSearch, type RemoteSearchState } from '@/hooks/useRemoteSearch';
 import { ApiError, toApiError } from '@/types/api';
+import { clinicMonth, clinicWallDateTime } from '@/utils/clinicTime';
 import { formatDate } from '@/utils/format';
 import {
   SPECIES_EMOJI,
   SPECIES_LABEL,
   type AvailableVet,
   type Pet,
-  type Service,
   type Species,
 } from '@/types/models';
 
@@ -60,6 +63,10 @@ function Check() {
 // Elemento estático hoisteado: el color se resuelve dentro de <Check /> vía useTheme.
 const CHECK_EL = <Check />;
 
+const searchOwners = (query: string) => listAdminOwners({ search: query || undefined });
+const searchServices = (query: string) =>
+  listAdminServices({ search: query || undefined });
+
 function ownerName(o: AdminOwner): string {
   return o.full_name ?? `${o.first_name} ${o.last_name}`.trim();
 }
@@ -73,16 +80,20 @@ function uniqueVets(vets: AvailableVet[]): AvailableVet[] {
 /** Sección de un paso del asistente: título + estados de carga/error/vacío. */
 function StepSection({
   title,
+  search,
   boundary,
   children,
 }: {
   title: string;
+  /** Buscador en el servidor (listas paginadas del backend). */
+  search?: React.ReactNode;
   boundary: Omit<AsyncBoundaryProps, 'children'>;
   children: React.ReactNode;
 }) {
   return (
     <View style={{ gap: 8 }}>
       <SectionTitle>{title}</SectionTitle>
+      {search}
       <AsyncBoundary {...boundary}>{children}</AsyncBoundary>
     </View>
   );
@@ -93,20 +104,28 @@ function OwnerStep({
   selectedId,
   onSelect,
 }: {
-  owners: AsyncState<AdminOwner[]>;
+  owners: RemoteSearchState<AdminOwner>;
   selectedId?: number;
   onSelect: (id: number) => void;
 }) {
   return (
     <StepSection
       title="Elige el dueño"
+      search={
+        <SearchBar
+          value={owners.query}
+          onChangeText={owners.setQuery}
+          placeholder="Buscar por nombre, correo o documento"
+        />
+      }
       boundary={{
         loading: owners.loading && owners.data === null,
         error: owners.error,
-        onRetry: owners.reload,
-        empty: (owners.data ?? []).length === 0,
+        onRetry: () => void owners.reload(),
+        empty: !owners.loading && (owners.data ?? []).length === 0,
         emptyIcon: 'person',
         emptyTitle: 'Sin dueños',
+        emptyDescription: owners.query ? 'Prueba con otra búsqueda.' : undefined,
       }}
     >
       {(owners.data ?? []).map((o) => (
@@ -176,20 +195,28 @@ function ServiceStep({
   selectedId,
   onSelect,
 }: {
-  services: AsyncState<Service[]>;
+  services: RemoteSearchState<AdminService>;
   selectedId?: number;
   onSelect: (id: number) => void;
 }) {
   return (
     <StepSection
       title="Elige el servicio"
+      search={
+        <SearchBar
+          value={services.query}
+          onChangeText={services.setQuery}
+          placeholder="Buscar servicio"
+        />
+      }
       boundary={{
         loading: services.loading && services.data === null,
         error: services.error,
-        onRetry: services.reload,
-        empty: (services.data ?? []).length === 0,
+        onRetry: () => void services.reload(),
+        empty: !services.loading && (services.data ?? []).length === 0,
         emptyIcon: 'medkit',
         emptyTitle: 'Sin servicios',
+        emptyDescription: services.query ? 'Prueba con otra búsqueda.' : undefined,
       }}
     >
       {(services.data ?? []).map((s) => (
@@ -211,14 +238,14 @@ export function AdminAppointmentWizardScreen() {
   const navigation = useNavigation<Nav>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
-  const [{ month, year }] = useState(() => {
-    const now = new Date();
-    return { month: now.getMonth() + 1, year: now.getFullYear() };
-  });
+  // Mes de la clínica (no del teléfono): el backend calcula "hoy" en su zona. La
+  // zona llega con la sesión (`clinic`), así que ya está al abrir el asistente.
+  const [{ month, year }] = useState(() => clinicMonth());
 
-  const owners = useAsync(() => listAdminOwners());
-  const pets = useAsync(() => listAdminPets());
-  const services = useAsync(() => listAdminServices());
+  // Dueños y servicios se buscan en el servidor: las listas son paginadas y la
+  // primera página (25) no basta para elegir entre todos.
+  const owners = useRemoteSearch(searchOwners);
+  const services = useRemoteSearch(searchServices);
   const days = useAsync(() => getAdminAvailableDays(month, year));
 
   const [step, setStep] = useState(0);
@@ -235,10 +262,11 @@ export function AdminAppointmentWizardScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
 
-  const ownerPets = useMemo(
-    () => (pets.data ?? []).filter((p) => p.proprietary_id === sel.ownerId),
-    [pets.data, sel.ownerId],
-  );
+  // Todas las mascotas del dueño elegido (antes se filtraba la primera página
+  // de todas las mascotas de la clínica y faltaban las demás).
+  const ownerPets = useOwnerPets(sel.ownerId);
+
+  const selectOwner = (ownerId: number) => patch({ ownerId, petId: undefined });
 
   const selectDay = async (d: string) => {
     patch({ day: d, vetId: undefined, time: undefined });
@@ -303,7 +331,7 @@ export function AdminAppointmentWizardScreen() {
         pet_id: petId,
         service_id: serviceId,
         assigned_to_id: vetId,
-        scheduled_at: `${day}T${time}:00`,
+        scheduled_at: clinicWallDateTime(day, time),
       });
       back?.();
     } catch (e) {
@@ -332,19 +360,15 @@ export function AdminAppointmentWizardScreen() {
       {submitError ? <InfoBanner tone="destructive" message={submitError} /> : null}
 
       {step === 0 ? (
-        <OwnerStep
-          owners={owners}
-          selectedId={sel.ownerId}
-          onSelect={(id) => patch({ ownerId: id, petId: undefined })}
-        />
+        <OwnerStep owners={owners} selectedId={sel.ownerId} onSelect={selectOwner} />
       ) : null}
 
       {step === 1 ? (
         <PetStep
-          loading={pets.loading && pets.data === null}
-          error={pets.error}
-          onRetry={pets.reload}
-          ownerPets={ownerPets}
+          loading={ownerPets.loading}
+          error={ownerPets.error}
+          onRetry={() => void ownerPets.reload()}
+          ownerPets={ownerPets.pets}
           selectedId={sel.petId}
           onSelect={(id) => patch({ petId: id })}
         />
