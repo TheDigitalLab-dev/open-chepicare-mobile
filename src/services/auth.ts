@@ -9,34 +9,13 @@
  *  - El access viaja como `Authorization: Bearer`; el refresh se rota en cada uso.
  *  - `user` trae `user_type` ("Owner" | "User"); de ahí se deriva el rol.
  */
+import type { ApiUser, AuthEnvelope } from '@/types/auth';
 import type { AuthUser, Owner, StaffUser } from '@/types/models';
 import * as secureStore from '@/utils/secureStore';
 import type { OwnerRegistration } from '@/screens/auth/RegisterScreen';
 import { api, registerSessionRefresher, registerTokenProvider } from './api';
 
 const BASE = '/auth/mobile';
-
-/** Usuario tal como lo serializa el backend (`as_json` + `user_type`). */
-interface ApiUser extends Record<string, unknown> {
-  id: number;
-  user_type: 'Owner' | 'User';
-  first_name: string;
-  last_name: string;
-  email: string;
-  username: string;
-  role?: StaffUser['role'];
-}
-
-interface AuthEnvelope {
-  success: boolean;
-  user: ApiUser;
-  auth: {
-    access_token: string;
-    refresh_token: string;
-    token_type: 'Bearer';
-    expires_in: number;
-  };
-}
 
 // --- Normalización ---------------------------------------------------------
 
@@ -49,7 +28,11 @@ export function toAuthUser(raw: ApiUser): AuthUser {
   return { ...rest, type: 'Owner' } as unknown as Owner;
 }
 
-async function persistTokens(env: AuthEnvelope): Promise<AuthUser> {
+/**
+ * Guarda los tokens de un sobre de autenticación y devuelve el usuario. Lo usan
+ * login/registro y el canje del QR de emparejamiento (`services/pairing`).
+ */
+export async function startSession(env: AuthEnvelope): Promise<AuthUser> {
   await secureStore.setTokens({
     access: env.auth.access_token,
     refresh: env.auth.refresh_token,
@@ -65,7 +48,7 @@ export async function login(login: string, password: string): Promise<AuthUser> 
     { login, password },
     { auth: false },
   );
-  return persistTokens(env);
+  return startSession(env);
 }
 
 export async function register(data: OwnerRegistration): Promise<AuthUser> {
@@ -74,7 +57,7 @@ export async function register(data: OwnerRegistration): Promise<AuthUser> {
     { owner: data },
     { auth: false },
   );
-  return persistTokens(env);
+  return startSession(env);
 }
 
 /** Restaura la sesión al arrancar: valida el access (auto-refresh ante 401). */

@@ -48,6 +48,7 @@ function kindFromStatus(status: number): ApiErrorKind {
   if (status === 401) return 'unauthorized';
   if (status === 403) return 'forbidden';
   if (status === 404) return 'notFound';
+  if (status === 409) return 'conflict';
   if (status === 422) return 'validation';
   if (status >= 500) return 'server';
   return 'unknown';
@@ -67,6 +68,8 @@ function messageFor(kind: ApiErrorKind, fallback?: string): string {
       return 'No se encontró el recurso solicitado.';
     case 'validation':
       return fallback ?? 'Revisa los datos ingresados.';
+    case 'conflict':
+      return fallback ?? 'La operación no está disponible en este momento.';
     case 'server':
       return 'Ocurrió un error en el servidor. Inténtalo más tarde.';
     default:
@@ -110,9 +113,12 @@ function translateRailsMessage(text: string): string {
 function parseErrorBody(body: unknown): {
   message?: string;
   fieldErrors?: FieldErrors;
+  code?: string;
 } {
   if (!body || typeof body !== 'object') return {};
   const obj = body as Record<string, unknown>;
+  // { error: "msg", code: "ai_disabled" } — código estable para que la UI decida.
+  const code = typeof obj.code === 'string' ? obj.code : undefined;
   // { errors: { campo: ["msg"] } }
   if (obj.errors && typeof obj.errors === 'object' && !Array.isArray(obj.errors)) {
     const fieldErrors: FieldErrors = {};
@@ -122,8 +128,15 @@ function parseErrorBody(body: unknown): {
     }
     return { fieldErrors };
   }
+  // { errors: ["msg", …] } (validaciones de acciones sin campo asociado)
+  if (Array.isArray(obj.errors) && obj.errors.length > 0) {
+    return {
+      message: obj.errors.map((e) => translateRailsMessage(String(e))).join('. '),
+    };
+  }
   // { error: "msg" } o { message: "msg" }
-  if (typeof obj.error === 'string') return { message: translateRailsMessage(obj.error) };
+  if (typeof obj.error === 'string')
+    return { message: translateRailsMessage(obj.error), code };
   if (typeof obj.message === 'string')
     return { message: translateRailsMessage(obj.message) };
   return {};
@@ -218,13 +231,14 @@ async function request<T>(
 
   if (!res.ok) {
     const kind = kindFromStatus(res.status);
-    const { message, fieldErrors } = parseErrorBody(parsed);
+    const { message, fieldErrors, code } = parseErrorBody(parsed);
     devLog('error', res.status, kind);
     throw new ApiError({
       message: messageFor(kind, message),
       status: res.status,
       kind,
       fieldErrors,
+      code,
     });
   }
 

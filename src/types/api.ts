@@ -14,6 +14,7 @@ export type ApiErrorKind =
   | 'unauthorized' // 401
   | 'forbidden' // 403
   | 'notFound' // 404
+  | 'conflict' // 409 (p. ej. `ai_disabled`: la IA está apagada en el servidor)
   | 'validation' // 422
   | 'server' // 5xx
   | 'unknown';
@@ -23,7 +24,10 @@ export class ApiError extends Error {
   readonly status: number;
   readonly kind: ApiErrorKind;
   readonly fieldErrors?: FieldErrors;
-  /** Código de error anónimo para correlación (RNF-OBS-001). */
+  /**
+   * Código de error del servidor cuando lo envía (`{ error, code }`), p. ej.
+   * `ai_disabled`; o código anónimo de correlación (RNF-OBS-001).
+   */
   readonly code?: string;
 
   constructor(params: {

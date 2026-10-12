@@ -58,8 +58,39 @@ if (typeof (Symbol as { dispose?: symbol }).dispose !== 'symbol') {
 // real en Node. Restauramos un cliente HTTP real (undici) para que los tests
 // peguen DE VERDAD al backend.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { fetch, Headers, Request, Response } = require('undici');
-Object.assign(globalThis, { fetch, Headers, Request, Response });
+const { fetch, FormData, Headers, Request, Response } = require('undici');
+// FormData/Blob/File del mismo realm que undici: las subidas multipart (audio
+// del dictado) viajan de verdad al backend. El FormData de React Native del
+// preset no es serializable por undici.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { Blob, File } = require('node:buffer');
+Object.assign(globalThis, { fetch, FormData, Blob, File, Headers, Request, Response });
+
+// Shim de plataforma: WebSocket con la firma de React Native
+// `new WebSocket(url, protocols, { headers })` sobre el WebSocket REAL de undici
+// (la conexión a /cable del backend es de verdad). Como el módulo nativo de RN,
+// envía `Origin` con el origen del propio servidor.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { WebSocket: UndiciWebSocket } = require('undici') as {
+  WebSocket: new (
+    url: string,
+    init: { protocols?: string | string[]; headers?: Record<string, string> },
+  ) => object;
+};
+class ReactNativeWebSocket extends UndiciWebSocket {
+  constructor(
+    url: string,
+    protocols?: string | string[] | null,
+    options?: { headers?: Record<string, string> } | null,
+  ) {
+    const origin = new URL(url.replace(/^ws/i, 'http')).origin;
+    super(url, {
+      protocols: protocols ?? undefined,
+      headers: { Origin: origin, ...(options?.headers ?? {}) },
+    });
+  }
+}
+Object.assign(globalThis, { WebSocket: ReactNativeWebSocket });
 
 // Shim de plataforma: SecureStore en memoria (no es lógica de negocio).
 jest.mock('expo-secure-store', () => {

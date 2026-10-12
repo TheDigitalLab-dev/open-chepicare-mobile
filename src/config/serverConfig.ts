@@ -6,9 +6,13 @@
  * servidor conectarse y verificar que responde, sin recompilar.
  *
  * La URL activa vive en memoria (acceso síncrono para el cliente HTTP) y se
- * persiste en AsyncStorage. `loadServerUrl()` la restaura al arrancar la app.
+ * persiste en almacenamiento seguro (Keystore/Keychain): junto con los tokens
+ * define A QUIÉN se le entregan las credenciales, así que no debe poder
+ * alterarse desde un almacenamiento sin cifrar. `loadServerUrl()` la restaura
+ * al arrancar la app y migra el valor de versiones anteriores (AsyncStorage).
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 import { config } from './env';
 
@@ -52,7 +56,16 @@ export function getDefaultApiBaseUrl(): string {
 /** Restaura la URL guardada al arrancar la app. Idempotente y a prueba de fallos. */
 export async function loadServerUrl(): Promise<void> {
   try {
-    const saved = await AsyncStorage.getItem(STORAGE_KEY);
+    let saved = await SecureStore.getItemAsync(STORAGE_KEY);
+    if (!saved) {
+      // Migración: versiones anteriores guardaban la URL en AsyncStorage.
+      const legacy = await AsyncStorage.getItem(STORAGE_KEY);
+      if (legacy && legacy.length > 0) {
+        await SecureStore.setItemAsync(STORAGE_KEY, legacy);
+        await AsyncStorage.removeItem(STORAGE_KEY);
+        saved = legacy;
+      }
+    }
     if (saved && saved.length > 0) {
       currentBaseUrl = saved;
       emitChange();
@@ -67,7 +80,7 @@ export async function setServerUrl(raw: string): Promise<string> {
   const url = normalizeServerUrl(raw);
   currentBaseUrl = url;
   emitChange();
-  await AsyncStorage.setItem(STORAGE_KEY, url);
+  await SecureStore.setItemAsync(STORAGE_KEY, url);
   return url;
 }
 
@@ -75,7 +88,10 @@ export async function setServerUrl(raw: string): Promise<string> {
 export async function resetServerUrl(): Promise<void> {
   currentBaseUrl = config.apiBaseUrl;
   emitChange();
-  await AsyncStorage.removeItem(STORAGE_KEY);
+  await Promise.all([
+    SecureStore.deleteItemAsync(STORAGE_KEY),
+    AsyncStorage.removeItem(STORAGE_KEY),
+  ]);
 }
 
 export interface ServerHealth {

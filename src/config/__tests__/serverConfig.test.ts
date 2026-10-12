@@ -3,11 +3,13 @@
  * El health check golpea `<url>/up` (health check de Rails).
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 import {
   checkServerHealth,
   getApiBaseUrl,
   getDefaultApiBaseUrl,
+  loadServerUrl,
   normalizeServerUrl,
   resetServerUrl,
   setServerUrl,
@@ -45,18 +47,34 @@ describe('checkServerHealth (real)', () => {
 });
 
 describe('setServerUrl / getApiBaseUrl / reset', () => {
-  it('activa y persiste la URL elegida, y la restablece', async () => {
+  it('activa y persiste la URL elegida en almacenamiento seguro, y la restablece', async () => {
     const def = getDefaultApiBaseUrl();
 
     const saved = await setServerUrl('http://192.168.1.50:3000/');
     expect(saved).toBe('http://192.168.1.50:3000');
     expect(getApiBaseUrl()).toBe('http://192.168.1.50:3000');
-    expect(await AsyncStorage.getItem('pawcare.server_url')).toBe(
+    expect(await SecureStore.getItemAsync('pawcare.server_url')).toBe(
       'http://192.168.1.50:3000',
     );
 
     await resetServerUrl();
     expect(getApiBaseUrl()).toBe(def);
+    expect(await SecureStore.getItemAsync('pawcare.server_url')).toBeNull();
+  });
+
+  it('restaura la URL guardada al arrancar', async () => {
+    await SecureStore.setItemAsync('pawcare.server_url', 'https://clinica.example.com');
+    await loadServerUrl();
+    expect(getApiBaseUrl()).toBe('https://clinica.example.com');
+  });
+
+  it('migra la URL de instalaciones anteriores (AsyncStorage) al almacenamiento seguro', async () => {
+    await AsyncStorage.setItem('pawcare.server_url', 'https://vieja.example.com');
+    await loadServerUrl();
+    expect(getApiBaseUrl()).toBe('https://vieja.example.com');
+    expect(await SecureStore.getItemAsync('pawcare.server_url')).toBe(
+      'https://vieja.example.com',
+    );
     expect(await AsyncStorage.getItem('pawcare.server_url')).toBeNull();
   });
 });
