@@ -62,6 +62,27 @@ export interface Paginated<T> {
   totalPages: number;
 }
 
+/** Metadatos `pagination` de los índices paginados del backend (snake_case). */
+export interface PaginationMeta {
+  page: number;
+  per_page: number;
+  total: number;
+  total_pages: number;
+}
+
+/** Búsqueda en el servidor de los índices `*-list` (nombre, correo, documento…). */
+export interface SearchOptions {
+  search?: string;
+}
+
+/** Par de tokens Bearer que entrega el backend. */
+export interface AuthTokenPair {
+  access_token: string;
+  refresh_token: string;
+  token_type: 'Bearer';
+  expires_in: number;
+}
+
 export type QueryParams = Record<string, string | number | boolean | null | undefined>;
 
 export interface RequestOptions {

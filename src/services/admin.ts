@@ -14,6 +14,7 @@ import type {
   Pet,
   Vaccination,
 } from '@/types/models';
+import type { PaginationMeta, QueryParams, SearchOptions } from '@/types/api';
 import { learnClinicTimeZone, learnFromAppointments } from '@/utils/clinicTime';
 import { api } from './api';
 
@@ -74,38 +75,26 @@ export async function getAdminMedicalReport(id: number): Promise<MedicalReport> 
 // para conjuntos acotados (las mascotas de UN dueño), recorren todas las
 // páginas.
 
-interface Pagination {
-  page: number;
-  per_page: number;
-  total: number;
-  total_pages: number;
-}
-
 const MAX_PER_PAGE = 100;
 
 /** Recorre todas las páginas de un índice paginado. */
-async function fetchAllPages<T>(
+async function fetchAllPages<K extends string, T>(
   path: string,
-  key: string,
-  params: Record<string, string | number | undefined>,
+  key: K,
+  params: QueryParams,
 ): Promise<T[]> {
   const items: T[] = [];
   for (let page = 1; ; page += 1) {
-    const res = await api.get<Record<string, unknown> & { pagination?: Pagination }>(
+    const res = await api.get<Partial<Record<K, T[]>> & { pagination?: PaginationMeta }>(
       path,
       { params: { ...params, page, per_page: MAX_PER_PAGE } },
     );
-    items.push(...((res[key] as T[] | undefined) ?? []));
+    items.push(...(res[key] ?? []));
     if (!res.pagination || page >= res.pagination.total_pages) return items;
   }
 }
 
-export interface AdminSearchOptions {
-  /** Búsqueda en el servidor (nombre, correo, documento…). */
-  search?: string;
-}
-
-export async function listAdminPets(options: AdminSearchOptions = {}): Promise<Pet[]> {
+export async function listAdminPets(options: SearchOptions = {}): Promise<Pet[]> {
   const res = await api.get<{ pets: Pet[] }>('/admin/pets-list', {
     params: { search: options.search || undefined },
   });
@@ -114,7 +103,7 @@ export async function listAdminPets(options: AdminSearchOptions = {}): Promise<P
 
 /** Todas las mascotas activas de un dueño (todas las páginas). */
 export async function listAdminPetsByOwner(ownerId: number): Promise<Pet[]> {
-  return fetchAllPages<Pet>('/admin/pets-list', 'pets', {
+  return fetchAllPages<'pets', Pet>('/admin/pets-list', 'pets', {
     proprietary_id: ownerId,
     proprietary_type: 'Owner',
   });
@@ -208,7 +197,7 @@ export interface AdminOwner {
 }
 
 export async function listAdminOwners(
-  options: AdminSearchOptions = {},
+  options: SearchOptions = {},
 ): Promise<AdminOwner[]> {
   const res = await api.get<{ owners: AdminOwner[] }>('/admin/owners-list', {
     params: { search: options.search || undefined },
@@ -335,7 +324,7 @@ export interface AdminService {
 }
 
 export async function listAdminServices(
-  options: AdminSearchOptions = {},
+  options: SearchOptions = {},
 ): Promise<AdminService[]> {
   const { services } = await api.get<{ services: AdminService[] }>(
     '/admin/services-list',

@@ -12,7 +12,7 @@
  *    clínica): se aplica y se guarda al recibirla (ver `clinicConfig`).
  */
 import type { AuthUser, ClinicConfig, Owner, StaffUser } from '@/types/models';
-import { ApiError } from '@/types/api';
+import { ApiError, type AuthTokenPair } from '@/types/api';
 import * as secureStore from '@/utils/secureStore';
 import type { OwnerRegistration } from '@/screens/auth/RegisterScreen';
 import { api, registerSessionRefresher, registerTokenProvider } from './api';
@@ -29,14 +29,6 @@ interface ApiUser extends Record<string, unknown> {
   email: string;
   username: string;
   role?: StaffUser['role'];
-}
-
-/** Par de tokens Bearer que entrega el backend. */
-export interface AuthTokenPair {
-  access_token: string;
-  refresh_token: string;
-  token_type: 'Bearer';
-  expires_in: number;
 }
 
 interface AuthEnvelope {

@@ -2,8 +2,9 @@
  * Servicio de Perfil (usuario autenticado) contra `../pawcare-web`.
  * Endpoints JSON: PATCH /profile, PATCH /profile/password.
  */
+import type { AuthTokenPair } from '@/types/api';
 import { api } from './api';
-import { storeTokenPair, type AuthTokenPair } from './auth';
+import { storeTokenPair } from './auth';
 
 export interface ProfileInput {
   first_name?: string;

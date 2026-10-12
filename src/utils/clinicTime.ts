@@ -17,7 +17,11 @@
  * la zona del dispositivo, con los formatos por defecto del backend.
  */
 
-import type { ClinicDateFormat, ClinicTimeFormat } from '@/types/models';
+import type {
+  ClinicDateFormat,
+  ClinicTimeConfig,
+  ClinicTimeFormat,
+} from '@/types/models';
 
 const LOCALE = 'es-CO';
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -36,13 +40,6 @@ const DEFAULT_TIME_FORMAT: ClinicTimeFormat = '24h';
 
 let dateFormat: ClinicDateFormat = DEFAULT_DATE_FORMAT;
 let timeFormat: ClinicTimeFormat = DEFAULT_TIME_FORMAT;
-
-/** Lo que `clinicTime` necesita de la configuración de la clínica. */
-export interface ClinicTimeConfig {
-  time_zone?: string | null;
-  date_format?: string | null;
-  time_format?: string | null;
-}
 
 function isValidTimeZone(tz: string): boolean {
   try {

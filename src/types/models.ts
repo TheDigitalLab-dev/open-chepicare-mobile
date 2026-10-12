@@ -167,6 +167,13 @@ export interface ClinicConfig {
   max_advance_days: number;
 }
 
+/** Lo que `clinicTime` necesita de la configuración de la clínica. */
+export interface ClinicTimeConfig {
+  time_zone?: string | null;
+  date_format?: string | null;
+  time_format?: string | null;
+}
+
 // Espejo de `pet_json` (app/controllers/concerns/pet_jsonable.rb).
 export interface Pet {
   id: number;
@@ -183,13 +190,20 @@ export interface Pet {
   proprietary_id?: number;
   proprietary_type?: 'Owner' | 'User';
   /** Dueño embebido (solo en las respuestas admin con include_proprietary). */
-  proprietary?: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    full_name?: string;
-    email: string;
-  } | null;
+  proprietary?: PetProprietary | null;
+}
+
+// Espejo de `pet_json(include_proprietary: true)[:proprietary]`.
+export interface PetProprietary {
+  id: number;
+  type?: 'Owner' | 'User';
+  first_name: string;
+  last_name: string;
+  full_name?: string;
+  email: string;
+  /** Solo si el dueño es un Owner. */
+  identity_document?: string | null;
+  phone?: string | null;
 }
 
 export interface PetMedicalProfile {
