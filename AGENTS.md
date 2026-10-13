@@ -1,4 +1,4 @@
-# Pawcare Mobile — Reglas de ingeniería (OBLIGATORIAS)
+# ChepiCare Mobile — Reglas de ingeniería (OBLIGATORIAS)
 
 ## Expo HAS CHANGED
 
@@ -33,10 +33,20 @@ escribir cualquier código.
   IA, el único doble es el del **CLI de terceros** `claude`
   (`src/testing/agent-bin/claude`), que llama de verdad al MCP del backend.
 - Credenciales sembradas (de `../open-chepicare-web/db/seeds`): `owner1@example.com`,
-  `admin@pawcare.com`, `vet@pawcare.com` — todas con `password123`. Con una BD
-  creada antes de que el seed del admin usara `password123`, basta con volver a
-  correr `bin/rails db:seed` en open-chepicare-web (fuera de producción actualiza la
-  contraseña anterior del seed); no hace falta tocar la BD a mano.
+  `admin@chepicare.com`, `vet@chepicare.com` — todas con `password123`. Con una BD
+  anterior (cuentas `@pawcare.com` o el admin con la contraseña vieja del seed),
+  basta con volver a correr `bin/rails db:seed` en open-chepicare-web (renombra las
+  cuentas del seed y, fuera de producción, actualiza la contraseña); no hace falta
+  tocar la BD a mano.
+
+## Nombre: ChepiCare (antes PawCare)
+
+- Marca visible: **ChepiCare**. Claves locales nuevas: `chepicare.*`, siempre vía
+  `src/config/storageKeys.ts` y los helpers de `src/utils/legacyStorage.ts` (migran
+  las `pawcare.*` de versiones anteriores).
+- **No cambiar** `expo.slug` (`pawcare-mobile`), `android.package`
+  (`com.pawcare.mobile`), la firma, el archivo SQLite `pawcare.db` ni el esquema
+  `pawcare://` (sigue aceptado junto a `chepicare://`). Ver README.
 
 ## Compuertas de calidad — antes de CADA commit
 

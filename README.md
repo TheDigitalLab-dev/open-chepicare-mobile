@@ -1,4 +1,4 @@
-# Pawcare Mobile
+# ChepiCare Mobile
 
 App móvil **Android** (Expo / React Native) para una clínica veterinaria a
 domicilio. Una sola app sirve a tres audiencias — **público** (sin sesión),
@@ -41,8 +41,9 @@ testing.
 
 ## 🚀 Instalación y arranque
 
-Los repos se renombraron (antes `pawcare-mobile` y `pawcare-web`). El clon hermano
-del backend se llama `open-chepicare-web`, en la misma carpeta que este:
+Los repos se renombraron (antes `pawcare-mobile` y `pawcare-web`) y la marca pasó
+de PawCare a **ChepiCare** (ver [Cambio de nombre](#-cambio-de-nombre-pawcare--chepicare)).
+El clon hermano del backend se llama `open-chepicare-web`, en la misma carpeta que este:
 
 ```bash
 git clone https://github.com/TheDigitalLab-dev/open-chepicare-web.git ../open-chepicare-web
@@ -68,12 +69,13 @@ Para cambiar de servidor sin recompilar: en la app, pantalla de bienvenida →
 | Rol    | Login                  | Contraseña    |
 | ------ | ---------------------- | ------------- |
 | Dueño  | `owner1@example.com`   | `password123` |
-| Staff  | `admin@pawcare.com`    | `password123` |
-| Vet    | `vet@pawcare.com`      | `password123` |
+| Staff  | `admin@chepicare.com`  | `password123` |
+| Vet    | `vet@chepicare.com`    | `password123` |
 
-Las crea `bin/rails db:seed` en open-chepicare-web. Si tu BD es anterior y el admin aún
-tiene la contraseña vieja del seed, vuelve a correr `db:seed` (fuera de
-producción la actualiza a `password123`).
+Las crea `bin/rails db:seed` en open-chepicare-web. Si tu BD es anterior (cuentas
+`@pawcare.com` o el admin con la contraseña vieja del seed), vuelve a correr
+`db:seed`: renombra las cuentas del seed a `@chepicare.com` y, fuera de
+producción, deja la contraseña en `password123`.
 
 ## 🕒 Zona horaria y formatos de la clínica
 
@@ -101,7 +103,7 @@ Requiere el backend con el asistente IA (open-chepicare-web, PR #59). Guía de u
 | Dictado de consulta (expo-audio → `POST /admin/voice_dictations` + audio) | `services/assistant.ts`, `hooks/useVoiceDictation.ts`, `hooks/useVoiceRecorder.ts` |
 | Chat texto/voz | `hooks/useAiChat.ts`, `screens/admin/AssistantChatScreen.tsx` |
 | Tiempo real (ActionCable `/cable`, `Authorization: Bearer`) + polling de respaldo | `services/aiUpdates.ts`, `hooks/useAiUpdates.ts` |
-| QR `pawcare://pair?v=1&server=…&code=…` (expo-camera) | `services/pairing.ts`, `hooks/usePairing.ts`, `screens/auth/PairingScanScreen.tsx` |
+| QR `chepicare://pair?v=1&server=…&code=…` (también `pawcare://`; expo-camera) | `services/pairing.ts`, `hooks/usePairing.ts`, `screens/auth/PairingScanScreen.tsx` |
 | Push Expo (`/auth/mobile/devices`, categoría `asistente`) | `services/pushNotifications.ts`, `hooks/usePushNotifications.ts` |
 
 - La URL del servidor se guarda en **almacenamiento seguro** (SecureStore) y se
@@ -110,6 +112,33 @@ Requiere el backend con el asistente IA (open-chepicare-web, PR #59). Guía de u
 - Push remoto necesita un build de desarrollo/producción con `projectId` de EAS
   (`extra.eas.projectId` en app.json o `EXPO_PUBLIC_EAS_PROJECT_ID`). Sin él la
   app no registra token y sigue funcionando con tiempo real + polling.
+
+## 🔁 Cambio de nombre: PawCare → ChepiCare
+
+La app se llama **ChepiCare** (nombre mostrado `expo.name`, textos, permisos,
+APK `chepicare.apk`). Actualizar desde una versión PawCare no pierde nada:
+
+| Qué | Cambio | Compatibilidad |
+| --- | --- | --- |
+| Claves de SecureStore/AsyncStorage | `pawcare.*` → `chepicare.*` (`src/config/storageKeys.ts`) | Al arrancar (y en cada lectura) se lee la nueva; si falta, la vieja se copia a la nueva y se borra (`src/utils/legacyStorage.ts`). Cerrar sesión borra ambas. Nadie pierde sesión, servidor emparejado, tema ni configuración de la clínica. |
+| Deep link | Esquema principal `chepicare://` | `pawcare://` sigue registrado y aceptado (`src/config/deepLinks.ts`): QR ya impresos, enlaces de recuperación y servidores que aún emiten `pawcare://pair`. |
+| APK publicado | `chepicare.apk` | Cada release adjunta también una copia idéntica (misma firma) `open-chepicare-mobile.apk` para los enlaces ya compartidos. |
+| Cuentas demo | `admin@chepicare.com`, `vet@chepicare.com` | El seed del backend renombra las `@pawcare.com`. |
+
+**Identificadores técnicos heredados (NO cambiar):** son la identidad de la app
+instalada o contienen datos; cambiarlos crea otra app (sin actualizaciones ni
+datos) o abre una base vacía.
+
+| Identificador | Valor | Por qué se conserva |
+| --- | --- | --- |
+| `expo.slug` | `pawcare-mobile` | Proyecto Expo/EAS y builds existentes |
+| `android.package` | `com.pawcare.mobile` | Identidad en Android: otro package es otra app y no actualiza la instalada |
+| Keystore de firma (alias, p. ej. `pawcare`) | — | Otra firma impide actualizar la app instalada |
+| Archivo SQLite | `pawcare.db` | Datos locales y cambios sin sincronizar (WAL: no se renombra de forma atómica) |
+| Esquema `pawcare://` | — | QR y enlaces ya emitidos |
+
+No hay `ios.bundleIdentifier` ni `owner`/`projectId` de EAS en `app.json`; si se
+añaden, deben mantenerse estables desde la primera publicación.
 
 ## 🧪 Scripts
 

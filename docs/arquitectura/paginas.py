@@ -26,12 +26,12 @@ _module_cards = """
 INDEX = (
     section(
         "que-es",
-        "¿Qué es Pawcare Mobile?",
+        "¿Qué es ChepiCare Mobile?",
         "<p>Aplicación móvil <b>Android</b> (Expo / React Native) para una clínica "
         "veterinaria a domicilio. Sirve a tres audiencias desde una sola app: el "
         "<b>público</b> (sin sesión), el <b>dueño</b> de mascotas y el <b>staff</b> "
         "clínico. Toda pantalla consume <b>datos reales</b> del backend Rails "
-        "<code>pawcare</code> a través de su servicio de dominio — sin datos "
+        "<code>open-chepicare-web</code> a través de su servicio de dominio — sin datos "
         "mockeados.</p>",
         '<div class="pills">'
         '<span class="pill">Expo SDK 56</span><span class="pill">React Native 0.85</span>'
@@ -62,7 +62,7 @@ INDEX = (
                 CFG["Config de servidor<br/>serverConfig"]
                 DB[("SQLite local<br/>expo-sqlite (local-first)")]
               end
-              BE["Backend Rails<br/>pawcare (JSON + Bearer)"]
+              BE["Backend Rails<br/>open-chepicare-web (JSON + Bearer)"]
 
               UI --> NAV
               UI --> COMP
@@ -83,7 +83,7 @@ INDEX = (
             "info",
             "Requisitos: <b>Node ≥ 20</b>, <b>Yarn 4</b> (Corepack), y para Android un "
             "<b>emulador</b> o dispositivo con <b>Expo Go</b>. El backend "
-            "<code>pawcare</code> debe estar corriendo (por defecto en "
+            "<code>open-chepicare-web</code> debe estar corriendo (por defecto en "
             "<code>http://localhost:3000</code>).",
         ),
         code(
@@ -148,7 +148,7 @@ VISION = (
               D["Servicios de dominio<br/>services/*.ts"]
               E["Cliente HTTP<br/>api.ts (ApiError, refresh)"]
               F["Config + Sesión<br/>serverConfig · SessionProvider"]
-              G["Backend Rails pawcare"]
+              G["Backend Rails open-chepicare-web"]
               A --> B
               A --> C
               C --> D
@@ -453,7 +453,7 @@ CONFIG_SERVIDOR = (
     section(
         "porque",
         "Por qué es configurable",
-        "<p>Pawcare es <b>open source y self-hosted</b>: cada organización puede correr "
+        "<p>ChepiCare es <b>open source y self-hosted</b>: cada organización puede correr "
         "su propio backend. Por eso la URL del servidor se elige <b>en tiempo de "
         "ejecución</b>, sin recompilar, desde la pantalla <em>Configurar servidor</em> "
         "(accesible desde la bienvenida de login y desde los ajustes del staff).</p>",
@@ -462,7 +462,8 @@ CONFIG_SERVIDOR = (
         "runtime",
         "serverConfig: URL en runtime",
         "<p>La URL activa vive en memoria (acceso síncrono para el cliente HTTP) y se "
-        "persiste en <code>AsyncStorage</code> bajo <code>pawcare.server_url</code>. "
+        "persiste en almacenamiento seguro (<code>SecureStore</code>) bajo <code>chepicare.server_url</code> "
+        "(migra la <code>pawcare.server_url</code> de versiones PawCare). "
         "Se restaura al arrancar la app, <b>antes</b> del primer fetch de sesión.</p>",
         table(
             ["Función", "Rol"],
@@ -484,10 +485,10 @@ CONFIG_SERVIDOR = (
             sequenceDiagram
               participant App as App.tsx
               participant Cfg as serverConfig
-              participant AS as AsyncStorage
+              participant AS as SecureStore
               participant Sess as SessionProvider
               App->>Cfg: loadServerUrl()
-              Cfg->>AS: get('pawcare.server_url')
+              Cfg->>AS: get('chepicare.server_url') (o la vieja pawcare.*)
               AS-->>Cfg: URL guardada | vacío
               Cfg-->>App: (URL en memoria lista)
               App->>Sess: monta el árbol
@@ -830,7 +831,7 @@ TESTING = (
         callout(
             "info",
             "Credenciales sembradas: <code>owner1@example.com</code>, "
-            "<code>admin@pawcare.com</code>, <code>vet@pawcare.com</code> "
+            "<code>admin@chepicare.com</code>, <code>vet@chepicare.com</code> "
             "(todas <code>password123</code>).",
         ),
     )
@@ -872,7 +873,7 @@ TESTING = (
 # ===========================================================================
 PAGES = {
     "index": (
-        "Arquitectura de Pawcare Mobile",
+        "Arquitectura de ChepiCare Mobile",
         "Guía técnica por módulos, con diagramas ampliables al hacer click.",
         INDEX,
     ),

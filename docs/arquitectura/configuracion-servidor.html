@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Configuración de servidor · Pawcare Mobile</title>
+<title>Configuración de servidor · ChepiCare Mobile</title>
 <style>
 :root{
   --bg:#f7f6f2; --panel:#ffffff; --ink:#1f2a2e; --muted:#5b6b70; --line:#e4e2da;
@@ -89,14 +89,14 @@ footer.pager{display:flex;justify-content:space-between;margin-top:52px;
 </head>
 <body>
 <div class="layout">
-<aside><div class="brand"><span class="dot"></span> Pawcare · Arquitectura</div><nav><a href="index.html" class="">Inicio</a><a href="vision-general.html" class="">Visión general</a><a href="navegacion.html" class="">Navegación y roles</a><a href="sesion-autenticacion.html" class="">Sesión y autenticación</a><a href="capa-http.html" class="">Capa HTTP</a><a href="configuracion-servidor.html" class="active">Configuración de servidor</a><a href="servicios-dominio.html" class="">Servicios de dominio</a><a href="pantallas-publico.html" class="">Área pública</a><a href="pantallas-owner.html" class="">Área del dueño</a><a href="pantallas-admin.html" class="">Área del staff</a><a href="componentes-ui.html" class="">Componentes y tema</a><a href="estado-datos.html" class="">Estado, datos y hooks</a><a href="local-first.html" class="">Local-first y sincronización</a><a href="testing.html" class="">Testing y calidad</a></nav><div class="meta">Expo SDK 56 · React Native 0.85 · TypeScript estricto.<br>Generado desde <code>docs/arquitectura/build.py</code>.</div></aside>
+<aside><div class="brand"><span class="dot"></span> ChepiCare · Arquitectura</div><nav><a href="index.html" class="">Inicio</a><a href="vision-general.html" class="">Visión general</a><a href="navegacion.html" class="">Navegación y roles</a><a href="sesion-autenticacion.html" class="">Sesión y autenticación</a><a href="capa-http.html" class="">Capa HTTP</a><a href="configuracion-servidor.html" class="active">Configuración de servidor</a><a href="servicios-dominio.html" class="">Servicios de dominio</a><a href="pantallas-publico.html" class="">Área pública</a><a href="pantallas-owner.html" class="">Área del dueño</a><a href="pantallas-admin.html" class="">Área del staff</a><a href="componentes-ui.html" class="">Componentes y tema</a><a href="estado-datos.html" class="">Estado, datos y hooks</a><a href="local-first.html" class="">Local-first y sincronización</a><a href="testing.html" class="">Testing y calidad</a></nav><div class="meta">Expo SDK 56 · React Native 0.85 · TypeScript estricto.<br>Generado desde <code>docs/arquitectura/build.py</code>.</div></aside>
 <main>
 <h1>Configuración de servidor</h1>
 <p class="subtitle">Self-hosted: elige tu backend en tiempo de ejecución.</p>
 <section id="porque"><h2>Por qué es configurable</h2>
-<p>Pawcare es <b>open source y self-hosted</b>: cada organización puede correr su propio backend. Por eso la URL del servidor se elige <b>en tiempo de ejecución</b>, sin recompilar, desde la pantalla <em>Configurar servidor</em> (accesible desde la bienvenida de login y desde los ajustes del staff).</p>
+<p>ChepiCare es <b>open source y self-hosted</b>: cada organización puede correr su propio backend. Por eso la URL del servidor se elige <b>en tiempo de ejecución</b>, sin recompilar, desde la pantalla <em>Configurar servidor</em> (accesible desde la bienvenida de login y desde los ajustes del staff).</p>
 </section><section id="runtime"><h2>serverConfig: URL en runtime</h2>
-<p>La URL activa vive en memoria (acceso síncrono para el cliente HTTP) y se persiste en <code>AsyncStorage</code> bajo <code>pawcare.server_url</code>. Se restaura al arrancar la app, <b>antes</b> del primer fetch de sesión.</p>
+<p>La URL activa vive en memoria (acceso síncrono para el cliente HTTP) y se persiste en almacenamiento seguro (<code>SecureStore</code>) bajo <code>chepicare.server_url</code> (migra la <code>pawcare.server_url</code> de versiones PawCare). Se restaura al arrancar la app, <b>antes</b> del primer fetch de sesión.</p>
 <table><thead><tr><th>Función</th><th>Rol</th></tr></thead><tbody><tr><td><code>getApiBaseUrl()</code></td><td>URL activa que usa <code>api.ts</code> (síncrona).</td></tr><tr><td><code>loadServerUrl()</code></td><td>Restaura la guardada al arrancar (en <code>App.tsx</code>).</td></tr><tr><td><code>setServerUrl(url)</code></td><td>Normaliza, activa y persiste una URL nueva.</td></tr><tr><td><code>resetServerUrl()</code></td><td>Vuelve al valor por defecto del build.</td></tr><tr><td><code>checkServerHealth(url)</code></td><td>Prueba <code>GET /up</code> (health check de Rails) con latencia.</td></tr><tr><td><code>normalizeServerUrl(raw)</code></td><td>Añade esquema si falta y quita barras finales.</td></tr></tbody></table>
 </section><section id="arranque"><h2>Arranque con la URL correcta</h2>
 <figure class="diagram">
@@ -104,10 +104,10 @@ footer.pager{display:flex;justify-content:space-between;margin-top:52px;
 sequenceDiagram
   participant App as App.tsx
   participant Cfg as serverConfig
-  participant AS as AsyncStorage
+  participant AS as SecureStore
   participant Sess as SessionProvider
   App-&gt;&gt;Cfg: loadServerUrl()
-  Cfg-&gt;&gt;AS: get('pawcare.server_url')
+  Cfg-&gt;&gt;AS: get('chepicare.server_url') (o la vieja pawcare.*)
   AS--&gt;&gt;Cfg: URL guardada | vacío
   Cfg--&gt;&gt;App: (URL en memoria lista)
   App-&gt;&gt;Sess: monta el árbol

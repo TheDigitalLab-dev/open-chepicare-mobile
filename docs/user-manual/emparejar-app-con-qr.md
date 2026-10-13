@@ -1,6 +1,6 @@
 # Conectar la app a tu clínica con un código QR
 
-La app PawCare puede conectarse al servidor de tu clínica (por ejemplo, una
+La app ChepiCare (antes PawCare) puede conectarse al servidor de tu clínica (por ejemplo, una
 instalación propia de la versión open source) escaneando un código QR. Sirve
 tanto para el **personal de la clínica** (veterinarios y administradores) como
 para los **propietarios de mascotas**: la app guarda la dirección del servidor,
@@ -55,7 +55,8 @@ Si ya tenías una sesión abierta con otra cuenta, al emparejar la app la cierra
 en su servidor y borra del teléfono los datos guardados de esa cuenta (incluidos
 los cambios sin sincronizar y las alarmas) antes de abrir la nueva.
 
-También puedes abrir el enlace `pawcare://pair?...` del código desde el teléfono
+También puedes abrir el enlace `chepicare://pair?...` (o `pawcare://pair?...`, el
+que generan los servidores y QR anteriores) del código desde el teléfono
 (sin sesión abierta): la app lo canjea igual que si lo escanearas.
 
 ## Dispositivos conectados y revocación
@@ -84,7 +85,7 @@ o cuando la cuenta se desactiva o se elimina.
 | «No se pudo contactar al servidor del código…» | El teléfono debe poder llegar a la dirección del QR (la misma red o una dirección pública). La app sigue conectada al servidor anterior. |
 | «La cuenta está inactiva» | Pide a la clínica que reactive tu cuenta. |
 | «Demasiados intentos» | Espera un minuto antes de volver a escanear. |
-| «Este QR no es un código de PawCare» | Escanea el código de la tarjeta **Conectar la app móvil**, no otro. |
+| «Este QR no es un código de ChepiCare» | Escanea el código de la tarjeta **Conectar la app móvil**, no otro. |
 | «Versión de código no compatible» | Actualiza la app. |
 
 ## ✅ Checklist
