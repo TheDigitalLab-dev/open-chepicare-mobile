@@ -1,5 +1,5 @@
 /**
- * Servicio de Pagos (owner) contra el backend real `../pawcare-web`.
+ * Servicio de Pagos (owner) contra el backend real `../open-chepicare-web`.
  * Controller JSON: owner_payments (index/show/register). Requiere Owner (Bearer).
  */
 import type { Payment, PaymentMethod } from '@/types/models';

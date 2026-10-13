@@ -1,5 +1,5 @@
 /**
- * Integración REAL del servicio de Citas contra `../pawcare-web`.
+ * Integración REAL del servicio de Citas contra `../open-chepicare-web`.
  * Lee citas/servicios/disponibilidad reales y ejerce un ciclo crear→cancelar.
  */
 import * as authService from '@/services/auth';

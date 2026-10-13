@@ -1,5 +1,5 @@
 /**
- * Servicio de Registros Médicos (owner, solo lectura) contra `../pawcare-web`.
+ * Servicio de Registros Médicos (owner, solo lectura) contra `../open-chepicare-web`.
  * Controllers JSON: owner_medical_profiles, owner_consultations,
  * owner_vaccinations, owner_dewormings, owner_medical_reports.
  * Endpoints anidados bajo /pets/:pet_id/*. Requiere Owner (Bearer).

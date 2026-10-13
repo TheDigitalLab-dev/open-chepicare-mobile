@@ -1,5 +1,5 @@
 /**
- * Servicio de Citas (owner) contra el backend real `../pawcare-web`.
+ * Servicio de Citas (owner) contra el backend real `../open-chepicare-web`.
  * Controllers JSON: owner_appointments, owner_services, owner_availability.
  * Requiere sesión de Owner (Bearer).
  */

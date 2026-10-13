@@ -1,5 +1,5 @@
 /**
- * Servicio de Perfil (usuario autenticado) contra `../pawcare-web`.
+ * Servicio de Perfil (usuario autenticado) contra `../open-chepicare-web`.
  * Endpoints JSON: PATCH /profile, PATCH /profile/password.
  */
 import type { AuthTokenPair } from '@/types/api';

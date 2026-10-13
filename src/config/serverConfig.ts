@@ -2,7 +2,7 @@
  * Configuración del servidor en TIEMPO DE EJECUCIÓN.
  *
  * Pawcare es open source y self-hosted: cada quien puede correr su propio
- * backend (`../pawcare-web`) en su propio dominio/IP. Esta app permite elegir a qué
+ * backend (`../open-chepicare-web`) en su propio dominio/IP. Esta app permite elegir a qué
  * servidor conectarse y verificar que responde, sin recompilar.
  *
  * La URL activa vive en memoria (acceso síncrono para el cliente HTTP) y se

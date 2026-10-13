@@ -2,7 +2,7 @@
  * Servicio del asistente IA (staff) contra el backend real de PawCare:
  * dictado de consulta por voz, chat escrito/por voz y confirmación de las
  * propuestas del agente. Ver contrato en `docs/plans/voice-dictation-mcp.md`
- * de pawcare-web.
+ * de open-chepicare-web.
  *
  * Convención del backend: datos con wrapper de modelo (`{ voice_dictation: {…} }`)
  * y archivos (audio) por FormData en endpoints separados.

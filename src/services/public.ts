@@ -1,5 +1,5 @@
 /**
- * Servicio público (sin autenticación) contra `../pawcare-web`.
+ * Servicio público (sin autenticación) contra `../open-chepicare-web`.
  * Endpoints JSON: /public/products, /adoption/pets, /landing.
  */
 import type { AdoptionPet, LandingService, Product } from '@/types/models';

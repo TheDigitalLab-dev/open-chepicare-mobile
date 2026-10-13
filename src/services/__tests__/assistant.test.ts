@@ -1,6 +1,6 @@
 /**
  * Integración REAL del servicio del asistente IA contra el backend
- * (pawcare-web, rama feat/voice-dictation-mcp). Sin respuestas mockeadas: el
+ * (open-chepicare-web, rama feat/voice-dictation-mcp). Sin respuestas mockeadas: el
  * servidor procesa el dictado y el chat de verdad y termina en sus estados de
  * degradación reales (sin claves de STT/IA en el entorno de pruebas).
  */

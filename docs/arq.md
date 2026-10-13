@@ -16,7 +16,7 @@
 ## Estructura de Directorios
 
 ```
-pawcare-mobile/
+open-chepicare-mobile/
 ├── App.tsx                  # Entry point
 ├── index.ts                 # Registro del componente raíz
 ├── app.json                 # Configuración Expo

@@ -1,5 +1,5 @@
 /**
- * Modelos del dominio (presentacionales) basados en el schema real de `../pawcare-web`.
+ * Modelos del dominio (presentacionales) basados en el schema real de `../open-chepicare-web`.
  * Los enums Rails son enteros; aquí se modelan como uniones de string + mapas de
  * etiqueta en español para la UI. Campos marcados opcionales = "según contrato API".
  */
