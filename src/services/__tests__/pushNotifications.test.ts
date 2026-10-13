@@ -3,6 +3,7 @@
  * (categoría `asistente`) y destino al tocar la notificación.
  */
 import {
+  ownerPushTarget,
   assistantPushTarget,
   parseAssistantPush,
   registerThisDevice,
@@ -75,6 +76,58 @@ describe('assistantPushTarget', () => {
       screen: 'chat',
       conversationId: 5,
     });
+  });
+});
+
+describe('ownerPushTarget', () => {
+  // Payload de Notifications::PublishEvent: { category, entity, entity_id, event_key }.
+  const push = (entity: string, id: unknown = 42, category = 'citas') => ({
+    category,
+    entity,
+    entity_id: id,
+    event_key: `${entity}-${String(id)}-x`,
+  });
+
+  it('abre la cita, el pago o el apadrinamiento de la push', () => {
+    expect(ownerPushTarget(push('appointment'))).toEqual({
+      tab: 'AppointmentsTab',
+      screen: 'AppointmentDetail',
+      params: { id: 42 },
+    });
+    expect(ownerPushTarget(push('payment', '7', 'pagos'))).toEqual({
+      tab: 'HomeTab',
+      screen: 'OwnerPaymentRegister',
+      params: { id: 7 },
+    });
+    expect(ownerPushTarget(push('sponsorship', 3, 'pagos'))).toEqual({
+      tab: 'HomeTab',
+      screen: 'OwnerSponsorshipDetail',
+      params: { id: 3 },
+    });
+  });
+
+  it('informes y vacunas abren el historial médico', () => {
+    expect(ownerPushTarget(push('medical_report', 5, 'informes'))).toEqual({
+      tab: 'HomeTab',
+      screen: 'OwnerMedicalHistory',
+    });
+    expect(ownerPushTarget(push('vaccination_schedule_item', 9, 'vacunas'))).toEqual({
+      tab: 'HomeTab',
+      screen: 'OwnerMedicalHistory',
+    });
+  });
+
+  it('otros eventos abren el centro de notificaciones; basura → null', () => {
+    expect(ownerPushTarget(push('adoption', 1, 'adopciones'))).toEqual({
+      tab: 'HomeTab',
+      screen: 'Notifications',
+    });
+    expect(ownerPushTarget(push('appointment', 'x'))).toEqual({
+      tab: 'HomeTab',
+      screen: 'Notifications',
+    });
+    expect(ownerPushTarget(null)).toBeNull();
+    expect(ownerPushTarget({ category: 'asistente', entity: 'ai_message' })).toBeNull();
   });
 });
 

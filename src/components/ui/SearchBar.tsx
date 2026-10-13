@@ -26,6 +26,8 @@ export function SearchBar({
         placeholder={placeholder}
         placeholderTextColor={colors.mutedForeground}
         style={[styles.input, { color: colors.foreground }]}
+        keyboardType="default"
+        accessibilityLabel={placeholder ?? 'Buscar'}
         returnKeyType="search"
         clearButtonMode="while-editing"
       />

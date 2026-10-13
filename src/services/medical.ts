@@ -12,6 +12,7 @@ import type {
   Vaccination,
 } from '@/types/models';
 import { api } from './api';
+import { fetchAllPages } from './pagination';
 
 export async function getMedicalProfile(petId: number): Promise<MedicalProfile | null> {
   const { profile } = await api.get<{ profile: MedicalProfile | null }>(
@@ -21,10 +22,11 @@ export async function getMedicalProfile(petId: number): Promise<MedicalProfile |
 }
 
 export async function listConsultations(petId: number): Promise<Consultation[]> {
-  const { consultations } = await api.get<{ consultations: Consultation[] }>(
+  // Todas las páginas: el detalle de una consulta y sus exámenes se buscan aquí.
+  return fetchAllPages<'consultations', Consultation>(
     `/pets/${petId}/consultations`,
+    'consultations',
   );
-  return consultations;
 }
 
 export async function listVaccinations(petId: number): Promise<Vaccination[]> {

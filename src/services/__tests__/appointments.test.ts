@@ -108,3 +108,79 @@ describe('appointmentsService crear→cancelar (real)', () => {
     }
   }, 30000);
 });
+
+describe('appointmentsService horarios del servidor y edición (real)', () => {
+  it('los horarios excluyen el ocupado y PATCH reprograma y vacía las notas', async () => {
+    const { month, year } = (() => {
+      const d = new Date();
+      const m = d.getMonth() + 2;
+      return m > 12
+        ? { month: m - 12, year: d.getFullYear() + 1 }
+        : { month: m, year: d.getFullYear() };
+    })();
+    const [days, services, pets] = await Promise.all([
+      appointmentsService.getAvailableDays(month, year),
+      appointmentsService.listServices(),
+      petsService.listPets(),
+    ]);
+    const day = days[1] ?? days[0]!;
+    const vet = (await appointmentsService.getAvailableVets(day))[0]!;
+    const service = services[0]!;
+
+    const before = await appointmentsService.getAvailableTimeSlots(
+      day,
+      vet.id,
+      service.id,
+    );
+    expect(before.length).toBeGreaterThan(1);
+    expect(before[0]).toEqual({
+      time: expect.stringMatching(/^\d{2}:\d{2}$/),
+      available: true,
+    });
+
+    const [first, second] = before;
+    const created = await appointmentsService.createAppointment({
+      pet_id: pets[0]!.id,
+      service_id: service.id,
+      assigned_to_id: vet.id,
+      scheduled_at: `${day}T${first!.time}:00`,
+      notes: 'Nota inicial',
+    });
+    try {
+      const after = await appointmentsService.getAvailableTimeSlots(
+        day,
+        vet.id,
+        service.id,
+      );
+      expect(after.map((s) => s.time)).not.toContain(first!.time);
+
+      const moved = await appointmentsService.updateAppointment(created.id, {
+        scheduled_at: `${day}T${second!.time}:00`,
+        notes: '',
+      });
+      expect(moved.id).toBe(created.id);
+      expect(formatClinicTime(moved.scheduled_at, moved.time_zone)).toBe(second!.time);
+      expect(moved.notes ?? '').toBe('');
+
+      // El detalle trae los pagos de la cita (se crea uno pendiente al agendar).
+      const detail = await appointmentsService.getAppointment(created.id);
+      expect(detail.payments?.length).toBeGreaterThan(0);
+      expect(detail.payments![0]).toEqual(
+        expect.objectContaining({ id: expect.any(Number), status: 'pending' }),
+      );
+    } finally {
+      await appointmentsService.cancelAppointment(created.id, 'Prueba de integración');
+    }
+  }, 30000);
+
+  it('PATCH de una cita cancelada responde 422 con el motivo', async () => {
+    const list = await appointmentsService.listAppointments({ status: 'cancelled' });
+    expect(list.length).toBeGreaterThan(0);
+    await expect(
+      appointmentsService.updateAppointment(list[0]!.id, { notes: 'x' }),
+    ).rejects.toMatchObject({
+      kind: 'validation',
+      message: 'Solo se pueden modificar citas pendientes o confirmadas',
+    });
+  });
+});

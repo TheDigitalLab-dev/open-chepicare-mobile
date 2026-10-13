@@ -195,6 +195,18 @@ export function clinicDayKey(iso: string, timeZone?: string | null): string {
 }
 
 /**
+ * Hora de pared "HH:MM" (24 h) de un instante en la zona de la clínica (o la
+ * indicada). Es la clave de los horarios de `/owner-time-slots`, no un texto
+ * para mostrar (para eso, `formatClinicTime`, que respeta el formato 12/24 h).
+ */
+export function clinicHourKey(iso: string, timeZone?: string | null): string {
+  const d = parseInstant(iso);
+  if (!d) return iso;
+  const p = wallParts(d, zoneFor(timeZone));
+  return `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`;
+}
+
+/**
  * Instante UTC (ISO con `Z`) de un día ("YYYY-MM-DD") y hora ("HH:MM") de pared
  * en la zona de la clínica (o la indicada), con el offset de esa fecha (respeta
  * el horario de verano). Es la alternativa con offset explícito a

@@ -1,7 +1,8 @@
 import { createContext, use, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import type { AuthUser } from '@/types/models';
-import type { OwnerRegistration } from '@/screens/auth/RegisterScreen';
+import { ApiError } from '@/types/api';
+import type { OwnerRegistration } from '@/types/auth';
 import * as authService from '@/services/auth';
 import * as secureStore from '@/utils/secureStore';
 import { purgeLocalData } from '@/db/database';
@@ -64,6 +65,32 @@ async function clearLocalUserData(): Promise<void> {
   await cancelAllLocalAlarms();
 }
 
+/** Cierra del todo los datos de la cuenta saliente (y su marca de dueño). */
+async function forgetLocalUser(): Promise<void> {
+  await clearLocalUserData();
+  await secureStore.clearLocalDataOwner();
+}
+
+const ownerKey = (user: AuthUser): string => `${user.type}:${user.id}`;
+
+/**
+ * Antes de abrir la sesión de `user`: si los datos locales del teléfono son de
+ * OTRA cuenta (p. ej. su sesión quedó guardada porque el arranque fue sin red),
+ * se purgan. La misma cuenta conserva sus tratamientos y alarmas.
+ */
+async function claimLocalData(user: AuthUser): Promise<void> {
+  const current = await secureStore.getLocalDataOwner();
+  if (current !== null && current !== ownerKey(user)) await clearLocalUserData();
+  await secureStore.setLocalDataOwner(ownerKey(user));
+}
+
+/** El servidor rechazó la sesión (no es un fallo de red ni del servidor). */
+function isSessionRejected(err: unknown): boolean {
+  return (
+    err instanceof ApiError && (err.kind === 'unauthorized' || err.kind === 'forbidden')
+  );
+}
+
 /** Deriva el rol de navegación a partir del tipo de cuenta. */
 function roleForUser(user: AuthUser): SessionRole {
   return user.type === 'Owner' ? 'owner' : 'admin';
@@ -86,7 +113,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (!active) return;
       setUser(null);
       setRole('public');
-      void clearLocalUserData();
+      void forgetLocalUser();
     });
 
     (async () => {
@@ -98,10 +125,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (!(await secureStore.hasSession())) return;
         const restored = await authService.fetchCurrentUser();
         if (!active) return;
+        await claimLocalData(restored);
         setUser(restored);
         setRole(roleForUser(restored));
-      } catch {
-        await secureStore.clearTokens();
+      } catch (err) {
+        // Solo una sesión RECHAZADA se borra (con los datos locales de la
+        // cuenta). Sin red, timeout o 5xx los tokens se conservan: el siguiente
+        // arranque con conexión restaura la sesión.
+        if (isSessionRejected(err)) {
+          await secureStore.clearTokens();
+          await forgetLocalUser();
+        }
       } finally {
         if (active) setStatus('ready');
       }
@@ -120,11 +154,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       user,
       signIn: async (login, password) => {
         const authed = await authService.login(login, password);
+        await claimLocalData(authed);
         setUser(authed);
         setRole(roleForUser(authed));
       },
       register: async (data) => {
         const authed = await authService.register(data);
+        await claimLocalData(authed);
         setUser(authed);
         setRole(roleForUser(authed));
       },
@@ -132,12 +168,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       resetPassword: (token, password, passwordConfirmation) =>
         authService.resetPassword(token, password, passwordConfirmation),
       signOut: async () => {
-        // El teléfono deja de recibir push de esta cuenta (requiere sesión).
-        await unregisterThisDevice();
-        await authService.logout();
-        await clearLocalUserData();
-        setUser(null);
-        setRole('public');
+        // Ninguno lanza: sin red o con el access vencido el teléfono sale igual.
+        try {
+          // El teléfono deja de recibir push de esta cuenta (requiere sesión).
+          await unregisterThisDevice();
+          await authService.logout();
+        } finally {
+          await forgetLocalUser();
+          setUser(null);
+          setRole('public');
+        }
       },
       adoptSession: async (authed) => {
         // Emparejar otra cuenta sin cerrar sesión (p. ej. el teléfono del
@@ -145,11 +185,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         // datos locales, ni la cola de sincronización, ni las alarmas de la
         // sesión anterior pasan a la nueva.
         if (user) await clearLocalUserData();
+        await claimLocalData(authed);
         setUser(authed);
         setRole(roleForUser(authed));
       },
       endSession: async () => {
-        await clearLocalUserData();
+        await forgetLocalUser();
         setUser(null);
         setRole('public');
       },

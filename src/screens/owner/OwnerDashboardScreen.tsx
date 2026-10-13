@@ -27,16 +27,117 @@ import {
   ownerPaymentAlerts,
 } from '@/services/changeAlertConfigs';
 import { appointmentReminders, pendingPaymentReminders } from '@/utils/reminders';
-import { formatDateTime, formatMoney } from '@/utils/format';
+import { splitAppointments } from '@/utils/appointmentGroups';
+import { formatDate, formatDateTime, formatMoney } from '@/utils/format';
 import {
   APPOINTMENT_STATUS_LABEL,
   PAYMENT_STATUS_LABEL,
-  type AppointmentStatus,
+  type Appointment,
+  type Payment,
+  type PaymentStatus,
 } from '@/types/models';
 
 type Nav = NativeStackNavigationProp<OwnerHomeStackParamList>;
+type TabNav = BottomTabNavigationProp<OwnerTabParamList>;
 
-const UPCOMING: AppointmentStatus[] = ['pending', 'confirmed', 'in_progress'];
+const PAYABLE: PaymentStatus[] = ['pending', 'overdue'];
+
+/** Pagos por registrar, el que vence antes primero (sin fecha, al final). */
+function payablePayments(payments: readonly Payment[]): Payment[] {
+  const due = (p: Payment) => p.due_date ?? '9999-12-31';
+  return payments
+    .filter((p) => PAYABLE.includes(p.status))
+    .sort((a, b) => due(a).localeCompare(due(b)));
+}
+
+function NextAppointment({ appointment }: { appointment: Appointment }) {
+  const navigation = useNavigation<Nav>();
+  const vet = appointment.assigned_to
+    ? `${appointment.assigned_to.first_name} ${appointment.assigned_to.last_name}`
+    : undefined;
+  return (
+    <View style={{ gap: 8 }}>
+      <SectionTitle>Próxima cita</SectionTitle>
+      <AppointmentCard
+        petName={appointment.pet?.name ?? 'Mascota'}
+        dateLabel={formatDateTime(appointment.scheduled_at, appointment.time_zone)}
+        vetName={vet}
+        statusLabel={APPOINTMENT_STATUS_LABEL[appointment.status]}
+        statusVariant={appointment.status === 'confirmed' ? 'success' : 'warning'}
+        onPress={() =>
+          navigation.getParent<TabNav>()?.navigate('AppointmentsTab', {
+            screen: 'AppointmentDetail',
+            params: { id: appointment.id },
+            initial: false,
+          })
+        }
+      />
+    </View>
+  );
+}
+
+function PendingPayment({ payment }: { payment: Payment }) {
+  const navigation = useNavigation<Nav>();
+  return (
+    <View style={{ gap: 8 }}>
+      <SectionTitle>Pagos pendientes</SectionTitle>
+      <PaymentCard
+        concept={payment.pet_name ?? 'Pago'}
+        amountLabel={formatMoney(payment.amount, payment.currency)}
+        statusLabel={PAYMENT_STATUS_LABEL[payment.status]}
+        statusVariant="warning"
+        // `due_date` es un día de calendario: sin conversión de zona.
+        dueLabel={`Vence: ${formatDate(payment.due_date)}`}
+        onRegister={() => navigation.navigate('OwnerPaymentRegister', { id: payment.id })}
+      />
+    </View>
+  );
+}
+
+function QuickActions() {
+  const navigation = useNavigation<Nav>();
+  const goToTab = (tab: keyof OwnerTabParamList) =>
+    navigation.getParent<TabNav>()?.navigate(tab);
+  return (
+    <View style={{ gap: 8 }}>
+      <SectionTitle>Accesos rápidos</SectionTitle>
+      <ActionTileGrid
+        tiles={[
+          {
+            id: 'pets',
+            label: 'Mis mascotas',
+            icon: 'paw',
+            onPress: () => goToTab('PetsTab'),
+          },
+          {
+            id: 'appointments',
+            label: 'Citas',
+            icon: 'calendar',
+            onPress: () => goToTab('AppointmentsTab'),
+          },
+          {
+            id: 'history',
+            label: 'Historial',
+            icon: 'document-text',
+            onPress: () => navigation.navigate('OwnerMedicalHistory'),
+          },
+          {
+            id: 'payments',
+            label: 'Pagos',
+            icon: 'card',
+            onPress: () => navigation.navigate('OwnerPayments'),
+          },
+          {
+            id: 'sponsorships',
+            label: 'Apadrinamientos',
+            icon: 'heart',
+            onPress: () => navigation.navigate('OwnerSponsorships'),
+          },
+        ]}
+      />
+    </View>
+  );
+}
 
 export function OwnerDashboardScreen() {
   const navigation = useNavigation<Nav>();
@@ -45,14 +146,17 @@ export function OwnerDashboardScreen() {
   const pets = useAsync(() => listPets());
   const appointments = useAsync(() => listAppointments());
   const payments = useAsync(() => listPayments());
+  const { reload: reloadPets } = pets;
+  const { reload: reloadAppointments } = appointments;
+  const { reload: reloadPayments } = payments;
 
-  useFocusEffect(
-    useCallback(() => {
-      void pets.reload();
-      void appointments.reload();
-      void payments.reload();
-    }, [pets.reload, appointments.reload, payments.reload]),
-  );
+  const reloadAll = useCallback(() => {
+    void reloadPets();
+    void reloadAppointments();
+    void reloadPayments();
+  }, [reloadPets, reloadAppointments, reloadPayments]);
+
+  useFocusEffect(reloadAll);
 
   // O1 del plan: recordatorios locales (24 h y 2 h antes) de las citas ya
   // sincronizadas. Identificadores estables: reprogramar reemplaza, no duplica.
@@ -77,21 +181,11 @@ export function OwnerDashboardScreen() {
   useChangeAlerts(appointments.data, ownerAppointmentAlerts);
   useChangeAlerts(payments.data, ownerPaymentAlerts);
 
-  const upcoming = (appointments.data ?? []).filter((a) => UPCOMING.includes(a.status));
-  const nextAppointment = upcoming[0];
-  const pendingPayments = (payments.data ?? []).filter(
-    (p) => p.status === 'pending' || p.status === 'overdue',
-  );
-  const firstPending = pendingPayments[0];
-
-  const goToTab = (tab: keyof OwnerTabParamList) =>
-    navigation.getParent<BottomTabNavigationProp<OwnerTabParamList>>()?.navigate(tab);
-
-  const loading =
-    (pets.loading && pets.data === null) ||
-    (appointments.loading && appointments.data === null) ||
-    (payments.loading && payments.data === null);
-  const error = pets.error ?? appointments.error ?? payments.error;
+  const { upcoming } = splitAppointments(appointments.data ?? []);
+  const pendingPayments = payablePayments(payments.data ?? []);
+  const all = [pets, appointments, payments];
+  const loading = all.some((s) => s.loading && s.data === null);
+  const error = all.find((s) => s.error)?.error ?? null;
 
   return (
     <MobileShell
@@ -111,94 +205,19 @@ export function OwnerDashboardScreen() {
         subtitle="Bienvenido a Pawcare. Aquí tienes un resumen de tus mascotas."
       />
 
-      <AsyncBoundary
-        loading={loading}
-        error={error}
-        onRetry={() => {
-          void pets.reload();
-          void appointments.reload();
-          void payments.reload();
-        }}
-      >
+      <AsyncBoundary loading={loading} error={error} onRetry={reloadAll}>
         <View style={{ gap: 16 }}>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <StatCard value={(pets.data ?? []).length} label="Mascotas" />
             <StatCard value={upcoming.length} label="Citas próximas" />
             <StatCard value={pendingPayments.length} label="Pagos pendientes" />
           </View>
-
-          {nextAppointment ? (
-            <View style={{ gap: 8 }}>
-              <SectionTitle>Próxima cita</SectionTitle>
-              <AppointmentCard
-                petName={nextAppointment.pet?.name ?? 'Mascota'}
-                dateLabel={formatDateTime(
-                  nextAppointment.scheduled_at,
-                  nextAppointment.time_zone,
-                )}
-                vetName={
-                  nextAppointment.assigned_to
-                    ? `${nextAppointment.assigned_to.first_name} ${nextAppointment.assigned_to.last_name}`
-                    : undefined
-                }
-                statusLabel={APPOINTMENT_STATUS_LABEL[nextAppointment.status]}
-                statusVariant={
-                  nextAppointment.status === 'confirmed' ? 'success' : 'warning'
-                }
-                onPress={() => goToTab('AppointmentsTab')}
-              />
-            </View>
-          ) : null}
-
-          {firstPending ? (
-            <View style={{ gap: 8 }}>
-              <SectionTitle>Pagos pendientes</SectionTitle>
-              <PaymentCard
-                concept={firstPending.pet_name ?? 'Pago'}
-                amountLabel={formatMoney(firstPending.amount, firstPending.currency)}
-                statusLabel={PAYMENT_STATUS_LABEL[firstPending.status]}
-                statusVariant="warning"
-                dueLabel={`Vence: ${formatDateTime(firstPending.due_date)}`}
-                onRegister={() =>
-                  navigation.navigate('OwnerPaymentRegister', { id: firstPending.id })
-                }
-              />
-            </View>
-          ) : null}
+          {upcoming[0] ? <NextAppointment appointment={upcoming[0]} /> : null}
+          {pendingPayments[0] ? <PendingPayment payment={pendingPayments[0]} /> : null}
         </View>
       </AsyncBoundary>
 
-      <View style={{ gap: 8 }}>
-        <SectionTitle>Accesos rápidos</SectionTitle>
-        <ActionTileGrid
-          tiles={[
-            {
-              id: 'pets',
-              label: 'Mis mascotas',
-              icon: 'paw',
-              onPress: () => goToTab('PetsTab'),
-            },
-            {
-              id: 'appointments',
-              label: 'Citas',
-              icon: 'calendar',
-              onPress: () => goToTab('AppointmentsTab'),
-            },
-            {
-              id: 'history',
-              label: 'Historial',
-              icon: 'document-text',
-              onPress: () => navigation.navigate('OwnerMedicalHistory'),
-            },
-            {
-              id: 'payments',
-              label: 'Pagos',
-              icon: 'card',
-              onPress: () => navigation.navigate('OwnerPayments'),
-            },
-          ]}
-        />
-      </View>
+      <QuickActions />
     </MobileShell>
   );
 }

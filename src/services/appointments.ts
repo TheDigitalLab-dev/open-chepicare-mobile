@@ -3,9 +3,10 @@
  * Controllers JSON: owner_appointments, owner_services, owner_availability.
  * Requiere sesión de Owner (Bearer).
  */
-import type { Appointment, AvailableVet, Service } from '@/types/models';
+import type { Appointment, AvailableVet, Service, TimeSlot } from '@/types/models';
 import { learnClinicTimeZone, learnFromAppointments } from '@/utils/clinicTime';
 import { api } from './api';
+import { fetchAllPages } from './pagination';
 
 // Cada respuesta de cita trae la zona de la clínica (`time_zone`): es la única
 // fuente para el propietario, que no puede leer Configuración General.
@@ -22,6 +23,9 @@ export interface AppointmentInput {
   notes?: string;
 }
 
+/** Campos editables de una cita (`notes: ""` vacía las notas). */
+export type AppointmentUpdate = Partial<AppointmentInput>;
+
 export interface AppointmentFilters {
   status?: string;
   pet_id?: number;
@@ -31,15 +35,11 @@ export interface AppointmentFilters {
 export async function listAppointments(
   filters: AppointmentFilters = {},
 ): Promise<Appointment[]> {
-  const { appointments } = await api.get<{ appointments: Appointment[] }>(
+  // Todas las páginas: la lista separa próximas/pasadas en el teléfono.
+  const appointments = await fetchAllPages<'appointments', Appointment>(
     '/owner-appointments-list',
-    {
-      params: {
-        status: filters.status,
-        pet_id: filters.pet_id,
-        search: filters.search,
-      },
-    },
+    'appointments',
+    { status: filters.status, pet_id: filters.pet_id, search: filters.search },
   );
   return learnFromAppointments(appointments);
 }
@@ -54,6 +54,18 @@ export async function getAppointment(id: number): Promise<Appointment> {
 export async function createAppointment(input: AppointmentInput): Promise<Appointment> {
   const { appointment } = await api.post<{ appointment: Appointment }>(
     '/owner-appointments',
+    { appointment: input },
+  );
+  return learned(appointment);
+}
+
+/** Reprograma o edita una cita pendiente o confirmada (PATCH). */
+export async function updateAppointment(
+  id: number,
+  input: AppointmentUpdate,
+): Promise<Appointment> {
+  const { appointment } = await api.patch<{ appointment: Appointment }>(
+    `/owner-appointments/${id}`,
     { appointment: input },
   );
   return learned(appointment);
@@ -99,4 +111,20 @@ export async function getAvailableVets(date: string): Promise<AvailableVet[]> {
     { params: { date } },
   );
   return available_vets;
+}
+
+/**
+ * Horarios libres ("HH:MM") de un veterinario para un día y servicio. Los
+ * calcula el servidor: excluye horas pasadas, ocupadas y las que cruzan
+ * ausencias o cierres, en todos los turnos del veterinario.
+ */
+export async function getAvailableTimeSlots(
+  date: string,
+  vetId: number,
+  serviceId: number,
+): Promise<TimeSlot[]> {
+  const { time_slots } = await api.get<{ time_slots: TimeSlot[] }>('/owner-time-slots', {
+    params: { date, vet_id: vetId, service_id: serviceId },
+  });
+  return time_slots;
 }

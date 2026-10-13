@@ -9,6 +9,7 @@ import type { AdminMoreStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
 import { getAdminConsultation } from '@/services/admin';
 import type { LabExam } from '@/types/models';
+import { formatLabResults } from '@/utils/labResults';
 
 type Rt = RouteProp<AdminMoreStackParamList, 'AdminLabExams'>;
 
@@ -16,11 +17,13 @@ const STATUS_LABEL: Record<string, string> = {
   pending: 'Pendiente',
   in_progress: 'En proceso',
   completed: 'Completado',
+  cancelled: 'Cancelado',
 };
 const STATUS_VARIANT: Record<string, BadgeVariant> = {
   pending: 'warning',
   in_progress: 'info',
   completed: 'success',
+  cancelled: 'outline',
 };
 
 export function AdminLabExamsScreen() {
@@ -37,7 +40,7 @@ export function AdminLabExamsScreen() {
     ({ item: e }: ListRenderItemInfo<LabExam>) => (
       <ListRow
         title={e.exam_name}
-        subtitle={e.results ?? undefined}
+        subtitle={formatLabResults(e.results)}
         showChevron={false}
         trailing={() => (
           <Badge

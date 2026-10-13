@@ -84,9 +84,10 @@ function PetFormBody({ initial }: { initial?: Pet }) {
       name: form.name.trim(),
       species: form.species,
       sex: form.sex,
-      breed: form.breed.trim() || undefined,
-      birth_date: form.birth_date.trim() || undefined,
-      distinctive_features: form.distinctive_features.trim() || undefined,
+      // Vacío → null: al editar, borra el valor anterior en el servidor.
+      breed: form.breed.trim() || null,
+      birth_date: form.birth_date.trim() || null,
+      distinctive_features: form.distinctive_features.trim() || null,
     };
 
     try {

@@ -14,6 +14,7 @@ import * as authService from '@/services/auth';
 import * as profileService from '@/services/profile';
 import * as secureStore from '@/utils/secureStore';
 import { ApiError } from '@/types/api';
+import { resetServerUrl, setServerUrl } from '@/config/serverConfig';
 
 const PASSWORD = 'password123';
 const NEW_PASSWORD = 'password456';
@@ -143,5 +144,49 @@ describe('profileService.changePassword', () => {
     ).rejects.toBeInstanceOf(ApiError);
 
     expect(await snapshotTokens()).toEqual(before);
+  }, 30000);
+});
+
+describe('authService.logout', () => {
+  const BASE = () => process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
+
+  async function refreshStatus(refresh: string): Promise<number> {
+    const res = await fetch(`${BASE()}/auth/mobile/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ refresh_token: refresh }),
+    });
+    return res.status;
+  }
+
+  it('con el access vencido renueva y revoca la sesión en el servidor', async () => {
+    await registerDisposableOwner('logout');
+    const { refresh: original } = await snapshotTokens();
+    await secureStore.setTokens({ access: 'token-vencido', refresh: original });
+    const stored = jest.spyOn(secureStore, 'setTokens');
+
+    await expect(authService.logout()).resolves.toBeUndefined();
+
+    expect(await secureStore.getAccessToken()).toBeNull();
+    expect(await secureStore.getRefreshToken()).toBeNull();
+    // El refresh original se rotó y el nuevo quedó revocado por el logout.
+    const rotated = stored.mock.calls.at(-1)?.[0].refresh;
+    stored.mockRestore();
+    expect(rotated).toEqual(expect.any(String));
+    expect(rotated).not.toBe(original);
+    expect(await refreshStatus(original)).toBe(401);
+    expect(await refreshStatus(rotated!)).toBe(401);
+  }, 30000);
+
+  it('sin conexión cierra la sesión local igualmente (no lanza)', async () => {
+    await registerDisposableOwner('logoutnet');
+    await setServerUrl('http://127.0.0.1:9');
+    try {
+      await expect(authService.logout()).resolves.toBeUndefined();
+    } finally {
+      await resetServerUrl();
+    }
+    expect(await secureStore.getAccessToken()).toBeNull();
+    expect(await secureStore.getRefreshToken()).toBeNull();
   }, 30000);
 });

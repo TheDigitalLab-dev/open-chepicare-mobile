@@ -12,8 +12,9 @@ export interface ProfileInput {
   email?: string;
   username?: string;
   identity_document?: string;
-  address?: string;
-  phone?: string;
+  /** `null` vacía el campo. */
+  address?: string | null;
+  phone?: string | null;
   sex?: string;
   phone_type?: string;
 }

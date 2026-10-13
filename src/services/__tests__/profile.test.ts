@@ -66,3 +66,31 @@ describe('profileService.deleteAccount', () => {
     });
   }, 30000);
 });
+
+describe('profileService: vaciar campos opcionales', () => {
+  it('teléfono y dirección en null se borran (cuenta desechable)', async () => {
+    const suffix = `${Date.now()}`.slice(-9);
+    await authService.register({
+      first_name: 'QA',
+      last_name: 'Vaciar',
+      identity_document: `V${suffix}`,
+      email: `qa-vaciar-${suffix}@example.com`,
+      username: `qavaciar${suffix}`,
+      password: 'password123',
+      password_confirmation: 'password123',
+      address: 'Calle 1',
+      sex: 'other',
+      phone: '04140000000',
+      phone_type: 'regular',
+    });
+    try {
+      await profileService.updateProfile({ phone: null, address: null });
+      const me = await authService.fetchCurrentUser();
+      expect('phone' in me ? (me.phone ?? null) : null).toBeNull();
+      expect('address' in me ? (me.address ?? null) : null).toBeNull();
+    } finally {
+      await profileService.deleteAccount();
+      await authService.login('owner1@example.com', 'password123');
+    }
+  });
+});

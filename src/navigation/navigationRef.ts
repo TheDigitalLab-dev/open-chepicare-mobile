@@ -4,7 +4,7 @@
  */
 import { createNavigationContainerRef } from '@react-navigation/native';
 
-import type { AssistantPushTarget } from '@/services/pushNotifications';
+import type { AssistantPushTarget, OwnerPushTarget } from '@/services/pushNotifications';
 
 export const navigationRef = createNavigationContainerRef();
 
@@ -40,4 +40,24 @@ export function openAssistantTarget(target: AssistantPushTarget, attempts = 25):
       });
       return;
   }
+}
+
+/**
+ * Abre el destino de una push del propietario (árbol `OwnerTabs`). Como la del
+ * personal, reintenta mientras la navegación no esté montada.
+ */
+export function openOwnerTarget(target: OwnerPushTarget, attempts = 25): void {
+  if (!navigationRef.isReady()) {
+    if (attempts > 0) setTimeout(() => openOwnerTarget(target, attempts - 1), 200);
+    return;
+  }
+  const navigate = navigationRef.navigate as unknown as (
+    name: string,
+    params: Record<string, unknown>,
+  ) => void;
+  navigate(target.tab, {
+    screen: target.screen,
+    params: 'params' in target ? target.params : undefined,
+    initial: false,
+  });
 }

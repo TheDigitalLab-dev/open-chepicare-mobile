@@ -52,10 +52,11 @@ export function OwnerMedicalHistoryScreen() {
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
   const { data, loading, error, reload } = useAsync(loadHistory);
 
-  const goToPets = () =>
+  // Abre la ficha de ESA mascota en la pestaña Mascotas (antes, la lista).
+  const openPet = (id: number) =>
     navigation
       .getParent<BottomTabNavigationProp<OwnerTabParamList>>()
-      ?.navigate('PetsTab');
+      ?.navigate('PetsTab', { screen: 'PetDetail', params: { id }, initial: false });
 
   return (
     <MobileShell
@@ -87,7 +88,7 @@ export function OwnerMedicalHistoryScreen() {
                       fallback={SPECIES_EMOJI[pet.species]}
                     />
                   )}
-                  onPress={goToPets}
+                  onPress={() => openPet(pet.id)}
                 />
               ))}
             </View>

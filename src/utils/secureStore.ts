@@ -55,3 +55,21 @@ export async function setPushToken(token: string): Promise<void> {
 export async function clearPushToken(): Promise<void> {
   await SecureStore.deleteItemAsync(PUSH_TOKEN_KEY);
 }
+
+/**
+ * Dueño de los datos locales (SQLite, alarmas) que hay en el teléfono:
+ * "Owner:12" / "User:3". Si inicia sesión otra cuenta, se purgan antes.
+ */
+const LOCAL_DATA_OWNER_KEY = 'pawcare.local_data_owner';
+
+export async function getLocalDataOwner(): Promise<string | null> {
+  return SecureStore.getItemAsync(LOCAL_DATA_OWNER_KEY);
+}
+
+export async function setLocalDataOwner(owner: string): Promise<void> {
+  await SecureStore.setItemAsync(LOCAL_DATA_OWNER_KEY, owner);
+}
+
+export async function clearLocalDataOwner(): Promise<void> {
+  await SecureStore.deleteItemAsync(LOCAL_DATA_OWNER_KEY);
+}

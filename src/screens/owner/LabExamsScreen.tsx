@@ -11,16 +11,19 @@ import { useChangeAlerts } from '@/hooks/useChangeAlerts';
 import { labExamAlerts } from '@/services/changeAlertConfigs';
 import { listConsultations } from '@/services/medical';
 import type { LabExam } from '@/types/models';
+import { formatLabResults } from '@/utils/labResults';
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Pendiente',
   in_progress: 'En proceso',
   completed: 'Completado',
+  cancelled: 'Cancelado',
 };
 const STATUS_VARIANT: Record<string, BadgeVariant> = {
   pending: 'warning',
   in_progress: 'info',
   completed: 'success',
+  cancelled: 'outline',
 };
 
 export function LabExamsScreen() {
@@ -41,7 +44,7 @@ export function LabExamsScreen() {
     ({ item: e }: ListRenderItemInfo<LabExam>) => (
       <ListRow
         title={e.exam_name}
-        subtitle={e.results ?? undefined}
+        subtitle={formatLabResults(e.results)}
         showChevron={false}
         trailing={() => (
           <Badge

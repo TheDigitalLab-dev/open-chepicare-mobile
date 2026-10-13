@@ -11,11 +11,10 @@
  *  - login/register/refresh y `/me` traen `clinic` (zona y formatos de la
  *    clínica): se aplica y se guarda al recibirla (ver `clinicConfig`).
  */
-import type { ApiUser, AuthEnvelope } from '@/types/auth';
+import type { ApiUser, AuthEnvelope, OwnerRegistration } from '@/types/auth';
 import type { AuthUser, ClinicConfig, Owner, StaffUser } from '@/types/models';
 import { ApiError, type AuthTokenPair } from '@/types/api';
 import * as secureStore from '@/utils/secureStore';
-import type { OwnerRegistration } from '@/screens/auth/RegisterScreen';
 import { api, registerSessionRefresher, registerTokenProvider } from './api';
 import { applyClinicConfig } from './clinicConfig';
 
@@ -87,17 +86,41 @@ export async function resetPassword(
   );
 }
 
+/**
+ * Cierra la sesión: revoca el refresh en el servidor y SIEMPRE borra los tokens
+ * locales. Nunca lanza: sin red o con el servidor caído, el teléfono queda
+ * igualmente fuera (el refresh vence solo en el servidor).
+ */
 export async function logout(): Promise<void> {
-  const refresh = await secureStore.getRefreshToken();
   try {
-    // El refresh a revocar viaja en el CUERPO (los query params quedan en logs
-    // de servidores/proxies). `skipRefresh` evita bucles si el access expiró.
-    await api.delete(`${BASE}/logout`, {
-      body: refresh ? { refresh_token: refresh } : undefined,
-      skipRefresh: true,
-    });
+    await revokeSessionOnServer();
+  } catch {
+    // Sin red / 5xx / sesión ya revocada: la salida local no depende de ello.
   } finally {
     await secureStore.clearTokens();
+  }
+}
+
+async function revokeSessionOnServer(): Promise<void> {
+  // El refresh a revocar viaja en el CUERPO (los query params quedan en logs
+  // de servidores/proxies). `skipRefresh`: el reintento se controla aquí para
+  // revocar el refresh NUEVO si hubo que renovar.
+  const send = async () => {
+    const refresh = await secureStore.getRefreshToken();
+    if (!refresh) return;
+    await api.delete(`${BASE}/logout`, {
+      body: { refresh_token: refresh },
+      skipRefresh: true,
+    });
+  };
+  try {
+    await send();
+  } catch (err) {
+    // `/logout` exige un access válido (dura ~30 min): si venció, se renueva
+    // (rota el refresh) y se revoca el par recién emitido.
+    if (!(err instanceof ApiError) || err.kind !== 'unauthorized') throw err;
+    if (!(await refreshSession())) throw err;
+    await send();
   }
 }
 

@@ -3,7 +3,25 @@
  * registro, refresh y canje del QR de emparejamiento comparten el sobre).
  */
 import type { AuthTokenPair } from './api';
-import type { ClinicConfig, StaffUser } from './models';
+import type { ClinicConfig, PhoneType, StaffUser } from './models';
+
+export type { PhoneType };
+export type OwnerSex = 'male' | 'female' | 'other';
+
+/** Payload de `POST /auth/mobile/register` (`owner_params`). */
+export interface OwnerRegistration {
+  first_name: string;
+  last_name: string;
+  identity_document: string;
+  email: string;
+  username: string;
+  password: string;
+  password_confirmation: string;
+  address: string;
+  sex: OwnerSex;
+  phone: string;
+  phone_type: PhoneType;
+}
 
 /** Usuario tal como lo serializa el backend (`as_json` + `user_type`). */
 export interface ApiUser extends Record<string, unknown> {

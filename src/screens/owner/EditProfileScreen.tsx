@@ -8,54 +8,81 @@ import type { OwnerProfileStackParamList } from '@/navigation/types';
 import { useAuth } from '@/hooks/useAuth';
 import { updateProfile } from '@/services/profile';
 import { ApiError } from '@/types/api';
+import type { AuthUser } from '@/types/models';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Nav = NativeStackNavigationProp<OwnerProfileStackParamList>;
+
+interface ProfileForm {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+}
+
+function initialForm(user: AuthUser | null): ProfileForm {
+  const owner = user?.type === 'Owner' ? user : null;
+  return {
+    first_name: user?.first_name ?? '',
+    last_name: user?.last_name ?? '',
+    email: user?.email ?? '',
+    phone: owner?.phone ?? '',
+    address: owner?.address ?? '',
+  };
+}
+
+function emailError(email: string): string | undefined {
+  return email.length > 0 && !EMAIL_RE.test(email.trim())
+    ? 'Correo inválido.'
+    : undefined;
+}
+
+function isValid(form: ProfileForm): boolean {
+  return (
+    form.first_name.trim().length > 0 &&
+    form.last_name.trim().length > 0 &&
+    EMAIL_RE.test(form.email.trim())
+  );
+}
 
 export function EditProfileScreen() {
   const navigation = useNavigation<Nav>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
   const { user, refreshUser } = useAuth();
 
-  const [form, setForm] = useState({
-    first_name: user?.first_name ?? '',
-    last_name: user?.last_name ?? '',
-    email: user?.email ?? '',
-    phone: (user && 'phone' in user ? user.phone : '') ?? '',
-    address: (user && 'address' in user ? user.address : '') ?? '',
-  });
-  const set = <K extends keyof typeof form>(key: K, value: string) =>
+  const [form, setForm] = useState(() => initialForm(user));
+  const set = <K extends keyof ProfileForm>(key: K, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>();
 
-  const emailValid = EMAIL_RE.test(form.email.trim());
-  const canSubmit =
-    form.first_name.trim().length > 0 &&
-    form.last_name.trim().length > 0 &&
-    emailValid &&
-    !submitting;
+  const canSubmit = isValid(form) && !submitting;
 
   const onSubmit = async () => {
     setSubmitting(true);
     setError(undefined);
+    let saved = false;
     try {
       await updateProfile({
         first_name: form.first_name.trim(),
         last_name: form.last_name.trim(),
         email: form.email.trim(),
-        phone: form.phone.trim() || undefined,
-        address: form.address.trim() || undefined,
+        // Vacío → null: borra el valor anterior en el servidor.
+        phone: form.phone.trim() || null,
+        address: form.address.trim() || null,
       });
-      await refreshUser();
-      if (back) back();
+      saved = true;
+      // El perfil ya se guardó: si releerlo falla, no es "no se pudo actualizar".
+      await refreshUser().catch(() => undefined);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'No se pudo actualizar el perfil.');
     } finally {
       setSubmitting(false);
     }
+    if (saved && back) back();
   };
 
   return (
@@ -68,12 +95,14 @@ export function EditProfileScreen() {
 
       <TextField
         label="Nombre"
+        keyboardType="default"
         value={form.first_name}
         onChangeText={(v) => set('first_name', v)}
         autoCapitalize="words"
       />
       <TextField
         label="Apellido"
+        keyboardType="default"
         value={form.last_name}
         onChangeText={(v) => set('last_name', v)}
         autoCapitalize="words"
@@ -86,7 +115,7 @@ export function EditProfileScreen() {
         autoCorrect={false}
         keyboardType="email-address"
         textContentType="emailAddress"
-        error={form.email.length > 0 && !emailValid ? 'Correo inválido.' : undefined}
+        error={emailError(form.email)}
       />
       <TextField
         label="Teléfono"
@@ -96,6 +125,7 @@ export function EditProfileScreen() {
       />
       <TextField
         label="Dirección"
+        keyboardType="default"
         value={form.address}
         onChangeText={(v) => set('address', v)}
       />

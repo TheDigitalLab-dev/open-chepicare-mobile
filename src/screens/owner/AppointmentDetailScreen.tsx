@@ -1,12 +1,28 @@
-import { useState } from 'react';
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { useCallback, useRef, useState } from 'react';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+  type RouteProp,
+} from '@react-navigation/native';
 import { Alert, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { useTheme } from '@/theme';
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary, Badge, Button, Card, type BadgeVariant } from '@/components/ui';
-import type { OwnerAppointmentsStackParamList } from '@/navigation/types';
+import {
+  AsyncBoundary,
+  Badge,
+  Button,
+  Card,
+  SectionTitle,
+  type BadgeVariant,
+} from '@/components/ui';
+import type {
+  OwnerAppointmentsStackParamList,
+  OwnerTabParamList,
+} from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
 import {
   cancelAppointment,
@@ -14,11 +30,13 @@ import {
   getAppointment,
 } from '@/services/appointments';
 import { ApiError } from '@/types/api';
-import { formatDateTime } from '@/utils/format';
+import { formatDate, formatDateTime, formatMoney } from '@/utils/format';
 import {
   APPOINTMENT_PAYMENT_STATUS_LABEL,
   APPOINTMENT_STATUS_LABEL,
+  PAYMENT_STATUS_LABEL,
   type Appointment,
+  type AppointmentPayment,
   type AppointmentStatus,
 } from '@/types/models';
 
@@ -32,6 +50,9 @@ const STATUS_VARIANT: Record<AppointmentStatus, BadgeVariant> = {
   cancelled: 'destructive',
   rescheduled: 'warning',
 };
+
+/** Pagos que el propietario puede registrar (el backend rechaza el resto). */
+const PAYABLE = ['pending', 'overdue'];
 
 function Row({ label, value }: { label: string; value: string }) {
   const { colors } = useTheme();
@@ -53,6 +74,40 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+function PaymentRow({ payment }: { payment: AppointmentPayment }) {
+  const { colors } = useTheme();
+  const navigation = useNavigation<Nav>();
+  // Registrar el pago vive en la pestaña Inicio.
+  const pay = () =>
+    navigation
+      .getParent<BottomTabNavigationProp<OwnerTabParamList>>()
+      ?.navigate('HomeTab', {
+        screen: 'OwnerPaymentRegister',
+        params: { id: payment.id },
+      });
+  return (
+    <Card style={{ gap: 8 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: colors.foreground }}>
+          {formatMoney(payment.amount, payment.currency)}
+        </Text>
+        <Badge
+          label={PAYMENT_STATUS_LABEL[payment.status]}
+          variant={payment.status === 'completed' ? 'success' : 'warning'}
+        />
+      </View>
+      <Text style={{ fontSize: 13, color: colors.mutedForeground }}>
+        {payment.status === 'completed'
+          ? `Pagado: ${formatDate(payment.paid_at)}`
+          : `Vence: ${formatDate(payment.due_date)}`}
+      </Text>
+      {PAYABLE.includes(payment.status) ? (
+        <Button label="Registrar pago" variant="outline" fullWidth onPress={pay} />
+      ) : null}
+    </Card>
+  );
+}
+
 function Details({
   appointment,
   onChanged,
@@ -61,6 +116,7 @@ function Details({
   onChanged: () => Promise<void>;
 }) {
   const { colors } = useTheme();
+  const navigation = useNavigation<Nav>();
   const [busy, setBusy] = useState(false);
   const status = appointment.status;
   const active = status === 'pending' || status === 'confirmed';
@@ -93,7 +149,10 @@ function Details({
       {
         text: 'Sí, cancelar',
         style: 'destructive',
-        onPress: () => void run(() => cancelAppointment(appointment.id)),
+        onPress: () =>
+          void run(() =>
+            cancelAppointment(appointment.id, 'Cancelada por el propietario'),
+          ),
       },
     ]);
   };
@@ -119,6 +178,9 @@ function Details({
           label="Fecha"
           value={formatDateTime(appointment.scheduled_at, appointment.time_zone)}
         />
+        {appointment.cancellation_reason ? (
+          <Row label="Motivo de cancelación" value={appointment.cancellation_reason} />
+        ) : null}
       </Card>
 
       {appointment.notes ? (
@@ -127,6 +189,15 @@ function Details({
             {appointment.notes}
           </Text>
         </Card>
+      ) : null}
+
+      {(appointment.payments ?? []).length > 0 ? (
+        <View style={{ gap: 8 }}>
+          <SectionTitle>Pagos</SectionTitle>
+          {(appointment.payments ?? []).map((p) => (
+            <PaymentRow key={p.id} payment={p} />
+          ))}
+        </View>
       ) : null}
 
       {active ? (
@@ -139,6 +210,15 @@ function Details({
               onPress={() => void run(() => confirmAppointment(appointment.id))}
             />
           ) : null}
+          <Button
+            label="Reprogramar"
+            variant="outline"
+            fullWidth
+            disabled={busy}
+            onPress={() =>
+              navigation.navigate('AppointmentWizard', { id: appointment.id })
+            }
+          />
           <Button
             label="Cancelar cita"
             variant="destructive"
@@ -160,6 +240,16 @@ export function AppointmentDetailScreen() {
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
   const { data, loading, error, reload } = useAsync(() => getAppointment(id));
+
+  // Al volver de reprogramar o de registrar el pago, se muestra lo actual.
+  // (La primera vez ya carga useAsync.)
+  const firstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (firstFocus.current) firstFocus.current = false;
+      else void reload();
+    }, [reload]),
+  );
 
   return (
     <MobileShell
