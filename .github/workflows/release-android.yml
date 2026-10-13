@@ -3,7 +3,7 @@
 # compila. Publica un GitHub Release con el APK adjunto en dos casos:
 #   - Cada merge (push) a `main` → release `build-<n>`, marcado como el último,
 #     así el APK más reciente siempre se descarga desde
-#     https://github.com/TheDigitalLab-dev/pawcare-mobile/releases/latest
+#     https://github.com/TheDigitalLab-dev/open-chepicare-mobile/releases/latest
 #   - Un tag `v*` → release con ese nombre de versión.
 # También se puede lanzar a mano (workflow_dispatch) para probar el pipeline;
 # en ese caso solo deja el APK como artifact del workflow.
@@ -25,7 +25,7 @@
 # El versionCode ahora es manual: subirlo en app.json (expo.android.versionCode)
 # antes de cada release.
 #
-# Los tests de integración NO corren aquí: requieren el backend de ../pawcare-web
+# Los tests de integración NO corren aquí: requieren el backend de ../open-chepicare-web
 # vivo y sembrado; son compuerta local pre-commit (ver AGENTS.md). CI valida
 # typecheck + lint + formato antes de compilar.
 #
@@ -109,7 +109,7 @@ jobs:
         run: cd android && ./gradlew assembleRelease
 
       - name: Renombrar APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk pawcare-mobile.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk open-chepicare-mobile.apk
 
       - name: Firmar con el keystore de release
         if: env.KEYSTORE_BASE64 != ''
@@ -127,8 +127,8 @@ jobs:
             --ks-pass "pass:$KEYSTORE_PASSWORD" \
             --ks-key-alias "$KEY_ALIAS" \
             --key-pass "pass:$KEY_PASSWORD" \
-            pawcare-mobile.apk
-          "$BUILD_TOOLS/apksigner" verify --print-certs pawcare-mobile.apk
+            open-chepicare-mobile.apk
+          "$BUILD_TOOLS/apksigner" verify --print-certs open-chepicare-mobile.apk
           rm -f release.keystore
 
       - name: Avisar si el APK va con firma debug
@@ -138,8 +138,8 @@ jobs:
       - name: Subir APK como artifact del workflow
         uses: actions/upload-artifact@v4
         with:
-          name: pawcare-mobile-android
-          path: pawcare-mobile.apk
+          name: open-chepicare-mobile-android
+          path: open-chepicare-mobile.apk
           if-no-files-found: error
 
       - name: Publicar GitHub Release con el APK
@@ -147,7 +147,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" pawcare-mobile.apk \
+          gh release create "${GITHUB_REF_NAME}" open-chepicare-mobile.apk \
             --title "Pawcare móvil ${GITHUB_REF_NAME}" \
             --generate-notes
 
@@ -159,7 +159,7 @@ jobs:
         # Los tags creados con GITHUB_TOKEN no disparan otro workflow, así que
         # esto no entra en bucle con el trigger de tags `v*`.
         run: |
-          gh release create "$TAG" pawcare-mobile.apk \
+          gh release create "$TAG" open-chepicare-mobile.apk \
             --target "$GITHUB_SHA" \
             --title "Pawcare móvil ${TAG} (main @ ${GITHUB_SHA::7})" \
             --generate-notes \

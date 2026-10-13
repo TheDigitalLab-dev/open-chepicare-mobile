@@ -1,5 +1,5 @@
 /**
- * Servicio de Mascotas (owner) contra el backend real `../pawcare-web`.
+ * Servicio de Mascotas (owner) contra el backend real `../open-chepicare-web`.
  * Endpoints (PetsController, JSON): GET/POST `/pets`, GET/PATCH/DELETE `/pets/:id`
  * y POST/DELETE `/pets/:id/photo`. Requiere sesión de Owner (Bearer). Espejo
  * de `pet_json` (`photo_url` relativa al servidor).

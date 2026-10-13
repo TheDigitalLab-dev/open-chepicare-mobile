@@ -1,7 +1,7 @@
 /**
  * Jest (jest-expo). Filosofía de pruebas del repo (ver AGENTS.md):
  *  - TDD para hooks y lógica de negocio.
- *  - Integración REAL contra el backend en ejecución (`../pawcare-web`); NADA de
+ *  - Integración REAL contra el backend en ejecución (`../open-chepicare-web`); NADA de
  *    respuestas de API mockeadas ni data falsa.
  *  - Solo se sustituyen shims de plataforma inevitables (SecureStore,
  *    AsyncStorage), porque no existen en el entorno Node de Jest.

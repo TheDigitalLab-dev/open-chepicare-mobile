@@ -1,5 +1,5 @@
 /**
- * Integración REAL de los endpoints públicos (sin auth) contra `../pawcare-web`.
+ * Integración REAL de los endpoints públicos (sin auth) contra `../open-chepicare-web`.
  */
 import * as publicService from '@/services/public';
 

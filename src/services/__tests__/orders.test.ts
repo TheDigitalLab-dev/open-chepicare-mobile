@@ -1,5 +1,5 @@
 /**
- * Integración REAL del servicio de pedidos de tienda contra `../pawcare-web`.
+ * Integración REAL del servicio de pedidos de tienda contra `../open-chepicare-web`.
  * Los pedidos públicos no requieren autenticación.
  */
 import * as ordersService from '@/services/orders';

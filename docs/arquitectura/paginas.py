@@ -92,7 +92,7 @@ INDEX = (
             corepack enable
             yarn install
 
-            # 2) Backend en marcha (repo ../pawcare-web) en el puerto 3000
+            # 2) Backend en marcha (repo ../open-chepicare-web) en el puerto 3000
             #    El emulador Android lo alcanza vía http://10.0.2.2:3000 (default de dev).
 
             # 3) Arrancar Metro / Expo

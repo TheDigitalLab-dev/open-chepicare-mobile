@@ -1,5 +1,5 @@
 /**
- * Integración REAL del selector de servidor contra `../pawcare-web`.
+ * Integración REAL del selector de servidor contra `../open-chepicare-web`.
  * El health check golpea `<url>/up` (health check de Rails).
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';

@@ -3,7 +3,7 @@
 App móvil **Android** (Expo / React Native) para una clínica veterinaria a
 domicilio. Una sola app sirve a tres audiencias — **público** (sin sesión),
 **dueño** de mascotas y **staff** clínico — y **todas** las pantallas consumen
-datos reales del backend Rails [`pawcare-web`](https://github.com/TheDigitalLab-dev/pawcare-web) (clon hermano en `../pawcare-web`) a través de su servicio de
+datos reales del backend Rails [`open-chepicare-web`](https://github.com/TheDigitalLab-dev/open-chepicare-web) (clon hermano en `../open-chepicare-web`) a través de su servicio de
 dominio (sin datos mockeados).
 
 > **Open source y self-hosted:** la URL del backend se elige en tiempo de
@@ -36,16 +36,23 @@ testing.
 
 - **Node ≥ 20** y **Yarn 4** (vía Corepack).
 - **Android**: un emulador (AVD) o un dispositivo con **Expo Go**.
-- El backend [`pawcare-web`](https://github.com/TheDigitalLab-dev/pawcare-web) (clon hermano en `../pawcare-web`) corriendo (por defecto en
+- El backend [`open-chepicare-web`](https://github.com/TheDigitalLab-dev/open-chepicare-web) (clon hermano en `../open-chepicare-web`) corriendo (por defecto en
   `http://localhost:3000`).
 
 ## 🚀 Instalación y arranque
+
+Los repos se renombraron (antes `pawcare-mobile` y `pawcare-web`). El clon hermano
+del backend se llama `open-chepicare-web`, en la misma carpeta que este:
+
+```bash
+git clone https://github.com/TheDigitalLab-dev/open-chepicare-web.git ../open-chepicare-web
+```
 
 ```bash
 corepack enable
 yarn install
 
-# 1) Levanta el backend (repo ../pawcare-web) en el puerto 3000.
+# 1) Levanta el backend (repo ../open-chepicare-web) en el puerto 3000.
 #    El emulador Android alcanza el localhost del host en 10.0.2.2,
 #    por eso el valor de desarrollo por defecto es http://10.0.2.2:3000.
 
@@ -64,7 +71,7 @@ Para cambiar de servidor sin recompilar: en la app, pantalla de bienvenida →
 | Staff  | `admin@pawcare.com`    | `password123` |
 | Vet    | `vet@pawcare.com`      | `password123` |
 
-Las crea `bin/rails db:seed` en pawcare-web. Si tu BD es anterior y el admin aún
+Las crea `bin/rails db:seed` en open-chepicare-web. Si tu BD es anterior y el admin aún
 tiene la contraseña vieja del seed, vuelve a correr `db:seed` (fuera de
 producción la actualiza a `password123`).
 
@@ -85,7 +92,7 @@ sesión.
 
 ## 🤖 Asistente IA, emparejamiento QR y push
 
-Requiere el backend con el asistente IA (pawcare-web, PR #59). Guía de uso:
+Requiere el backend con el asistente IA (open-chepicare-web, PR #59). Guía de uso:
 [docs/user-manual/asistente-ia.md](docs/user-manual/asistente-ia.md).
 
 | Pieza | Dónde |

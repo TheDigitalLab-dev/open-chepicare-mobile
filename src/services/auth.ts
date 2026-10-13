@@ -1,7 +1,7 @@
 /**
  * Servicio de autenticación (F4) contra la superficie Bearer del backend:
  * `/auth/mobile/*` (separada del flujo web por cookies). Ver
- * `../pawcare-web/docs/mobile-auth-plan/auth.html`.
+ * `../open-chepicare-web/docs/mobile-auth-plan/auth.html`.
  *
  * Contrato:
  *  - login/register/refresh devuelven `{ success, user, auth: { access_token,

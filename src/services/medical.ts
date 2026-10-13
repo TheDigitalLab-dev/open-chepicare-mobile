@@ -1,5 +1,5 @@
 /**
- * Servicio de Registros Médicos del propietario contra `../pawcare-web`.
+ * Servicio de Registros Médicos del propietario contra `../open-chepicare-web`.
  * Controllers JSON: owner_medical_profiles, owner_consultations,
  * owner_vaccinations, owner_dewormings, owner_medical_reports,
  * owner_lab_exams y owner_prescription_items.

@@ -1,5 +1,5 @@
 /**
- * Servicio de Apadrinamientos (owner) contra el backend real `../pawcare-web`.
+ * Servicio de Apadrinamientos (owner) contra el backend real `../open-chepicare-web`.
  * Controller JSON: sponsorships (index/show/create/update). Requiere Owner (Bearer).
  */
 import type { Sponsorship, SponsorshipRecurrence } from '@/types/models';

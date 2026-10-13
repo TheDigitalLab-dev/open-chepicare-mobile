@@ -1,5 +1,5 @@
 /**
- * Integración REAL del servicio de auth contra el backend `../pawcare-web`
+ * Integración REAL del servicio de auth contra el backend `../open-chepicare-web`
  * (`/auth/mobile/*`). No hay respuestas mockeadas: cada test pega al servidor
  * en ejecución y usa las credenciales sembradas (`db/seeds`).
  *

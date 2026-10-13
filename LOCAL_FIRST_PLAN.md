@@ -3,7 +3,7 @@
 > Estado: **propuesta** (no implementado). Objetivo: que los registros clínicos
 > creados en el móvil (consultas, historias, **pesaje**, vacunas,
 > desparasitaciones, reportes) se guarden **primero en el dispositivo** y
-> funcionen sin conexión, y se **sincronicen** con `../pawcare-web` cuando haya
+> funcionen sin conexión, y se **sincronicen** con `../open-chepicare-web` cuando haya
 > internet — con opción de sincronizar usando datos móviles.
 
 ## 1. Contexto y estado actual
@@ -45,7 +45,7 @@ SQLite local (expo-sqlite)  src/db/*                 ← nueva capa
 Motor de sincronización  src/sync/*                  ← nueva capa
    │  drena el outbox (push) + refresca desde el server (pull)
    ▼
-src/services/api.ts (sin cambios de contrato) → ../pawcare-web
+src/services/api.ts (sin cambios de contrato) → ../open-chepicare-web
    ▲
 Conectividad  src/sync/connectivity.ts (NetInfo) — dispara sync al recuperar red
 ```
@@ -117,7 +117,7 @@ así el historial de peso es consultable offline. Requiere endpoint backend (ver
 - Al abrir la app y al entrar a una pantalla clínica (pull incremental).
 - Manualmente (botón "Sincronizar ahora").
 
-## 7. Cambios necesarios en el backend `../pawcare-web`
+## 7. Cambios necesarios en el backend `../open-chepicare-web`
 
 1. **Aceptar `client_uuid`** en los `create` clínicos (consultas, vacunas,
    desparasitaciones, pesajes) y **deduplicar** por `(client_uuid)` →
@@ -178,5 +178,5 @@ ejecución, nada mockeado salvo shims nativos):
 
 Un veterinario en una zona sin señal puede: registrar consultas, pesajes, vacunas y
 notas; ver ese historial de inmediato; y al volver la conexión (Wi-Fi o, si lo
-autoriza, datos móviles) todo se sincroniza con `../pawcare-web` **sin duplicados ni
+autoriza, datos móviles) todo se sincroniza con `../open-chepicare-web` **sin duplicados ni
 pérdida**, con el estado visible en todo momento.

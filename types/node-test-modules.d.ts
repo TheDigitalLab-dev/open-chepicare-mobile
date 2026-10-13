@@ -17,6 +17,7 @@ declare module 'node:fs/promises' {
     options?: { recursive?: boolean; force?: boolean },
   ): Promise<void>;
   export function stat(path: string): Promise<{ mtimeMs: number }>;
+  export function readFile(path: string, encoding: 'utf8'): Promise<string>;
 }
 
 declare module 'node:path' {

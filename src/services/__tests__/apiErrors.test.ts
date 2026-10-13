@@ -2,7 +2,7 @@
  * Normalización de errores del backend (lógica pura, sin red): cómo se
  * convierte un status + body de Rails en el `ApiError` que ve la UI. Los
  * cuerpos de ejemplo son los que devuelve la rama `fix/functional-review-2026-10`
- * de `../pawcare-web` (copiados de sus controllers, no inventados).
+ * de `../open-chepicare-web` (copiados de sus controllers, no inventados).
  */
 import { buildApiError } from '@/services/api';
 

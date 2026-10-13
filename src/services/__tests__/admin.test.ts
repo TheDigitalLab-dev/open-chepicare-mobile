@@ -1,5 +1,5 @@
 /**
- * Integración REAL del servicio Admin contra `../pawcare-web` (login de staff).
+ * Integración REAL del servicio Admin contra `../open-chepicare-web` (login de staff).
  */
 import * as authService from '@/services/auth';
 import * as adminService from '@/services/admin';

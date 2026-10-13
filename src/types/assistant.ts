@@ -2,7 +2,7 @@
  * Tipos del asistente IA de PawCare (dictado de consultas por voz, chat,
  * capacidades del servidor y push de la categoría `asistente`).
  *
- * Reflejan el contrato real de `pawcare-web` (rama feat/voice-dictation-mcp):
+ * Reflejan el contrato real de `open-chepicare-web` (rama feat/voice-dictation-mcp):
  * `AiJsonable` (voice_dictation, tool_call, message, conversation) y
  * `Server::GetCapabilities`. Ver `docs/plans/voice-dictation-mcp.md` del backend.
  */

@@ -1,5 +1,5 @@
 /**
- * Servicio Admin (staff) contra el backend real `../pawcare-web`.
+ * Servicio Admin (staff) contra el backend real `../open-chepicare-web`.
  * Endpoints JSON del namespace /admin/*-list (índices) + métricas.
  * Requiere sesión de staff (User) con Bearer.
  */

@@ -1,5 +1,5 @@
 /**
- * Integración REAL de patrocinios del owner contra `../pawcare-web`: lista,
+ * Integración REAL de patrocinios del owner contra `../open-chepicare-web`: lista,
  * detalle con gastos, alta y cancelación.
  */
 import * as authService from '@/services/auth';
