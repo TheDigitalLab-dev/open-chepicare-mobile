@@ -25,3 +25,4 @@ export { VoiceDictationCard, type VoiceDictationCardProps } from './VoiceDictati
 export { ChatMessageBubble, type ChatMessageBubbleProps } from './ChatMessageBubble';
 export { ChatComposer, type ChatComposerProps } from './ChatComposer';
 export { ServerChangeDialog, type ServerChangeDialogProps } from './ServerChangeDialog';
+export { LabExamStatusBadge, type LabExamStatusBadgeProps } from './LabExamStatusBadge';

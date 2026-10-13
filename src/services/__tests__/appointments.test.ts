@@ -45,6 +45,8 @@ describe('appointmentsService (lecturas reales)', () => {
     expect(services[0]).toEqual(
       expect.objectContaining({ id: expect.any(Number), name: expect.any(String) }),
     );
+    // Importes como número JSON (el backend dejó de serializar BigDecimal como texto).
+    expect(typeof services[0]!.price).toBe('number');
   });
 });
 
@@ -166,8 +168,72 @@ describe('appointmentsService horarios del servidor y edición (real)', () => {
       const detail = await appointmentsService.getAppointment(created.id);
       expect(detail.payments?.length).toBeGreaterThan(0);
       expect(detail.payments![0]).toEqual(
-        expect.objectContaining({ id: expect.any(Number), status: 'pending' }),
+        expect.objectContaining({
+          id: expect.any(Number),
+          status: 'pending',
+          amount: expect.any(Number),
+          amount_cents: expect.any(Number),
+        }),
       );
+      expect(detail.payments![0]!.amount * 100).toBeCloseTo(
+        detail.payments![0]!.amount_cents!,
+      );
+      expect(typeof detail.service?.price).toBe('number');
+    } finally {
+      await appointmentsService.cancelAppointment(created.id, 'Prueba de integración');
+    }
+  }, 30000);
+
+  it('al reprogramar, `exclude_appointment_id` libera el horario de la propia cita', async () => {
+    const { month, year } = (() => {
+      const d = new Date();
+      const m = d.getMonth() + 2;
+      return m > 12
+        ? { month: m - 12, year: d.getFullYear() + 1 }
+        : { month: m, year: d.getFullYear() };
+    })();
+    const [days, services, pets] = await Promise.all([
+      appointmentsService.getAvailableDays(month, year),
+      appointmentsService.listServices(),
+      petsService.listPets(),
+    ]);
+    const day = days[2] ?? days[0]!;
+    const vet = (await appointmentsService.getAvailableVets(day))[0]!;
+    // Un servicio de más de 30 min: la cita ocupa también el horario siguiente.
+    const service = services.find((s) => (s.duration_minutes ?? 0) > 30) ?? services[0]!;
+    const free = await appointmentsService.getAvailableTimeSlots(day, vet.id, service.id);
+    expect(free.length).toBeGreaterThan(1);
+    const own = free[0]!.time;
+
+    const created = await appointmentsService.createAppointment({
+      pet_id: pets[0]!.id,
+      service_id: service.id,
+      assigned_to_id: vet.id,
+      scheduled_at: `${day}T${own}:00`,
+    });
+    try {
+      const taken = (
+        await appointmentsService.getAvailableTimeSlots(day, vet.id, service.id)
+      ).map((s) => s.time);
+      expect(taken).not.toContain(own);
+
+      const forEdit = (
+        await appointmentsService.getAvailableTimeSlots(
+          day,
+          vet.id,
+          service.id,
+          created.id,
+        )
+      ).map((s) => s.time);
+      expect(forEdit).toContain(own);
+      // Los horarios que solo chocaban con la propia cita también se ofrecen…
+      const overlapping = forEdit.find((t) => t > own && !taken.includes(t));
+      expect(overlapping).toBeDefined();
+      // …y el servidor acepta moverla ahí (el solapamiento se valida sin ella).
+      const moved = await appointmentsService.updateAppointment(created.id, {
+        scheduled_at: `${day}T${overlapping!}:00`,
+      });
+      expect(formatClinicTime(moved.scheduled_at, moved.time_zone)).toBe(overlapping);
     } finally {
       await appointmentsService.cancelAppointment(created.id, 'Prueba de integración');
     }

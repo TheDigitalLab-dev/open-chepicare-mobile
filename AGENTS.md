@@ -26,7 +26,9 @@ escribir cualquier código.
   **Cero respuestas de API mockeadas.**
 - Lo único que se permite sustituir son los **shims de plataforma nativa** que no
   existen en el entorno Node de Jest (`expo-secure-store`, `AsyncStorage`, el
-  `WebSocket` de React Native sobre el WebSocket real de undici) — nunca lógica
+  `WebSocket` de React Native sobre el WebSocket real de undici, los selectores
+  de documentos/fotos que entregan archivos reales, `expo-file-system` sobre el
+  disco real de Node y el menú de compartir) — nunca lógica
   de negocio ni respuestas del servidor. Ver `jest.setup.ts`. Para el asistente
   IA, el único doble es el del **CLI de terceros** `claude`
   (`src/testing/agent-bin/claude`), que llama de verdad al MCP del backend.

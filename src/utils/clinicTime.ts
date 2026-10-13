@@ -232,6 +232,26 @@ export function clinicWallTimeToInstant(
   return new Date(instant).toISOString();
 }
 
+/**
+ * Día de calendario ("YYYY-MM-DD") desplazado `days` días. Aritmética de
+ * calendario pura (en UTC), sin zona: un día solo-día no es un instante.
+ */
+export function shiftDayKey(day: string, days: number): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(Date.UTC(y!, m! - 1, d! + days)).toISOString().slice(0, 10);
+}
+
+/** "30 de julio" de un día de calendario ("YYYY-MM-DD"), sin conversión de zona. */
+export function formatDayLong(day: string): string {
+  const m = DATE_ONLY.exec(day);
+  if (!m) return day;
+  return format(
+    new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))),
+    { day: 'numeric', month: 'long' },
+    'UTC',
+  );
+}
+
 /** "Hoy" de la clínica ("YYYY-MM-DD"): fecha por defecto de los formularios. */
 export function clinicToday(now: Date = new Date()): string {
   return clinicDayKey(now.toISOString());

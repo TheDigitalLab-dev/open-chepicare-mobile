@@ -6,6 +6,8 @@
  * `AiJsonable` (voice_dictation, tool_call, message, conversation) y
  * `Server::GetCapabilities`. Ver `docs/plans/voice-dictation-mcp.md` del backend.
  */
+import type { ClinicConfig } from './models';
+
 // --- Capacidades del servidor ------------------------------------------------
 
 /** Motor de IA configurado en Configuración > Inteligencia Artificial. */
@@ -14,6 +16,11 @@ export type AiEngine = 'none' | 'claude_cli' | 'anthropic_api';
 export interface ServerCapabilities {
   server: { name: string; api_version: number };
   pairing: { enabled: boolean; qr_version: number };
+  /**
+   * Configuración pública de la clínica (zona, formatos, reglas de agenda),
+   * la misma de la sesión. Ausente en backends anteriores.
+   */
+  clinic?: ClinicConfig | null;
   ai: {
     /** false = "Sin inteligencia artificial": ocultar chat y dictado. */
     enabled: boolean;

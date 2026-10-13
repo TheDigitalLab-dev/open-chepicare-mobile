@@ -15,13 +15,19 @@ import {
   renderApp,
 } from '@/testing/renderApp';
 import * as appointmentsService from '@/services/appointments';
+import * as authService from '@/services/auth';
 import * as petsService from '@/services/pets';
 import * as secureStore from '@/utils/secureStore';
-import { clinicHourKey, clinicMonth } from '@/utils/clinicTime';
+import { clinicDayKey, clinicHourKey, clinicMonth } from '@/utils/clinicTime';
 import { formatDate, formatDateTime } from '@/utils/format';
 import { shiftMonth } from '@/utils/schedule';
+import { bookFreshAppointment } from '@/testing/ownerData';
 
 let createdId: number | null = null;
+
+async function loginSeedOwner() {
+  await authService.login('owner1@example.com', 'password123');
+}
 
 afterEach(async () => {
   // Una cita pendiente que quede ocupa el hueco en las siguientes ejecuciones.
@@ -143,4 +149,60 @@ it('agenda, confirma, reprograma y cancela una cita desde la app', async () => {
   expect(screen.queryByRole('button', { name: 'Reprogramar' })).toBeNull();
   expect(within(screen.root).queryByRole('button', { name: 'Cancelar cita' })).toBeNull();
   alert.mockRestore();
+}, 120000);
+
+it('reprograma a un horario que solo chocaba con la propia cita (exclude_appointment_id)', async () => {
+  await loginSeedOwner();
+  // Servicio de más de 30 min: la cita ocupa también los horarios siguientes.
+  const appt = await bookFreshAppointment(5, (all) =>
+    all.find((s) => (s.duration_minutes ?? 0) > 30),
+  );
+  createdId = appt.id;
+  const day = clinicDayKey(appt.scheduled_at, appt.time_zone);
+  const own = clinicHourKey(appt.scheduled_at, appt.time_zone);
+  const occupied = (
+    await appointmentsService.getAvailableTimeSlots(
+      day,
+      appt.assigned_to_id!,
+      appt.service_id,
+    )
+  ).map((s) => s.time);
+  const forEdit = (
+    await appointmentsService.getAvailableTimeSlots(
+      day,
+      appt.assigned_to_id!,
+      appt.service_id,
+      appt.id,
+    )
+  ).map((s) => s.time);
+  // El horario al que se mueve solo estaba ocupado por la propia cita.
+  const target = forEdit.find((t) => t > own && !occupied.includes(t))!;
+  expect(target).toBeDefined();
+  await secureStore.clearTokens();
+
+  renderApp();
+  await loginThroughUi('owner1@example.com');
+  fireEvent.press(screen.getAllByText('Citas').at(-1)!);
+  await pressButton(
+    `${appt.pet!.name}, ${formatDateTime(appt.scheduled_at, appt.time_zone)}, Pendiente`,
+  );
+  await pressButton('Reprogramar');
+  await findText('Reprogramar cita');
+  for (let i = 0; i < 4; i += 1) await pressButton('Siguiente');
+
+  // Se ofrecen el horario propio y el que solo chocaba con él.
+  await findText(own);
+  fireEvent.press(await findText(target));
+  await pressButton('Guardar cambios');
+
+  await waitFor(async () => {
+    const moved = await appointmentsService.getAppointment(appt.id);
+    expect(clinicHourKey(moved.scheduled_at, moved.time_zone)).toBe(target);
+  }, E2E_WAIT);
+  await findText(
+    formatDateTime(
+      (await appointmentsService.getAppointment(appt.id)).scheduled_at,
+      appt.time_zone,
+    ),
+  );
 }, 120000);

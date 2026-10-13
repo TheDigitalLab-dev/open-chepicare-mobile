@@ -219,3 +219,65 @@ jest.mock('expo-camera', () => ({
     jest.fn(async () => ({ granted: false, canAskAgain: true, status: 'denied' })),
   ],
 }));
+
+// Shim de plataforma: selectores NATIVOS del sistema (documentos y galería).
+// Por defecto el usuario cancela; un test elige archivos con
+// `mockResolvedValueOnce`, entregando los assets que da el sistema (en Node,
+// como en web, con el `File` en memoria: el archivo se sube DE VERDAD).
+jest.mock('expo-document-picker', () => ({
+  getDocumentAsync: jest.fn(async () => ({ canceled: true, assets: null })),
+}));
+jest.mock('expo-image-picker', () => ({
+  launchImageLibraryAsync: jest.fn(async () => ({ canceled: true, assets: null })),
+  requestMediaLibraryPermissionsAsync: jest.fn(async () => ({ granted: true })),
+}));
+
+// Shim de plataforma: expo-file-system (módulo NATIVO) sobre el sistema de
+// archivos REAL de Node, en un directorio temporal: lo que la app escribe se
+// puede leer y verificar byte a byte.
+// (Tipos `Mock*`: jest-hoist solo deja referenciar esos nombres en el factory.)
+type MockNodeFs = {
+  mkdtempSync(prefix: string): string;
+  existsSync(p: string): boolean;
+  writeFileSync(p: string, data: string | Uint8Array): void;
+};
+type MockNodeOs = { tmpdir(): string };
+type MockNodePath = { join(...parts: string[]): string };
+jest.mock('expo-file-system', () => {
+  /* eslint-disable @typescript-eslint/no-require-imports */
+  const fs = require('node:fs') as MockNodeFs;
+  const os = require('node:os') as MockNodeOs;
+  const path = require('node:path') as MockNodePath;
+  /* eslint-enable @typescript-eslint/no-require-imports */
+  const mockCacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pawcare-cache-'));
+  const toPath = (part: string | { uri: string }) =>
+    (typeof part === 'string' ? part : part.uri).replace(/^file:\/\//, '');
+  class MockFile {
+    readonly path: string;
+    constructor(...parts: (string | { uri: string })[]) {
+      this.path = path.join(...parts.map(toPath));
+    }
+    get uri() {
+      return `file://${this.path}`;
+    }
+    get exists() {
+      return fs.existsSync(this.path);
+    }
+    create(options: { overwrite?: boolean } = {}) {
+      if (fs.existsSync(this.path) && !options.overwrite) {
+        throw new Error('El archivo ya existe');
+      }
+      fs.writeFileSync(this.path, new Uint8Array());
+    }
+    write(content: string | Uint8Array) {
+      fs.writeFileSync(this.path, content);
+    }
+  }
+  return { File: MockFile, Paths: { cache: { uri: `file://${mockCacheDir}` } } };
+});
+
+// Shim de plataforma: menú de compartir del sistema (expo-sharing).
+jest.mock('expo-sharing', () => ({
+  isAvailableAsync: jest.fn(async () => true),
+  shareAsync: jest.fn(async () => undefined),
+}));
