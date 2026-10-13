@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import {
   CameraView,
@@ -10,7 +10,10 @@ import { ActivityIndicator, Linking, StyleSheet, Text, View } from 'react-native
 import { useTheme } from '@/theme';
 import { AppHeader, MobileShell } from '@/components/layout';
 import { Button, EmptyState, InfoBanner } from '@/components/ui';
+import { ServerChangeDialog } from '@/components/domain';
 import { usePairing, type PairingState } from '@/hooks/usePairing';
+import { useServerChange } from '@/hooks/useServerChange';
+import { parsePairingUri } from '@/services/pairing';
 import { useSession } from '@/session/SessionProvider';
 import type { AuthStackParamList } from '@/navigation/types';
 import type { PairingAccountType } from '@/types/pairing';
@@ -97,18 +100,41 @@ function PairingProgress({
  * (Perfil del personal o «Mi Perfil» del propietario > Conectar la app móvil).
  * Configura el servidor y abre la sesión de la cuenta que generó el código, en
  * su modo (propietario o personal); también acepta el deep link
- * `pawcare://pair`.
+ * `pawcare://pair`. Si el QR es de otro servidor, primero lo explica y pide
+ * confirmación: confirmar cierra la sesión actual antes del canje.
  */
 export function PairingScanScreen() {
   const { colors } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<Rt>();
-  const { adoptSession } = useSession();
+  const { adoptSession, endSession } = useSession();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
   const [permission, requestPermission] = useCameraPermissions();
 
+  const serverChange = useServerChange();
+  // Tras confirmar el cambio, la sesión anterior ya se cerró en su servidor.
+  // Si el canje no abre la nueva, al salir de aquí la app vuelve a público.
+  const [leftSession, setLeftSession] = useState(false);
+  const [declined, setDeclined] = useState(false);
+  // QR cuyo cambio de servidor se canceló: la cámara lo sigue viendo y no
+  // debe volver a preguntar.
+  const lastQr = useRef<string | null>(null);
+  const declinedQr = useRef<string | null>(null);
+  const orphaned = useRef({ left: false, adopted: false });
+  const endSessionRef = useRef(endSession);
+  useEffect(() => {
+    endSessionRef.current = endSession;
+  });
+  useEffect(() => {
+    const state = orphaned.current;
+    return () => {
+      if (state.left && !state.adopted) void endSessionRef.current();
+    };
+  }, []);
+
   const pairing = usePairing({
     onPaired: (result) => {
+      orphaned.current.adopted = true;
       // Cambia el árbol de navegación al del rol de la cuenta emparejada
       // (propietario o personal); se vuelve a montar para el nuevo
       // servidor/usuario.
@@ -116,19 +142,46 @@ export function PairingScanScreen() {
     },
   });
 
+  const { pair } = pairing;
+  const { request } = serverChange;
+  const startPairing = useCallback(
+    (raw: string) => {
+      if (raw === declinedQr.current) return;
+      lastQr.current = raw;
+      setDeclined(false);
+      let server: string;
+      try {
+        server = parsePairingUri(raw).server;
+      } catch {
+        // QR ajeno o dañado: el canje explica el motivo.
+        void pair(raw);
+        return;
+      }
+      void request(server, (change) => {
+        if (change?.hasSession) {
+          orphaned.current.left = true;
+          setLeftSession(true);
+        }
+        return pair(raw);
+      });
+    },
+    [pair, request],
+  );
+
   const fromLink = deepLinkUri(route.params);
   const linkHandled = useRef(false);
   useEffect(() => {
     if (!fromLink || linkHandled.current) return;
     linkHandled.current = true;
-    void pairing.pair(fromLink);
-  }, [fromLink, pairing]);
+    startPairing(fromLink);
+  }, [fromLink, startPairing]);
 
+  const deciding = serverChange.pending !== null || serverChange.leaving;
   const onScanned = useCallback(
     (result: BarcodeScanningResult) => {
-      if (pairing.status === 'idle') void pairing.pair(result.data);
+      if (pairing.status === 'idle') startPairing(result.data);
     },
-    [pairing],
+    [pairing.status, startPairing],
   );
 
   const header = <AppHeader title="Emparejar con QR" onBack={back} />;
@@ -169,7 +222,7 @@ export function PairingScanScreen() {
         un solo uso y vence a los 10 minutos.
       </Text>
 
-      {permission.granted && pairing.status === 'idle' ? (
+      {permission.granted && pairing.status === 'idle' && !deciding ? (
         <View style={[styles.cameraFrame, { borderColor: colors.primary }]}>
           <CameraView
             style={styles.camera}
@@ -181,6 +234,29 @@ export function PairingScanScreen() {
       ) : null}
 
       <PairingProgress pairing={pairing} onContinue={back} />
+      {declined ? (
+        <InfoBanner
+          tone="info"
+          message="No se cambió de servidor: todo sigue como estaba."
+        />
+      ) : null}
+      {leftSession && pairing.status === 'error' ? (
+        <InfoBanner
+          tone="warning"
+          message="Tu sesión en el servidor anterior ya se cerró. Escanea un código nuevo o vuelve para entrar de nuevo."
+        />
+      ) : null}
+
+      <ServerChangeDialog
+        change={serverChange.pending}
+        leaving={serverChange.leaving}
+        onCancel={() => {
+          declinedQr.current = lastQr.current;
+          setDeclined(true);
+          serverChange.cancel();
+        }}
+        onConfirm={() => void serverChange.confirm()}
+      />
     </MobileShell>
   );
 }

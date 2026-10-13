@@ -6,6 +6,7 @@ import { Text, View } from 'react-native';
 import { useTheme } from '@/theme';
 import { AppHeader, MobileShell } from '@/components/layout';
 import { Button, Card, InfoBanner, SectionTitle, TextField } from '@/components/ui';
+import { ServerChangeDialog } from '@/components/domain';
 import {
   checkServerHealth,
   getApiBaseUrl,
@@ -14,10 +15,14 @@ import {
   setServerUrl,
   type ServerHealth,
 } from '@/config/serverConfig';
+import { useServerChange } from '@/hooks/useServerChange';
+import { useSession } from '@/session/SessionProvider';
 
 /**
  * Selección del servidor Pawcare (self-hosted / open source).
  * El usuario escribe la URL de su backend, prueba la conexión y la guarda.
+ * Guardar otra dirección o restablecer la de por defecto, si cambia el
+ * servidor, primero lo explica y pide confirmación (cierra la sesión actual).
  */
 export function ServerSettingsScreen() {
   const { colors } = useTheme();
@@ -31,6 +36,8 @@ export function ServerSettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [health, setHealth] = useState<ServerHealth | null>(null);
   const [savedMsg, setSavedMsg] = useState<string>();
+  const serverChange = useServerChange();
+  const { endSession } = useSession();
 
   const trimmed = url.trim();
   const canTest = trimmed.length > 0 && !testing;
@@ -46,23 +53,32 @@ export function ServerSettingsScreen() {
     }
   };
 
-  const onSave = async () => {
-    setSaving(true);
+  const onSave = () => {
     setSavedMsg(undefined);
-    try {
-      const saved = await setServerUrl(trimmed);
-      setUrl(saved);
-      setSavedMsg(`Servidor guardado: ${saved}`);
-    } finally {
-      setSaving(false);
-    }
+    void serverChange.request(trimmed, async (change) => {
+      setSaving(true);
+      try {
+        // La sesión del servidor anterior ya se cerró allí: la app vuelve a
+        // público (el inicio de sesión del servidor nuevo).
+        if (change?.hasSession) await endSession();
+        const saved = await setServerUrl(trimmed);
+        setUrl(saved);
+        setSavedMsg(`Servidor guardado: ${saved}`);
+      } finally {
+        setSaving(false);
+      }
+    });
   };
 
-  const onReset = async () => {
-    await resetServerUrl();
-    setUrl(getApiBaseUrl());
-    setHealth(null);
-    setSavedMsg('Se restableció el servidor por defecto.');
+  const onReset = () => {
+    setSavedMsg(undefined);
+    void serverChange.request(getDefaultApiBaseUrl(), async (change) => {
+      if (change?.hasSession) await endSession();
+      await resetServerUrl();
+      setUrl(getApiBaseUrl());
+      setHealth(null);
+      setSavedMsg('Se restableció el servidor por defecto.');
+    });
   };
 
   const defaultUrl = getDefaultApiBaseUrl();
@@ -151,6 +167,13 @@ export function ServerSettingsScreen() {
         label="Restablecer al valor por defecto"
         variant="ghost"
         onPress={onReset}
+      />
+
+      <ServerChangeDialog
+        change={serverChange.pending}
+        leaving={serverChange.leaving}
+        onCancel={serverChange.cancel}
+        onConfirm={() => void serverChange.confirm()}
       />
     </MobileShell>
   );
