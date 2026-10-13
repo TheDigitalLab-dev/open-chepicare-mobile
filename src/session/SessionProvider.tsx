@@ -38,6 +38,12 @@ export interface SessionContextValue {
    * SecureStore. Si había otra sesión abierta, purga antes sus datos locales.
    */
   adoptSession: (user: AuthUser) => Promise<void>;
+  /**
+   * Termina la sesión en la app cuando ya se cerró en el servidor por otro
+   * flujo (cambio de servidor confirmado: `services/serverChange`), sin más
+   * llamadas de red: purga los datos locales y vuelve a público.
+   */
+  endSession: () => Promise<void>;
   /** Re-lee el usuario de sesión desde /me (tras editar el perfil). */
   refreshUser: () => Promise<void>;
 }
@@ -141,6 +147,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         if (user) await clearLocalUserData();
         setUser(authed);
         setRole(roleForUser(authed));
+      },
+      endSession: async () => {
+        await clearLocalUserData();
+        setUser(null);
+        setRole('public');
       },
       refreshUser: async () => {
         const fresh = await authService.fetchCurrentUser();
