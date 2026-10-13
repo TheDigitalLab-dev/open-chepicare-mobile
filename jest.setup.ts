@@ -122,7 +122,23 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 // utils/treatmentSchedule y services/treatments contra SQLite real.
 jest.mock('expo-notifications', () => {
   let counter = 0;
+  // Toques en notificaciones: el sistema operativo los entrega a estos
+  // listeners. `__tapNotification(data)` simula que el usuario toca una push.
+  // (Nombres `mock*`: jest-hoist solo deja referenciar esos dentro del factory.)
+  const responseListeners = new Set<(mockResponse: unknown) => void>();
   return {
+    getLastNotificationResponseAsync: jest.fn(async () => null),
+    clearLastNotificationResponseAsync: jest.fn(async () => undefined),
+    addNotificationResponseReceivedListener: jest.fn(
+      (mockListener: (mockResponse: unknown) => void) => {
+        responseListeners.add(mockListener);
+        return { remove: () => responseListeners.delete(mockListener) };
+      },
+    ),
+    __tapNotification: (data: Record<string, unknown>) => {
+      const mockResponse = { notification: { request: { content: { data } } } };
+      responseListeners.forEach((mockListener) => mockListener(mockResponse));
+    },
     setNotificationChannelAsync: jest.fn(async () => null),
     requestPermissionsAsync: jest.fn(async () => ({ granted: true })),
     getPermissionsAsync: jest.fn(async () => ({ granted: true })),
@@ -192,3 +208,14 @@ jest.mock('expo-sqlite', () => {
     },
   };
 });
+
+// Shim de plataforma: expo-camera (cámara NATIVA). Sin cámara en Node: permiso
+// denegado (se puede volver a pedir) y visor vacío. El emparejamiento se prueba
+// por el deep link `pawcare://pair?...` que entrega el sistema al escanear.
+jest.mock('expo-camera', () => ({
+  CameraView: () => null,
+  useCameraPermissions: () => [
+    { granted: false, canAskAgain: true, status: 'denied' },
+    jest.fn(async () => ({ granted: false, canAskAgain: true, status: 'denied' })),
+  ],
+}));
