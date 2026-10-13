@@ -275,6 +275,27 @@ export interface Appointment {
   pet: AppointmentPet | null;
   service: AppointmentService | null;
   assigned_to: AppointmentVet | null;
+  /** Solo en el detalle (`GET /owner-appointments/:id`). */
+  payments?: AppointmentPayment[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+/** Pago resumido que trae el detalle de una cita (`payments[]`). */
+export interface AppointmentPayment {
+  id: number;
+  amount: number;
+  amount_cents?: number | null;
+  currency: string;
+  status: PaymentStatus;
+  due_date?: string | null;
+  paid_at?: string | null;
+}
+
+/** Horario libre de `/owner-time-slots`. */
+export interface TimeSlot {
+  time: string; // "HH:MM"
+  available: boolean;
 }
 
 export interface PaymentItem {
@@ -283,7 +304,9 @@ export interface PaymentItem {
   description?: string | null;
   quantity?: number | null;
   unit_price?: number | null;
+  unit_price_cents?: number | null;
   total_price?: number | null;
+  total_price_cents?: number | null;
   notes?: string | null;
 }
 
@@ -368,9 +391,13 @@ export interface LabExam {
   id: number;
   exam_type?: string | null;
   exam_name: string;
-  status: string;
-  results?: string | null;
+  status: LabExamStatus;
+  /** Columna JSON: pares "parámetro → valor" (antes, texto libre). */
+  results?: LabExamResults | string | null;
 }
+
+export type LabExamStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type LabExamResults = Record<string, string | number | boolean | null>;
 
 export interface Prescription {
   id: number;
@@ -446,18 +473,50 @@ export interface SponsorshipPet {
   breed?: string | null;
 }
 
+export type SponsorshipStatus = 'active' | 'cancelled' | 'completed';
+export type SponsorshipRecurrence = 'one_time' | 'monthly';
+
+export const SPONSORSHIP_STATUS_LABEL: Record<SponsorshipStatus, string> = {
+  active: 'Activo',
+  cancelled: 'Cancelado',
+  completed: 'Completado',
+};
+
+export const SPONSORSHIP_RECURRENCE_LABEL: Record<SponsorshipRecurrence, string> = {
+  one_time: 'Única vez',
+  monthly: 'Mensual',
+};
+
+/** Gasto de la mascota apadrinada (cita con su pago), en el detalle. */
+export interface SponsorshipExpense {
+  id: number;
+  date: string;
+  service?: string | null;
+  description?: string | null;
+  price: number;
+  price_cents?: number | null;
+  paid: number;
+  paid_cents?: number | null;
+  currency: string;
+  status: AppointmentStatus;
+  payment_status: AppointmentPaymentStatus;
+}
+
 // Espejo de sponsorship_json (sponsorships_controller).
 export interface Sponsorship {
   id: number;
   amount: number;
   amount_cents?: number | null;
-  recurrence?: string | null;
-  status: string;
+  recurrence?: SponsorshipRecurrence | null;
+  status: SponsorshipStatus;
   start_date?: string | null;
   end_date?: string | null;
   notes?: string | null;
+  created_at?: string;
   sponsor_id?: number;
   pet: SponsorshipPet | null;
+  /** Solo en el detalle (`GET /sponsorships/:id`). */
+  expenses?: SponsorshipExpense[];
 }
 
 // Espejo de public_pet_json (adoption_controller).

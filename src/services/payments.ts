@@ -4,6 +4,7 @@
  */
 import type { Payment, PaymentMethod } from '@/types/models';
 import { api } from './api';
+import { fetchAllPages } from './pagination';
 
 export interface PaymentFilters {
   status?: string;
@@ -21,14 +22,11 @@ export interface RegisterPaymentInput {
 }
 
 export async function listPayments(filters: PaymentFilters = {}): Promise<Payment[]> {
-  const { payments } = await api.get<{ payments: Payment[] }>('/owner-payments-list', {
-    params: {
-      status: filters.status,
-      overdue: filters.overdue ? 'true' : undefined,
-      search: filters.search,
-    },
+  return fetchAllPages<'payments', Payment>('/owner-payments-list', 'payments', {
+    status: filters.status,
+    overdue: filters.overdue ? 'true' : undefined,
+    search: filters.search,
   });
-  return payments;
 }
 
 export async function getPayment(id: number): Promise<Payment> {

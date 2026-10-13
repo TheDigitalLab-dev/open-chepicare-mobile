@@ -14,9 +14,10 @@ import type {
   Pet,
   Vaccination,
 } from '@/types/models';
-import type { PaginationMeta, QueryParams, SearchOptions } from '@/types/api';
+import type { SearchOptions } from '@/types/api';
 import { learnClinicTimeZone, learnFromAppointments } from '@/utils/clinicTime';
 import { api } from './api';
+import { fetchAllPages } from './pagination';
 
 /** Registro de adopción del admin (adoptions-list / show). */
 export interface AdoptionRecord {
@@ -74,25 +75,6 @@ export async function getAdminMedicalReport(id: number): Promise<MedicalReport> 
 // pueden quedarse con la primera página: buscan en el servidor (`search`) o,
 // para conjuntos acotados (las mascotas de UN dueño), recorren todas las
 // páginas.
-
-const MAX_PER_PAGE = 100;
-
-/** Recorre todas las páginas de un índice paginado. */
-async function fetchAllPages<K extends string, T>(
-  path: string,
-  key: K,
-  params: QueryParams,
-): Promise<T[]> {
-  const items: T[] = [];
-  for (let page = 1; ; page += 1) {
-    const res = await api.get<Partial<Record<K, T[]>> & { pagination?: PaginationMeta }>(
-      path,
-      { params: { ...params, page, per_page: MAX_PER_PAGE } },
-    );
-    items.push(...(res[key] ?? []));
-    if (!res.pagination || page >= res.pagination.total_pages) return items;
-  }
-}
 
 export async function listAdminPets(options: SearchOptions = {}): Promise<Pet[]> {
   const res = await api.get<{ pets: Pet[] }>('/admin/pets-list', {
