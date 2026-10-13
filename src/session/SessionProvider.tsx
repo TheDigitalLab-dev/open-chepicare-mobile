@@ -34,9 +34,10 @@ export interface SessionContextValue {
   signOut: () => Promise<void>;
   /**
    * Adopta una sesión ya guardada por otro flujo (canje del QR de
-   * emparejamiento): los tokens ya están en SecureStore.
+   * emparejamiento, de personal o de propietario): los tokens ya están en
+   * SecureStore. Si había otra sesión abierta, purga antes sus datos locales.
    */
-  adoptSession: (user: AuthUser) => void;
+  adoptSession: (user: AuthUser) => Promise<void>;
   /** Re-lee el usuario de sesión desde /me (tras editar el perfil). */
   refreshUser: () => Promise<void>;
 }
@@ -132,7 +133,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setRole('public');
       },
-      adoptSession: (authed) => {
+      adoptSession: async (authed) => {
+        // Emparejar otra cuenta sin cerrar sesión (p. ej. el teléfono del
+        // personal pasa a la cuenta de un propietario): como al salir, ni los
+        // datos locales, ni la cola de sincronización, ni las alarmas de la
+        // sesión anterior pasan a la nueva.
+        if (user) await clearLocalUserData();
         setUser(authed);
         setRole(roleForUser(authed));
       },

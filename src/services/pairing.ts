@@ -1,14 +1,16 @@
 /**
  * Emparejamiento de la app con un servidor PawCare por código QR.
  *
- * La web genera (Perfil) un QR `pawcare://pair?v=1&server=<URL>&code=<token>`
- * con un token de un solo uso y 10 min de vida, nunca credenciales
- * permanentes. La app:
+ * La web genera (Perfil del personal o «Mi Perfil» del propietario) un QR
+ * `pawcare://pair?v=1&server=<URL>&code=<token>&account=<staff|owner>` con un
+ * token de un solo uso y 10 min de vida, nunca credenciales permanentes. La
+ * app:
  *   1. valida el contenido (`parsePairingUri`),
  *   2. apunta al servidor del QR (`setServerUrl`, persistido en almacenamiento
  *      seguro),
- *   3. canjea el token en `POST /auth/mobile/pair` por una sesión del usuario
- *      que lo generó y registra el dispositivo para push en el mismo paso.
+ *   3. canjea el token en `POST /auth/mobile/pair` por una sesión de la cuenta
+ *      que lo generó (personal o propietario, según `account_type`) y registra
+ *      el dispositivo para push en el mismo paso.
  * Si el canje falla, la app vuelve al servidor y la sesión que tenía.
  */
 import {
@@ -18,8 +20,10 @@ import {
   resetServerUrl,
   setServerUrl,
 } from '@/config/serverConfig';
+import type { AuthUser } from '@/types/models';
 import type {
   PairEnvelope,
+  PairingAccountType,
   PairingDevice,
   PairingPayload,
   PairingResult,
@@ -30,6 +34,11 @@ import { startSession } from './auth';
 
 const PREFIX = 'pawcare://pair';
 const SUPPORTED_VERSION = '1';
+const ACCOUNT_TYPES: readonly PairingAccountType[] = ['staff', 'owner'];
+
+function isAccountType(value: string | undefined): value is PairingAccountType {
+  return ACCOUNT_TYPES.some((type) => type === value);
+}
 
 /** El contenido escaneado no es un QR de emparejamiento válido. */
 export class PairingUriError extends Error {
@@ -56,7 +65,9 @@ function parseQuery(query: string): Record<string, string> {
 }
 
 /**
- * Valida el texto de un QR y devuelve servidor y código. Lanza
+ * Valida el texto de un QR y devuelve servidor, código y (si lo trae) el tipo
+ * de cuenta. Un `account` ausente o desconocido no invalida el QR: es
+ * informativo y la sesión la decide el canje. Lanza
  * `PairingUriError` con un mensaje para el usuario si no es válido.
  */
 export function parsePairingUri(raw: string): PairingPayload {
@@ -83,7 +94,19 @@ export function parsePairingUri(raw: string): PairingPayload {
   if (code.length === 0) {
     throw new PairingUriError('El QR no trae el código de emparejamiento.');
   }
-  return { server: normalizeServerUrl(server), code };
+  const payload: PairingPayload = { server: normalizeServerUrl(server), code };
+  if (isAccountType(query.account)) payload.account = query.account;
+  return payload;
+}
+
+/**
+ * Tipo de cuenta de la sesión canjeada. Se deriva del usuario (como el árbol
+ * de navegación, también al restaurar la sesión con `/me`), así la app nunca
+ * anuncia un modo distinto del que abre. El servidor actual envía el mismo
+ * valor en `account_type`; los anteriores no lo envían.
+ */
+function accountTypeOf(user: AuthUser): PairingAccountType {
+  return user.type === 'Owner' ? 'owner' : 'staff';
 }
 
 async function restoreServer(previous: string): Promise<void> {
@@ -145,5 +168,10 @@ export async function redeemPairing(
 
   const user = await startSession(env);
   void revokeSession(previousServer, previousTokens);
-  return { user, serverName: env.server.name, serverUrl };
+  return {
+    user,
+    accountType: accountTypeOf(user),
+    serverName: env.server.name,
+    serverUrl,
+  };
 }

@@ -14,7 +14,9 @@ export type AuthStackParamList = {
   ResetPassword: { token?: string };
   ServerSettings: undefined;
   /** Escáner de QR; con params viene de un deep link `pawcare://pair?...`. */
-  PairingScan: { v?: string; server?: string; code?: string } | undefined;
+  PairingScan:
+    | { v?: string; server?: string; code?: string; account?: string }
+    | undefined;
 };
 
 // El árbol raíz cuando no hay sesión es el público (incluye Auth → ResetPassword).
