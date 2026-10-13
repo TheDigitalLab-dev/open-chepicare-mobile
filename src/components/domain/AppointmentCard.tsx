@@ -24,6 +24,7 @@ export function AppointmentCard({
   return (
     <Pressable
       accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={`${petName}, ${dateLabel}, ${statusLabel}`}
       onPress={onPress}
       disabled={!onPress}
       style={({ pressed }) => [

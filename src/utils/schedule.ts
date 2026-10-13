@@ -1,35 +1,3 @@
-/**
- * Genera horarios ("HH:MM") entre `start` y `end` en pasos de `stepMinutes`.
- * Solo incluye huecos que caben completos antes de `end`.
- */
-export function generateTimeSlots(
-  start: string,
-  end: string,
-  stepMinutes: number,
-): string[] {
-  const toMinutes = (t: string): number | null => {
-    const m = /^(\d{1,2}):(\d{2})$/.exec(t);
-    if (!m) return null;
-    const h = Number(m[1]);
-    const min = Number(m[2]);
-    if (h > 23 || min > 59) return null;
-    return h * 60 + min;
-  };
-
-  const startMin = toMinutes(start);
-  const endMin = toMinutes(end);
-  if (startMin === null || endMin === null || stepMinutes <= 0) return [];
-
-  const format = (mins: number): string =>
-    `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
-
-  const slots: string[] = [];
-  for (let t = startMin; t + stepMinutes <= endMin; t += stepMinutes) {
-    slots.push(format(t));
-  }
-  return slots;
-}
-
 export interface VetShift {
   start_time: string;
   end_time: string;
@@ -67,4 +35,20 @@ export function groupVetShifts(
     }
   }
   return [...byId.values()];
+}
+
+export interface MonthRef {
+  month: number; // 1-12
+  year: number;
+}
+
+/** Índice absoluto del mes (para comparar y limitar la navegación). */
+export function monthIndex({ month, year }: MonthRef): number {
+  return year * 12 + (month - 1);
+}
+
+/** Mes desplazado `delta` meses (cruza años). */
+export function shiftMonth(ref: MonthRef, delta: number): MonthRef {
+  const index = monthIndex(ref) + delta;
+  return { month: (index % 12) + 1, year: Math.floor(index / 12) };
 }

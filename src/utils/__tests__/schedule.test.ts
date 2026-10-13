@@ -1,25 +1,4 @@
-import { generateTimeSlots, groupVetShifts } from '@/utils/schedule';
-
-describe('generateTimeSlots', () => {
-  it('genera huecos en pasos del tamaño dado', () => {
-    expect(generateTimeSlots('09:00', '11:00', 30)).toEqual([
-      '09:00',
-      '09:30',
-      '10:00',
-      '10:30',
-    ]);
-  });
-
-  it('solo incluye huecos que caben completos antes del fin', () => {
-    expect(generateTimeSlots('09:00', '10:00', 45)).toEqual(['09:00']);
-  });
-
-  it('devuelve vacío con entradas inválidas o paso no positivo', () => {
-    expect(generateTimeSlots('bad', '10:00', 30)).toEqual([]);
-    expect(generateTimeSlots('09:00', '10:00', 0)).toEqual([]);
-    expect(generateTimeSlots('10:00', '09:00', 30)).toEqual([]);
-  });
-});
+import { groupVetShifts, monthIndex, shiftMonth } from '@/utils/schedule';
 
 describe('groupVetShifts', () => {
   it('agrupa los turnos de un mismo veterinario (un id, varios turnos)', () => {
@@ -65,5 +44,19 @@ describe('groupVetShifts', () => {
         { id: 3, first_name: 'Eva', last_name: '', start_time: null, end_time: null },
       ]),
     ).toEqual([{ id: 3, name: 'Eva', shifts: [] }]);
+  });
+});
+
+describe('shiftMonth', () => {
+  it('avanza y retrocede cruzando el año', () => {
+    expect(shiftMonth({ month: 12, year: 2026 }, 1)).toEqual({ month: 1, year: 2027 });
+    expect(shiftMonth({ month: 1, year: 2027 }, -1)).toEqual({ month: 12, year: 2026 });
+    expect(shiftMonth({ month: 5, year: 2026 }, 14)).toEqual({ month: 7, year: 2027 });
+  });
+
+  it('compara meses', () => {
+    expect(monthIndex({ month: 1, year: 2027 })).toBeGreaterThan(
+      monthIndex({ month: 12, year: 2026 }),
+    );
   });
 });

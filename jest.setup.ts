@@ -153,3 +153,42 @@ jest.mock('expo-network', () => ({
   })),
   addNetworkStateListener: jest.fn(() => ({ remove: jest.fn() })),
 }));
+
+// Shim de plataforma: expo-audio (grabadora NATIVA; no existe en Node). Solo lo
+// cargan las pantallas del dictado del personal al montar la app completa en
+// los recorridos e2e; ningún test graba audio (los dictados suben un m4a real).
+jest.mock('expo-audio', () => ({
+  RecordingPresets: { HIGH_QUALITY: {} },
+  getRecordingPermissionsAsync: jest.fn(async () => ({ granted: false })),
+  requestRecordingPermissionsAsync: jest.fn(async () => ({ granted: false })),
+  setAudioModeAsync: jest.fn(async () => undefined),
+  useAudioRecorder: jest.fn(() => ({
+    prepareToRecordAsync: jest.fn(async () => undefined),
+    record: jest.fn(),
+    stop: jest.fn(async () => undefined),
+    uri: null,
+  })),
+  useAudioRecorderState: jest.fn(() => ({ isRecording: false, durationMillis: 0 })),
+}));
+
+// Shim de plataforma: expo-sqlite (módulo NATIVO) sobre el SQLite REAL de Node
+// (`node:sqlite`, en memoria por archivo de test). Las migraciones y todo el SQL
+// de la app se ejecutan de verdad; solo cambia el binding nativo. Lo necesitan
+// los recorridos e2e que montan la app completa (centro de notificaciones,
+// tratamientos locales, preferencias).
+jest.mock('expo-sqlite', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { DatabaseSync } = require('node:sqlite') as typeof import('node:sqlite');
+  return {
+    openDatabaseSync: () => {
+      const db = new DatabaseSync(':memory:');
+      return {
+        execSync: (sql: string) => db.exec(sql),
+        runSync: (sql: string, params: never[] = []) => db.prepare(sql).run(...params),
+        getAllSync: (sql: string, params: never[] = []) => db.prepare(sql).all(...params),
+        getFirstSync: (sql: string, params: never[] = []) =>
+          db.prepare(sql).get(...params) ?? null,
+      };
+    },
+  };
+});

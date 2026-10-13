@@ -3,6 +3,7 @@
  * Estructura: Root decide por rol → Auth | Public | OwnerTabs | AdminTabs.
  * Cada tab tiene un native-stack propio.
  */
+import type { NavigatorScreenParams } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 // --- Auth ------------------------------------------------------------------
@@ -50,11 +51,13 @@ export type PublicStackParamList = {
 };
 
 // --- Owner -----------------------------------------------------------------
+// Con params anidados se puede abrir una pantalla de otra pestaña
+// (p. ej. pagar desde el detalle de una cita).
 export type OwnerTabParamList = {
-  HomeTab: undefined;
-  PetsTab: undefined;
-  AppointmentsTab: undefined;
-  ProfileTab: undefined;
+  HomeTab: NavigatorScreenParams<OwnerHomeStackParamList> | undefined;
+  PetsTab: NavigatorScreenParams<OwnerPetsStackParamList> | undefined;
+  AppointmentsTab: NavigatorScreenParams<OwnerAppointmentsStackParamList> | undefined;
+  ProfileTab: NavigatorScreenParams<OwnerProfileStackParamList> | undefined;
 };
 
 export type OwnerHomeStackParamList = {

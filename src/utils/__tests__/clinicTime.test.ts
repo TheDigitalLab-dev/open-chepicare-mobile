@@ -6,6 +6,7 @@
  */
 import {
   clinicDayKey,
+  clinicHourKey,
   clinicMonth,
   clinicToday,
   clinicWallDateTime,
@@ -152,6 +153,18 @@ describe('clinicDayKey', () => {
       '2026-03-15',
     );
     expect(clinicDayKey('2026-03-15T22:00:00-04:00', 'Asia/Tokyo')).toBe('2026-03-16');
+  });
+});
+
+describe('clinicHourKey', () => {
+  it('la hora de pared "HH:MM" (24 h) de la clínica, sin importar el formato de UI', () => {
+    setClinicConfig({ time_zone: 'America/Caracas', time_format: '12h' });
+    try {
+      expect(clinicHourKey('2026-03-16T02:30:00.000Z', 'America/Caracas')).toBe('22:30');
+      expect(clinicHourKey('2026-03-15T09:05:00-04:00', 'America/Caracas')).toBe('09:05');
+    } finally {
+      setClinicConfig(null);
+    }
   });
 });
 
