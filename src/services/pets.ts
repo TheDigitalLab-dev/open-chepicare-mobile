@@ -1,10 +1,13 @@
 /**
  * Servicio de Mascotas (owner) contra el backend real `../pawcare-web`.
- * Endpoints (PetsController, JSON): GET/POST `/pets`, GET/PATCH/DELETE `/pets/:id`.
- * Requiere sesión de Owner (Bearer). Espejo de `pet_json`.
+ * Endpoints (PetsController, JSON): GET/POST `/pets`, GET/PATCH/DELETE `/pets/:id`
+ * y POST/DELETE `/pets/:id/photo`. Requiere sesión de Owner (Bearer). Espejo
+ * de `pet_json` (`photo_url` relativa al servidor).
  */
 import type { Pet, PetSex, Species } from '@/types/models';
+import type { UploadSource } from '@/types/uploads';
 import { api } from './api';
+import { uploadForm } from './uploads';
 
 /**
  * `null` vacía el campo en el servidor (`undefined` no lo toca). Sin
@@ -41,4 +44,20 @@ export async function updatePet(id: number, input: Partial<PetInput>): Promise<P
 
 export async function deletePet(id: number): Promise<void> {
   await api.delete<unknown>(`/pets/${id}`);
+}
+
+/** Sube o cambia la foto (jpg, png o webp, hasta 5 MB). */
+export async function uploadPetPhoto(id: number, photo: UploadSource): Promise<Pet> {
+  const { pet } = await api.upload<{ pet: Pet }>(
+    `/pets/${id}/photo`,
+    uploadForm('photo', photo),
+    { timeoutMs: 120_000 },
+  );
+  return pet;
+}
+
+/** Quita la foto de la mascota. */
+export async function deletePetPhoto(id: number): Promise<Pet> {
+  const { pet } = await api.delete<{ pet: Pet }>(`/pets/${id}/photo`);
+  return pet;
 }

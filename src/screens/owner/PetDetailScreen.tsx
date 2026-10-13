@@ -1,17 +1,71 @@
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
-import { View } from 'react-native';
+import { useCallback } from 'react';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+  type RouteProp,
+} from '@react-navigation/native';
+import { Alert, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary, Avatar, Button, SectionTitle } from '@/components/ui';
+import { AsyncBoundary, Avatar, Button, InfoBanner, SectionTitle } from '@/components/ui';
 import { ActionTileGrid, DetailHero } from '@/components/domain';
 import type { ActionTile } from '@/components/domain';
 import type { OwnerPetsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
+import { usePetPhoto } from '@/hooks/usePetPhoto';
 import { getPet } from '@/services/pets';
-import { PET_SEX_LABEL, SPECIES_EMOJI, SPECIES_LABEL } from '@/types/models';
+import { PET_SEX_LABEL, SPECIES_EMOJI, SPECIES_LABEL, type Pet } from '@/types/models';
 
 type Nav = NativeStackNavigationProp<OwnerPetsStackParamList>;
+
+/** Editar la ficha y subir, cambiar o quitar la foto. */
+function PetActions({
+  pet,
+  onEdit,
+  onPhotoChange,
+}: {
+  pet: Pet;
+  onEdit: () => void;
+  onPhotoChange: () => void;
+}) {
+  const photo = usePetPhoto(pet.id, onPhotoChange);
+  const hasPhoto = Boolean(pet.photo_url);
+
+  const confirmRemove = () => {
+    Alert.alert('Quitar foto', '¿Quitar la foto de la mascota?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Sí, quitar', style: 'destructive', onPress: () => void photo.remove() },
+    ]);
+  };
+
+  return (
+    <>
+      {photo.error ? <InfoBanner tone="destructive" message={photo.error} /> : null}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+        <Button label="Editar" variant="outline" onPress={onEdit} style={{ flex: 1 }} />
+        <Button
+          label={hasPhoto ? 'Cambiar foto' : 'Subir foto'}
+          variant="outline"
+          loading={photo.busy}
+          disabled={photo.busy}
+          onPress={() => void photo.pickAndUpload()}
+          style={{ flex: 1 }}
+        />
+      </View>
+      {hasPhoto ? (
+        <Button
+          label="Quitar foto"
+          variant="ghost"
+          size="sm"
+          disabled={photo.busy}
+          onPress={confirmRemove}
+        />
+      ) : null}
+    </>
+  );
+}
 
 export function PetDetailScreen() {
   const navigation = useNavigation<Nav>();
@@ -20,6 +74,13 @@ export function PetDetailScreen() {
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
   const { data: pet, loading, error, reload } = useAsync(() => getPet(petId));
+  // Al volver de editar, y tras subir o quitar la foto, se muestra lo del servidor.
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+    }, [reload]),
+  );
+  const onPhotoChange = useCallback(() => void reload(), [reload]);
 
   const tiles: ActionTile[] = [
     {
@@ -89,18 +150,18 @@ export function PetDetailScreen() {
                   uri={pet.photo_url ?? undefined}
                   fallback={SPECIES_EMOJI[pet.species]}
                   size="lg"
+                  accessibilityLabel={
+                    pet.photo_url ? `Foto de ${pet.name}` : `${pet.name} sin foto`
+                  }
                 />
               }
             />
 
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Button
-                label="Editar"
-                variant="outline"
-                onPress={() => navigation.navigate('PetForm', { id: pet.id })}
-                style={{ flex: 1 }}
-              />
-            </View>
+            <PetActions
+              pet={pet}
+              onEdit={() => navigation.navigate('PetForm', { id: pet.id })}
+              onPhotoChange={onPhotoChange}
+            />
 
             <SectionTitle>Salud</SectionTitle>
             <ActionTileGrid tiles={tiles} />
