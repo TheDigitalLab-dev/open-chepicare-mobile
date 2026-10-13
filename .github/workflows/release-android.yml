@@ -1,7 +1,12 @@
 # Release Android — compila el APK de release en el propio runner (sin EAS ni
 # cuenta de expo.dev): `expo prebuild` genera el proyecto nativo y Gradle lo
-# compila. Con un tag `v*` publica un GitHub Release con el APK adjunto; también
-# se puede lanzar a mano (workflow_dispatch) para probar el pipeline.
+# compila. Publica un GitHub Release con el APK adjunto en dos casos:
+#   - Cada merge (push) a `main` → release `build-<n>`, marcado como el último,
+#     así el APK más reciente siempre se descarga desde
+#     https://github.com/TheDigitalLab-dev/pawcare-mobile/releases/latest
+#   - Un tag `v*` → release con ese nombre de versión.
+# También se puede lanzar a mano (workflow_dispatch) para probar el pipeline;
+# en ese caso solo deja el APK como artifact del workflow.
 #
 # Firma (opcional pero recomendada antes de distribuir):
 #   1. Generar un keystore UNA vez y guardarlo en un lugar seguro — si se
@@ -30,6 +35,7 @@ name: Release Android
 
 on:
   push:
+    branches: [main]
     tags: ['v*']
   workflow_dispatch:
 
@@ -144,3 +150,17 @@ jobs:
           gh release create "${GITHUB_REF_NAME}" pawcare-mobile.apk \
             --title "Pawcare móvil ${GITHUB_REF_NAME}" \
             --generate-notes
+
+      - name: Publicar GitHub Release del build de main
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: build-${{ github.run_number }}
+        # Los tags creados con GITHUB_TOKEN no disparan otro workflow, así que
+        # esto no entra en bucle con el trigger de tags `v*`.
+        run: |
+          gh release create "$TAG" pawcare-mobile.apk \
+            --target "$GITHUB_SHA" \
+            --title "Pawcare móvil ${TAG} (main @ ${GITHUB_SHA::7})" \
+            --generate-notes \
+            --latest
