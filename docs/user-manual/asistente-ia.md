@@ -25,7 +25,8 @@ tu confirmación.
 La app guarda la dirección del servidor de forma segura e inicia sesión con tu
 usuario. El código sirve **una sola vez** y vence a los **10 minutos**; si falla,
 genera uno nuevo. Desde el Perfil de la web puedes ver y **revocar** los
-teléfonos emparejados.
+teléfonos emparejados. Los propietarios también pueden emparejar la app desde
+**Mi Perfil**; ver [Conectar la app a tu clínica con un código QR](emparejar-app-con-qr.md).
 
 > ⚠️ El teléfono debe poder llegar a la dirección del servidor que aparece en el
 > QR (la misma red o una dirección pública).
@@ -91,7 +92,7 @@ configurada; sin ella el chat escrito sigue funcionando.
 
 | Síntoma | Qué hacer |
 | --- | --- |
-| «Código de emparejamiento inválido o vencido» | Genera un QR nuevo en la web. |
+| «El código venció o ya se usó…» | Genera un QR nuevo en la web. |
 | «Demasiados intentos» | Espera un minuto antes de volver a escanear. |
 | «Sin permiso de micrófono» | Actívalo en los ajustes del teléfono para PawCare. |
 | El dictado termina «Con error» | El servidor no pudo transcribir/interpretar: el motivo aparece en la tarjeta. Avisa al administrador. |

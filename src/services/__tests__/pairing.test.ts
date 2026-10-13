@@ -27,6 +27,21 @@ describe('parsePairingUri', () => {
     });
   });
 
+  it.each(['staff', 'owner'] as const)('lee el tipo de cuenta account=%s', (account) => {
+    const uri = `pawcare://pair?v=1&server=https%3A%2F%2Fa.com&code=x&account=${account}`;
+    expect(pairing.parsePairingUri(uri)).toEqual({
+      server: 'https://a.com',
+      code: 'x',
+      account,
+    });
+  });
+
+  it('sin account (QR de un servidor anterior) o con un valor desconocido no falla: decide el canje', () => {
+    const base = 'pawcare://pair?v=1&server=https%3A%2F%2Fa.com&code=x';
+    expect(pairing.parsePairingUri(base).account).toBeUndefined();
+    expect(pairing.parsePairingUri(`${base}&account=root`).account).toBeUndefined();
+  });
+
   it.each([
     ['https://clinica.example.com', 'no es un código de PawCare'],
     ['pawcare://reset_password/abc', 'no es un código de PawCare'],
@@ -53,6 +68,7 @@ describe('redeemPairing (real)', () => {
     const qr = await freshQr();
     const payload = pairing.parsePairingUri(qr);
     expect(payload.server).toBe(BACKEND);
+    expect(payload.account).toBe('staff');
 
     // La app estaba apuntando a otro servidor: el QR la reconfigura.
     await setServerUrl('http://127.0.0.1:59999');
@@ -67,6 +83,7 @@ describe('redeemPairing (real)', () => {
     expect(result.serverName.length).toBeGreaterThan(0);
     expect(result.user.email).toBe('vet@pawcare.com');
     expect(result.user.type).toBe('User');
+    expect(result.accountType).toBe('staff');
     expect(getApiBaseUrl()).toBe(BACKEND);
 
     // La sesión canjeada es real: /me responde con el usuario del QR.
