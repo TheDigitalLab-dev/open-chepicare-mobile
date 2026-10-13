@@ -1,14 +1,22 @@
 import { formatMoney } from '@/utils/format';
 
 describe('formatMoney', () => {
-  it('formatea números y los decimales que el backend serializa como texto', () => {
+  it('formatea los importes numéricos del backend', () => {
     expect(formatMoney(500, 'USD')).toBe('USD 500');
-    // `payment_summary_json` del detalle de cita envía BigDecimal: "500.0".
+    expect(formatMoney(30.5, 'USD')).toBe('USD 30,5');
+    expect(formatMoney(1500)).toBe('$1.500');
+  });
+
+  it('sigue aceptando un texto numérico (datos guardados por versiones anteriores)', () => {
     expect(formatMoney('500.0', 'USD')).toBe('USD 500');
     expect(formatMoney('20.5', 'USD')).toBe('USD 20,5');
   });
 
-  it('un importe ilegible no se muestra como NaN', () => {
+  it('un importe ilegible o ausente no se muestra como NaN ni como 0', () => {
     expect(formatMoney('abc', 'USD')).toBe('—');
+    expect(formatMoney(Number.NaN, 'USD')).toBe('—');
+    expect(formatMoney(null, 'USD')).toBe('—');
+    expect(formatMoney(undefined, 'USD')).toBe('—');
+    expect(formatMoney('', 'USD')).toBe('—');
   });
 });

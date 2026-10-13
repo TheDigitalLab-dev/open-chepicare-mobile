@@ -284,8 +284,7 @@ export interface Appointment {
 /** Pago resumido que trae el detalle de una cita (`payments[]`). */
 export interface AppointmentPayment {
   id: number;
-  /** BigDecimal serializado como texto ("500.0"). */
-  amount: number | string;
+  amount: number;
   amount_cents?: number | null;
   currency: string;
   status: PaymentStatus;
