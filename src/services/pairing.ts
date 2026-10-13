@@ -1,8 +1,9 @@
 /**
- * Emparejamiento de la app con un servidor PawCare por código QR.
+ * Emparejamiento de la app con un servidor ChepiCare por código QR.
  *
  * La web genera (Perfil del personal o «Mi Perfil» del propietario) un QR
- * `pawcare://pair?v=1&server=<URL>&code=<token>&account=<staff|owner>` con un
+ * `pawcare://pair?v=1&server=<URL>&code=<token>&account=<staff|owner>` (o
+ * `chepicare://pair?...`: se aceptan los dos esquemas, ver `deepLinks`) con un
  * token de un solo uso y 10 min de vida, nunca credenciales permanentes. La
  * app:
  *   1. valida el contenido (`parsePairingUri`),
@@ -13,6 +14,7 @@
  *      el dispositivo para push en el mismo paso.
  * Si el canje falla, la app vuelve al servidor y la sesión que tenía.
  */
+import { DEEP_LINK_PREFIXES } from '@/config/deepLinks';
 import {
   getApiBaseUrl,
   getDefaultApiBaseUrl,
@@ -32,7 +34,7 @@ import * as secureStore from '@/utils/secureStore';
 import { api } from './api';
 import { startSession } from './auth';
 
-const PREFIX = 'pawcare://pair';
+const PAIR_PREFIXES = DEEP_LINK_PREFIXES.map((prefix) => `${prefix}pair`);
 const SUPPORTED_VERSION = '1';
 const ACCOUNT_TYPES: readonly PairingAccountType[] = ['staff', 'owner'];
 
@@ -72,12 +74,13 @@ function parseQuery(query: string): Record<string, string> {
  */
 export function parsePairingUri(raw: string): PairingPayload {
   const text = raw.trim();
-  if (!text.toLowerCase().startsWith(PREFIX)) {
-    throw new PairingUriError('Este QR no es un código de PawCare.');
+  const prefix = PAIR_PREFIXES.find((p) => text.toLowerCase().startsWith(p));
+  if (!prefix) {
+    throw new PairingUriError('Este QR no es un código de ChepiCare.');
   }
-  const rest = text.slice(PREFIX.length).replace(/^\/+/, '');
+  const rest = text.slice(prefix.length).replace(/^\/+/, '');
   if (rest.length > 0 && !rest.startsWith('?')) {
-    throw new PairingUriError('Este QR no es un código de PawCare.');
+    throw new PairingUriError('Este QR no es un código de ChepiCare.');
   }
   const query = parseQuery(rest.slice(1));
 

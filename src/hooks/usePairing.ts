@@ -22,7 +22,7 @@ export interface PairingState {
    * de la sesión abierta al terminar. `null` si aún no se sabe.
    */
   accountType: PairingAccountType | null;
-  /** Procesa el texto de un QR (o de un deep link `pawcare://pair`). */
+  /** Procesa el texto de un QR (o de un deep link `chepicare://pair` o `pawcare://pair`). */
   pair: (raw: string) => Promise<void>;
   reset: () => void;
 }

@@ -20,7 +20,7 @@ export function WelcomeScreen({
   return (
     <MobileShell contentStyle={styles.content}>
       <View style={styles.brandBlock}>
-        <Text style={[styles.brand, { color: colors.primary }]}>PawCare</Text>
+        <Text style={[styles.brand, { color: colors.primary }]}>ChepiCare</Text>
         <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
           Cuidado veterinario a domicilio
         </Text>

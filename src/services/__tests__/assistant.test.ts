@@ -25,7 +25,7 @@ let petId: number;
 
 beforeAll(async () => {
   restoreAi = await applyAiSettings(DEGRADED_AI);
-  await authService.login('vet@pawcare.com', 'password123');
+  await authService.login('vet@chepicare.com', 'password123');
   petId = (await adminService.listAdminPets())[0]!.id;
 }, AI_SETUP_TIMEOUT);
 

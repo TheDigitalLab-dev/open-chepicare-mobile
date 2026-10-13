@@ -68,7 +68,7 @@ function sessionTimeZone(): string {
 }
 
 beforeAll(async () => {
-  await authService.login('admin@pawcare.com', 'password123');
+  await authService.login('admin@chepicare.com', 'password123');
 });
 
 afterAll(async () => {
@@ -141,7 +141,7 @@ describe('citas: hora de la clínica, solapes y eliminación', () => {
   }, 60000);
 
   it('el veterinario (sin acceso a Configuración General) adopta la zona de las citas', async () => {
-    await authService.login('vet@pawcare.com', 'password123');
+    await authService.login('vet@chepicare.com', 'password123');
     try {
       setClinicTimeZone(null);
       const list = await adminService.listAdminAppointments();
@@ -149,7 +149,7 @@ describe('citas: hora de la clínica, solapes y eliminación', () => {
       expect(list[0]!.time_zone).toEqual(expect.any(String));
       expect(getClinicTimeZone()).toBe(list[0]!.time_zone);
     } finally {
-      await authService.login('admin@pawcare.com', 'password123');
+      await authService.login('admin@chepicare.com', 'password123');
     }
   }, 60000);
 

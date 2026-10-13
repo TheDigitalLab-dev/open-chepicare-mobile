@@ -13,7 +13,7 @@ afterAll(async () => {
 
 describe('canRegisterVaccinations', () => {
   it('el admin sembrado (can_vaccinate: true) puede registrar vacunas', async () => {
-    const admin = await authService.login('admin@pawcare.com', 'password123');
+    const admin = await authService.login('admin@chepicare.com', 'password123');
     expect(admin.type).toBe('User');
     expect(canRegisterVaccinations(admin)).toBe(true);
   });

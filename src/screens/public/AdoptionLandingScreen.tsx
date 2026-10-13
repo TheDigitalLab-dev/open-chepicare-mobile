@@ -29,7 +29,7 @@ export function AdoptionLandingScreen() {
       />
 
       <Text style={[styles.body, { color: colors.foreground }]}>
-        En PawCare promovemos la adopción responsable. Todas nuestras mascotas están
+        En ChepiCare promovemos la adopción responsable. Todas nuestras mascotas están
         desparasitadas, vacunadas y revisadas por nuestro equipo veterinario. Adoptar es
         un compromiso de amor y cuidado para toda la vida.
       </Text>

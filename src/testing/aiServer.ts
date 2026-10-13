@@ -25,7 +25,7 @@ const LOCK_DIR = path.join(
   process.cwd(),
   'node_modules',
   '.cache',
-  'pawcare-ai-tests.lock',
+  'chepicare-ai-tests.lock',
 );
 const STALE_LOCK_MS = 180_000;
 
@@ -37,7 +37,7 @@ export const AI_SETUP_TIMEOUT = 300_000;
 
 export const DEGRADED_AI = {
   agent_engine: 'claude_cli',
-  claude_binary_path: '/nonexistent/pawcare-tests/claude',
+  claude_binary_path: '/nonexistent/chepicare-tests/claude',
   stt_provider: 'local',
   stt_base_url: 'http://127.0.0.1:9/v1',
   timeout_seconds: 30,

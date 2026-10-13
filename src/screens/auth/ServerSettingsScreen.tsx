@@ -19,7 +19,7 @@ import { useServerChange } from '@/hooks/useServerChange';
 import { useSession } from '@/session/SessionProvider';
 
 /**
- * Selección del servidor Pawcare (self-hosted / open source).
+ * Selección del servidor ChepiCare (self-hosted / open source).
  * El usuario escribe la URL de su backend, prueba la conexión y la guarda.
  * Guardar otra dirección o restablecer la de por defecto, si cambia el
  * servidor, primero lo explica y pide confirmación (cierra la sesión actual).
@@ -91,7 +91,7 @@ export function ServerSettingsScreen() {
     >
       <InfoBanner
         tone="info"
-        message="Pawcare es de código abierto. Conecta la app a tu propio servidor escaneando el código QR de la web o escribiendo su dirección."
+        message="ChepiCare es de código abierto. Conecta la app a tu propio servidor escaneando el código QR de la web o escribiendo su dirección."
       />
 
       <Button

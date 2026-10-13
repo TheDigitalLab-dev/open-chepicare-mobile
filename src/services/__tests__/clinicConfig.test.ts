@@ -32,7 +32,7 @@ import {
 import type { ClinicConfig } from '@/types/models';
 
 const OWNER = { login: 'owner1@example.com', password: 'password123' };
-const VET = { login: 'vet@pawcare.com', password: 'password123' };
+const VET = { login: 'vet@chepicare.com', password: 'password123' };
 
 /** Lo que el backend tiene en Configuración General (vía admin, solo para comparar). */
 interface GeneralConfig {
@@ -46,7 +46,7 @@ interface GeneralConfig {
 let general: GeneralConfig;
 
 beforeAll(async () => {
-  await authService.login('admin@pawcare.com', 'password123');
+  await authService.login('admin@chepicare.com', 'password123');
   general = await api.get<GeneralConfig>('/admin/settings/general-config');
   await authService.logout();
 });
@@ -148,6 +148,28 @@ describe('caché local-first', () => {
       await resetServerUrl();
       expect(getApiBaseUrl()).toBe(original);
     }
+  });
+
+  it('se guarda con la clave chepicare.clinic_config', () => {
+    expect(CLINIC_CONFIG_STORAGE_KEY).toBe('chepicare.clinic_config');
+  });
+
+  it('arranca sin red con la configuración guardada por una versión PawCare', async () => {
+    // La caché real del último inicio, tal como la guardaba la versión PawCare.
+    await authService.login(OWNER.login, OWNER.password);
+    await authService.logout();
+    const saved = await AsyncStorage.getItem(CLINIC_CONFIG_STORAGE_KEY);
+    expect(saved).not.toBeNull();
+    await AsyncStorage.setItem('pawcare.clinic_config', saved!);
+    await AsyncStorage.removeItem(CLINIC_CONFIG_STORAGE_KEY);
+    forgetClinicConfig();
+
+    const restored = await restoreClinicConfig();
+
+    expect(restored?.time_zone).toBe(general.timezone);
+    expect(getClinicTimeZone()).toBe(general.timezone);
+    expect(await AsyncStorage.getItem('pawcare.clinic_config')).toBeNull();
+    expect(await AsyncStorage.getItem(CLINIC_CONFIG_STORAGE_KEY)).not.toBeNull();
   });
 
   it('una caché corrupta se ignora sin lanzar', async () => {

@@ -8,6 +8,7 @@ import {
 import { ActivityIndicator, Linking, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/theme';
+import { PRIMARY_DEEP_LINK_PREFIX } from '@/config/deepLinks';
 import { AppHeader, MobileShell } from '@/components/layout';
 import { Button, EmptyState, InfoBanner } from '@/components/ui';
 import { ServerChangeDialog } from '@/components/domain';
@@ -31,7 +32,7 @@ function deepLinkUri(params: Rt['params']): string | null {
     `code=${encodeURIComponent(params.code)}`,
   ];
   if (params.account) query.push(`account=${encodeURIComponent(params.account)}`);
-  return `pawcare://pair?${query.join('&')}`;
+  return `${PRIMARY_DEEP_LINK_PREFIX}pair?${query.join('&')}`;
 }
 
 const ACCOUNT_LABEL: Record<PairingAccountType, string> = {
@@ -96,11 +97,11 @@ function PairingProgress({
 }
 
 /**
- * Emparejar la app con un servidor PawCare escaneando el QR que genera la web
+ * Emparejar la app con un servidor ChepiCare escaneando el QR que genera la web
  * (Perfil del personal o «Mi Perfil» del propietario > Conectar la app móvil).
  * Configura el servidor y abre la sesión de la cuenta que generó el código, en
  * su modo (propietario o personal); también acepta el deep link
- * `pawcare://pair`. Si el QR es de otro servidor, primero lo explica y pide
+ * `chepicare://pair` (o `pawcare://pair`). Si el QR es de otro servidor, primero lo explica y pide
  * confirmación: confirmar cierra la sesión actual antes del canje.
  */
 export function PairingScanScreen() {
@@ -202,7 +203,7 @@ export function PairingScanScreen() {
         <EmptyState
           icon="camera-outline"
           title="Permiso de cámara"
-          description="PawCare necesita la cámara solo para leer el código QR que muestra tu servidor."
+          description="ChepiCare necesita la cámara solo para leer el código QR que muestra tu servidor."
           actionLabel={permission.canAskAgain ? 'Permitir cámara' : 'Abrir ajustes'}
           onAction={() =>
             permission.canAskAgain

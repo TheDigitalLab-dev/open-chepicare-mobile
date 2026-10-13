@@ -10,7 +10,7 @@ import * as adminService from '@/services/admin';
 import * as secureStore from '@/utils/secureStore';
 
 beforeAll(async () => {
-  await authService.login('admin@pawcare.com', 'password123');
+  await authService.login('admin@chepicare.com', 'password123');
 });
 
 afterAll(async () => {
@@ -52,7 +52,7 @@ describe('useRemoteSearch', () => {
     // El indicador de carga se libera también cuando la búsqueda falla.
     expect(result.current.loading).toBe(false);
 
-    await authService.login('admin@pawcare.com', 'password123');
+    await authService.login('admin@chepicare.com', 'password123');
     await act(() => result.current.reload());
     expect(result.current.error).toBeNull();
     expect(result.current.data?.length).toBeGreaterThan(0);

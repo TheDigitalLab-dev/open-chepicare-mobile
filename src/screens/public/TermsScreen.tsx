@@ -9,7 +9,7 @@ import type { PublicStackParamList } from '@/navigation/types';
 const SECTIONS: { heading: string; body: string }[] = [
   {
     heading: '1. Aceptación de los términos',
-    body: 'Al usar la aplicación PawCare aceptas los presentes términos y condiciones. Si no estás de acuerdo, te pedimos abstenerte de utilizar nuestros servicios.',
+    body: 'Al usar la aplicación ChepiCare aceptas los presentes términos y condiciones. Si no estás de acuerdo, te pedimos abstenerte de utilizar nuestros servicios.',
   },
   {
     heading: '2. Uso de los servicios',
@@ -21,7 +21,7 @@ const SECTIONS: { heading: string; body: string }[] = [
   },
   {
     heading: '4. Adopción responsable',
-    body: 'La adopción está sujeta a la evaluación de requisitos. PawCare se reserva el derecho de aprobar o rechazar solicitudes en beneficio del bienestar animal.',
+    body: 'La adopción está sujeta a la evaluación de requisitos. ChepiCare se reserva el derecho de aprobar o rechazar solicitudes en beneficio del bienestar animal.',
   },
   {
     heading: '5. Modificaciones',

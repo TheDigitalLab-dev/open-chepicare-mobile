@@ -1,5 +1,5 @@
 /**
- * Servicio del asistente IA (staff) contra el backend real de PawCare:
+ * Servicio del asistente IA (staff) contra el backend real de ChepiCare:
  * dictado de consulta por voz, chat escrito/por voz y confirmación de las
  * propuestas del agente. Ver contrato en `docs/plans/voice-dictation-mcp.md`
  * de open-chepicare-web.

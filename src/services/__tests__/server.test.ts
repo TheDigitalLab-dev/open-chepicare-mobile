@@ -41,7 +41,7 @@ describe('server: capacidades (real)', () => {
   });
 
   it('con sesión de veterinario habilita chat, voz y dictado', async () => {
-    await authService.login('vet@pawcare.com', 'password123');
+    await authService.login('vet@chepicare.com', 'password123');
     const caps = await server.getCapabilities();
     expect(caps.user).toEqual({ can_chat: true, can_dictate: true });
     expect(server.assistantAvailability(caps)).toEqual({
@@ -53,7 +53,7 @@ describe('server: capacidades (real)', () => {
   });
 
   it('con "Sin inteligencia artificial" oculta chat y dictado', async () => {
-    await authService.login('vet@pawcare.com', 'password123');
+    await authService.login('vet@chepicare.com', 'password123');
     await patchAiSettings({ agent_engine: 'none' });
     try {
       const caps = await server.getCapabilities();

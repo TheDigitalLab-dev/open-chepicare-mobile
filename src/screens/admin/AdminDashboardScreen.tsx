@@ -39,7 +39,7 @@ export function AdminDashboardScreen() {
     >
       <HeroCard
         title={`Hola, ${user?.first_name ?? ''}`.trim()}
-        subtitle="Panel del personal de Pawcare. Resumen del periodo."
+        subtitle="Panel del personal de ChepiCare. Resumen del periodo."
       />
 
       <AsyncBoundary loading={loading && data === null} error={error} onRetry={reload}>

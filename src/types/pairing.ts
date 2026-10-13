@@ -1,7 +1,8 @@
 /**
- * Emparejamiento de la app con un servidor PawCare por código QR.
+ * Emparejamiento de la app con un servidor ChepiCare por código QR.
  * Contenido del QR:
- * `pawcare://pair?v=1&server=<URL url-encoded>&code=<token>&account=<staff|owner>`.
+ * `chepicare://pair?v=1&server=<URL url-encoded>&code=<token>&account=<staff|owner>`
+ * (también `pawcare://pair?...`, el que emiten los servidores y QR anteriores).
  * Lo genera el Perfil de la web, tanto del personal como del propietario.
  */
 import type { AuthEnvelope } from './auth';

@@ -211,7 +211,7 @@ jest.mock('expo-sqlite', () => {
 
 // Shim de plataforma: expo-camera (cámara NATIVA). Sin cámara en Node: permiso
 // denegado (se puede volver a pedir) y visor vacío. El emparejamiento se prueba
-// por el deep link `pawcare://pair?...` que entrega el sistema al escanear.
+// por el deep link `chepicare://pair?...` o `pawcare://pair?...` que entrega el sistema al escanear.
 jest.mock('expo-camera', () => ({
   CameraView: () => null,
   useCameraPermissions: () => [
@@ -249,7 +249,7 @@ jest.mock('expo-file-system', () => {
   const os = require('node:os') as MockNodeOs;
   const path = require('node:path') as MockNodePath;
   /* eslint-enable @typescript-eslint/no-require-imports */
-  const mockCacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pawcare-cache-'));
+  const mockCacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chepicare-cache-'));
   const toPath = (part: string | { uri: string }) =>
     (typeof part === 'string' ? part : part.uri).replace(/^file:\/\//, '');
   class MockFile {

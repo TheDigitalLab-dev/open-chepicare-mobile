@@ -12,7 +12,7 @@ import * as authService from '@/services/auth';
 
 const BASE = () => process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
-export const ADMIN_LOGIN = 'admin@pawcare.com';
+export const ADMIN_LOGIN = 'admin@chepicare.com';
 const ADMIN_PASSWORDS = ['password123', 'admin12345'];
 
 /** Inicia sesión como el admin del seed con el servicio real de la app. */

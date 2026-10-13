@@ -18,7 +18,7 @@ let restoreAi: () => Promise<void>;
 
 beforeAll(async () => {
   restoreAi = await applyAiSettings(DEGRADED_AI);
-  await authService.login('vet@pawcare.com', 'password123');
+  await authService.login('vet@chepicare.com', 'password123');
 }, AI_SETUP_TIMEOUT);
 
 afterAll(async () => {

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "pawcare-mobile",
+    "name": "ChepiCare",
     "slug": "pawcare-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "pawcare",
+    "scheme": ["chepicare", "pawcare"],
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.pawcare.mobile",
@@ -32,15 +32,15 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "PawCare usa el micrófono para que dictes consultas y envíes notas de voz al asistente.",
+          "microphonePermission": "ChepiCare usa el micrófono para que dictes consultas y envíes notas de voz al asistente.",
           "recordAudioAndroid": true
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "PawCare usa la cámara para escanear el código QR que conecta la app con tu servidor.",
-          "microphonePermission": "PawCare usa el micrófono para que dictes consultas y envíes notas de voz al asistente.",
+          "cameraPermission": "ChepiCare usa la cámara para escanear el código QR que conecta la app con tu servidor.",
+          "microphonePermission": "ChepiCare usa el micrófono para que dictes consultas y envíes notas de voz al asistente.",
           "recordAudioAndroid": true,
           "barcodeScannerEnabled": true
         }

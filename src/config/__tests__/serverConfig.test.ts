@@ -53,17 +53,17 @@ describe('setServerUrl / getApiBaseUrl / reset', () => {
     const saved = await setServerUrl('http://192.168.1.50:3000/');
     expect(saved).toBe('http://192.168.1.50:3000');
     expect(getApiBaseUrl()).toBe('http://192.168.1.50:3000');
-    expect(await SecureStore.getItemAsync('pawcare.server_url')).toBe(
+    expect(await SecureStore.getItemAsync('chepicare.server_url')).toBe(
       'http://192.168.1.50:3000',
     );
 
     await resetServerUrl();
     expect(getApiBaseUrl()).toBe(def);
-    expect(await SecureStore.getItemAsync('pawcare.server_url')).toBeNull();
+    expect(await SecureStore.getItemAsync('chepicare.server_url')).toBeNull();
   });
 
   it('restaura la URL guardada al arrancar', async () => {
-    await SecureStore.setItemAsync('pawcare.server_url', 'https://clinica.example.com');
+    await SecureStore.setItemAsync('chepicare.server_url', 'https://clinica.example.com');
     await loadServerUrl();
     expect(getApiBaseUrl()).toBe('https://clinica.example.com');
   });
@@ -72,9 +72,33 @@ describe('setServerUrl / getApiBaseUrl / reset', () => {
     await AsyncStorage.setItem('pawcare.server_url', 'https://vieja.example.com');
     await loadServerUrl();
     expect(getApiBaseUrl()).toBe('https://vieja.example.com');
-    expect(await SecureStore.getItemAsync('pawcare.server_url')).toBe(
+    expect(await SecureStore.getItemAsync('chepicare.server_url')).toBe(
       'https://vieja.example.com',
     );
     expect(await AsyncStorage.getItem('pawcare.server_url')).toBeNull();
+  });
+
+  it('conserva el servidor emparejado por una versión PawCare (pawcare.server_url)', async () => {
+    await SecureStore.setItemAsync(
+      'pawcare.server_url',
+      'https://emparejada.example.com',
+    );
+    await loadServerUrl();
+    expect(getApiBaseUrl()).toBe('https://emparejada.example.com');
+    expect(await SecureStore.getItemAsync('chepicare.server_url')).toBe(
+      'https://emparejada.example.com',
+    );
+    expect(await SecureStore.getItemAsync('pawcare.server_url')).toBeNull();
+  });
+
+  it('restablecer borra también la URL guardada por una versión PawCare', async () => {
+    await SecureStore.setItemAsync(
+      'pawcare.server_url',
+      'https://emparejada.example.com',
+    );
+    await resetServerUrl();
+    await loadServerUrl();
+    expect(getApiBaseUrl()).toBe(getDefaultApiBaseUrl());
+    expect(await SecureStore.getItemAsync('pawcare.server_url')).toBeNull();
   });
 });

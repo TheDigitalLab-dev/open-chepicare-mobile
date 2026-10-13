@@ -202,7 +202,7 @@ export function OwnerDashboardScreen() {
     >
       <HeroCard
         title={`Hola, ${user?.first_name ?? ''}`.trim()}
-        subtitle="Bienvenido a Pawcare. Aquí tienes un resumen de tus mascotas."
+        subtitle="Bienvenido a ChepiCare. Aquí tienes un resumen de tus mascotas."
       />
 
       <AsyncBoundary loading={loading} error={error} onRetry={reloadAll}>

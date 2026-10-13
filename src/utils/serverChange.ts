@@ -9,7 +9,7 @@ export interface ServerChangeExplanation {
   current: string;
   /** Servidor al que se va a cambiar. */
   target: string;
-  /** Qué es el servidor (PawCare open source, uno por clínica). */
+  /** Qué es el servidor (ChepiCare open source, uno por clínica). */
   about: string;
   /** Qué pasa al confirmar (sesión y notificaciones). */
   consequence: string;
@@ -29,7 +29,7 @@ export function serverChangeExplanation(info: ServerChangeInfo): ServerChangeExp
     current,
     target,
     about:
-      'PawCare es de código abierto: cada clínica tiene su propio servidor, y ahí viven sus datos y tu cuenta.',
+      'ChepiCare es de código abierto: cada clínica tiene su propio servidor, y ahí viven sus datos y tu cuenta.',
     consequence,
     advice: 'Hazlo solo si te lo indicó tu clínica.',
   };

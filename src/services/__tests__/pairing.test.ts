@@ -19,16 +19,24 @@ afterEach(async () => {
 });
 
 describe('parsePairingUri', () => {
-  it('extrae servidor y código de pawcare://pair?v=1', () => {
-    const uri = `pawcare://pair?v=1&server=${encodeURIComponent('https://clinica.example.com/')}&code=Zx3-_abc`;
-    expect(pairing.parsePairingUri(uri)).toEqual({
-      server: 'https://clinica.example.com',
-      code: 'Zx3-_abc',
-    });
+  it.each(['chepicare', 'pawcare'])(
+    'extrae servidor y código de %s://pair?v=1',
+    (scheme) => {
+      const uri = `${scheme}://pair?v=1&server=${encodeURIComponent('https://clinica.example.com/')}&code=Zx3-_abc`;
+      expect(pairing.parsePairingUri(uri)).toEqual({
+        server: 'https://clinica.example.com',
+        code: 'Zx3-_abc',
+      });
+    },
+  );
+
+  it('acepta el esquema sin distinguir mayúsculas (lectores de QR que lo cambian)', () => {
+    const uri = 'ChepiCare://pair?v=1&server=https%3A%2F%2Fa.com&code=x';
+    expect(pairing.parsePairingUri(uri)).toEqual({ server: 'https://a.com', code: 'x' });
   });
 
   it.each(['staff', 'owner'] as const)('lee el tipo de cuenta account=%s', (account) => {
-    const uri = `pawcare://pair?v=1&server=https%3A%2F%2Fa.com&code=x&account=${account}`;
+    const uri = `chepicare://pair?v=1&server=https%3A%2F%2Fa.com&code=x&account=${account}`;
     expect(pairing.parsePairingUri(uri)).toEqual({
       server: 'https://a.com',
       code: 'x',
@@ -43,10 +51,19 @@ describe('parsePairingUri', () => {
   });
 
   it.each([
-    ['https://clinica.example.com', 'no es un código de PawCare'],
-    ['pawcare://reset_password/abc', 'no es un código de PawCare'],
+    ['https://clinica.example.com', 'no es un código de ChepiCare'],
+    ['pawcare://reset_password/abc', 'no es un código de ChepiCare'],
+    ['chepicare://reset_password/abc', 'no es un código de ChepiCare'],
+    [
+      'otraapp://pair?v=1&server=https%3A%2F%2Fa.com&code=x',
+      'no es un código de ChepiCare',
+    ],
+    [
+      'chepicare://pairing?v=1&server=https%3A%2F%2Fa.com&code=x',
+      'no es un código de ChepiCare',
+    ],
     ['pawcare://pair?v=2&server=https%3A%2F%2Fa.com&code=x', 'versión'],
-    ['pawcare://pair?v=1&code=x', 'servidor'],
+    ['chepicare://pair?v=1&code=x', 'servidor'],
     ['pawcare://pair?v=1&server=ftp%3A%2F%2Fa.com&code=x', 'servidor'],
     ['pawcare://pair?v=1&server=https%3A%2F%2Fa.com', 'código'],
   ])('rechaza %s', (uri, fragment) => {
@@ -57,7 +74,7 @@ describe('parsePairingUri', () => {
 
 describe('redeemPairing (real)', () => {
   async function freshQr(): Promise<string> {
-    await authService.login('vet@pawcare.com', 'password123');
+    await authService.login('vet@chepicare.com', 'password123');
     const token = (await secureStore.getAccessToken())!;
     const issued = await issuePairingCode(token);
     await secureStore.clearTokens();
@@ -81,14 +98,14 @@ describe('redeemPairing (real)', () => {
 
     expect(result.serverUrl).toBe(BACKEND);
     expect(result.serverName.length).toBeGreaterThan(0);
-    expect(result.user.email).toBe('vet@pawcare.com');
+    expect(result.user.email).toBe('vet@chepicare.com');
     expect(result.user.type).toBe('User');
     expect(result.accountType).toBe('staff');
     expect(getApiBaseUrl()).toBe(BACKEND);
 
     // La sesión canjeada es real: /me responde con el usuario del QR.
     const me = await authService.fetchCurrentUser();
-    expect(me.email).toBe('vet@pawcare.com');
+    expect(me.email).toBe('vet@chepicare.com');
 
     const devices = await listPairedDevices((await secureStore.getAccessToken())!);
     expect(devices.find((d) => d.device_name === deviceName)?.push_enabled).toBe(true);

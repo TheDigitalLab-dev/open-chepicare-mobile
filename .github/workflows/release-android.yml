@@ -4,13 +4,17 @@
 #   - Cada merge (push) a `main` → release `build-<n>`, marcado como el último,
 #     así el APK más reciente siempre se descarga desde
 #     https://github.com/TheDigitalLab-dev/open-chepicare-mobile/releases/latest
+#     (`chepicare.apk`; también se adjunta una copia idéntica con el nombre
+#     anterior `open-chepicare-mobile.apk` para no romper enlaces ya compartidos)
 #   - Un tag `v*` → release con ese nombre de versión.
 # También se puede lanzar a mano (workflow_dispatch) para probar el pipeline;
 # en ese caso solo deja el APK como artifact del workflow.
 #
 # Firma (opcional pero recomendada antes de distribuir):
 #   1. Generar un keystore UNA vez y guardarlo en un lugar seguro — si se
-#      pierde, no se pueden publicar actualizaciones con la misma firma:
+#      pierde, no se pueden publicar actualizaciones con la misma firma. Si ya
+#      existe uno (p. ej. alias `pawcare`), NO se regenera: la firma y el
+#      package (com.pawcare.mobile) son la identidad de la app instalada:
 #        keytool -genkeypair -v -keystore pawcare-release.keystore \
 #          -alias pawcare -keyalg RSA -keysize 2048 -validity 10000
 #   2. Crear estos secrets del repositorio:
@@ -76,9 +80,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # para crear el GitHub Release con el APK
-    env:
-      # Vacío si los secrets de firma no están configurados todavía.
-      KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    # Los secrets de firma NO van a nivel de job: solo los ven los pasos de
+    # firma, nunca `yarn install`, `expo prebuild` ni Gradle (código de terceros).
     steps:
       - uses: actions/checkout@v4
 
@@ -109,11 +112,19 @@ jobs:
         run: cd android && ./gradlew assembleRelease
 
       - name: Renombrar APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk open-chepicare-mobile.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk chepicare.apk
+
+      - name: Comprobar si hay keystore de release
+        id: signing
+        env:
+          # Vacío si los secrets de firma no están configurados todavía.
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: echo "enabled=$([ -n "$KEYSTORE_BASE64" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - name: Firmar con el keystore de release
-        if: env.KEYSTORE_BASE64 != ''
+        if: steps.signing.outputs.enabled == 'true'
         env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -127,19 +138,24 @@ jobs:
             --ks-pass "pass:$KEYSTORE_PASSWORD" \
             --ks-key-alias "$KEY_ALIAS" \
             --key-pass "pass:$KEY_PASSWORD" \
-            open-chepicare-mobile.apk
-          "$BUILD_TOOLS/apksigner" verify --print-certs open-chepicare-mobile.apk
+            chepicare.apk
+          "$BUILD_TOOLS/apksigner" verify --print-certs chepicare.apk
           rm -f release.keystore
 
       - name: Avisar si el APK va con firma debug
-        if: env.KEYSTORE_BASE64 == ''
+        if: steps.signing.outputs.enabled != 'true'
         run: echo "::warning::Secrets de firma no configurados; el APK sale firmado con el keystore debug del template."
+
+      # Copia con el nombre anterior DESPUÉS de firmar (misma firma): los enlaces
+      # a /releases/latest/download/open-chepicare-mobile.apk siguen sirviendo.
+      - name: Copia con el nombre anterior del APK
+        run: cp chepicare.apk open-chepicare-mobile.apk
 
       - name: Subir APK como artifact del workflow
         uses: actions/upload-artifact@v4
         with:
-          name: open-chepicare-mobile-android
-          path: open-chepicare-mobile.apk
+          name: chepicare-android
+          path: chepicare.apk
           if-no-files-found: error
 
       - name: Publicar GitHub Release con el APK
@@ -147,8 +163,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" open-chepicare-mobile.apk \
-            --title "Pawcare móvil ${GITHUB_REF_NAME}" \
+          gh release create "${GITHUB_REF_NAME}" chepicare.apk open-chepicare-mobile.apk \
+            --title "ChepiCare móvil ${GITHUB_REF_NAME}" \
             --generate-notes
 
       - name: Publicar GitHub Release del build de main
@@ -159,8 +175,8 @@ jobs:
         # Los tags creados con GITHUB_TOKEN no disparan otro workflow, así que
         # esto no entra en bucle con el trigger de tags `v*`.
         run: |
-          gh release create "$TAG" open-chepicare-mobile.apk \
+          gh release create "$TAG" chepicare.apk open-chepicare-mobile.apk \
             --target "$GITHUB_SHA" \
-            --title "Pawcare móvil ${TAG} (main @ ${GITHUB_SHA::7})" \
+            --title "ChepiCare móvil ${TAG} (main @ ${GITHUB_SHA::7})" \
             --generate-notes \
             --latest

@@ -1,7 +1,7 @@
 /**
  * Configuración del servidor en TIEMPO DE EJECUCIÓN.
  *
- * Pawcare es open source y self-hosted: cada quien puede correr su propio
+ * ChepiCare es open source y self-hosted: cada quien puede correr su propio
  * backend (`../open-chepicare-web`) en su propio dominio/IP. Esta app permite elegir a qué
  * servidor conectarse y verificar que responde, sin recompilar.
  *
@@ -9,14 +9,21 @@
  * persiste en almacenamiento seguro (Keystore/Keychain): junto con los tokens
  * define A QUIÉN se le entregan las credenciales, así que no debe poder
  * alterarse desde un almacenamiento sin cifrar. `loadServerUrl()` la restaura
- * al arrancar la app y migra el valor de versiones anteriores (AsyncStorage).
+ * al arrancar la app y migra el valor de versiones anteriores (AsyncStorage y
+ * claves `pawcare.*` de las versiones PawCare).
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 
+import {
+  deleteSecureItem,
+  getAsyncItem,
+  getSecureItem,
+  removeAsyncItem,
+} from '@/utils/legacyStorage';
 import { config } from './env';
+import { SECURE_STORE_KEYS } from './storageKeys';
 
-const STORAGE_KEY = 'pawcare.server_url';
+const STORAGE_KEY = SECURE_STORE_KEYS.serverUrl;
 
 /** URL base activa (en memoria). Arranca con el default del build. */
 let currentBaseUrl: string = config.apiBaseUrl;
@@ -56,13 +63,13 @@ export function getDefaultApiBaseUrl(): string {
 /** Restaura la URL guardada al arrancar la app. Idempotente y a prueba de fallos. */
 export async function loadServerUrl(): Promise<void> {
   try {
-    let saved = await SecureStore.getItemAsync(STORAGE_KEY);
+    let saved = await getSecureItem(STORAGE_KEY);
     if (!saved) {
       // Migración: versiones anteriores guardaban la URL en AsyncStorage.
-      const legacy = await AsyncStorage.getItem(STORAGE_KEY);
+      const legacy = await getAsyncItem(STORAGE_KEY);
       if (legacy && legacy.length > 0) {
         await SecureStore.setItemAsync(STORAGE_KEY, legacy);
-        await AsyncStorage.removeItem(STORAGE_KEY);
+        await removeAsyncItem(STORAGE_KEY);
         saved = legacy;
       }
     }
@@ -88,10 +95,7 @@ export async function setServerUrl(raw: string): Promise<string> {
 export async function resetServerUrl(): Promise<void> {
   currentBaseUrl = config.apiBaseUrl;
   emitChange();
-  await Promise.all([
-    SecureStore.deleteItemAsync(STORAGE_KEY),
-    AsyncStorage.removeItem(STORAGE_KEY),
-  ]);
+  await Promise.all([deleteSecureItem(STORAGE_KEY), removeAsyncItem(STORAGE_KEY)]);
 }
 
 export interface ServerHealth {
@@ -101,7 +105,7 @@ export interface ServerHealth {
 }
 
 /**
- * Comprueba si un servidor Pawcare responde en `<url>/up` (health check de
+ * Comprueba si un servidor ChepiCare responde en `<url>/up` (health check de
  * Rails). No lanza: devuelve `ok: false` ante cualquier fallo o timeout.
  */
 export async function checkServerHealth(

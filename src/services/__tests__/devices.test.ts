@@ -9,7 +9,7 @@ import { NOTIFICATION_CATEGORIES } from '@/services/notificationPrefs';
 import * as secureStore from '@/utils/secureStore';
 
 beforeAll(async () => {
-  await authService.login('vet@pawcare.com', 'password123');
+  await authService.login('vet@chepicare.com', 'password123');
 });
 
 afterAll(async () => {
