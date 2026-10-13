@@ -109,6 +109,50 @@ export function assistantPushTarget(data: AssistantPushData): AssistantPushTarge
   return null;
 }
 
+/**
+ * Destino de una push del PROPIETARIO al tocarla (pestaña + pantalla del
+ * árbol `OwnerTabs`). Payload de `Notifications::PublishEvent`:
+ * `{ category, entity, entity_id, event_key }`. Los eventos sin pantalla propia
+ * abren el centro de notificaciones. `null` si no es una push de negocio.
+ */
+export type OwnerPushTarget =
+  | { tab: 'AppointmentsTab'; screen: 'AppointmentDetail'; params: { id: number } }
+  | {
+      tab: 'HomeTab';
+      screen: 'OwnerPaymentRegister' | 'OwnerSponsorshipDetail';
+      params: { id: number };
+    }
+  | { tab: 'HomeTab'; screen: 'OwnerMedicalHistory' | 'Notifications' };
+
+export function ownerPushTarget(data: unknown): OwnerPushTarget | null {
+  if (typeof data !== 'object' || data === null) return null;
+  const d = data as Record<string, unknown>;
+  if (typeof d.category !== 'string' || d.category === 'asistente') return null;
+  if (typeof d.entity !== 'string') return null;
+  const id = toId(d.entity_id);
+  const fallback: OwnerPushTarget = { tab: 'HomeTab', screen: 'Notifications' };
+  switch (d.entity) {
+    case 'appointment':
+      return id === null
+        ? fallback
+        : { tab: 'AppointmentsTab', screen: 'AppointmentDetail', params: { id } };
+    case 'payment':
+      return id === null
+        ? fallback
+        : { tab: 'HomeTab', screen: 'OwnerPaymentRegister', params: { id } };
+    case 'sponsorship':
+      return id === null
+        ? fallback
+        : { tab: 'HomeTab', screen: 'OwnerSponsorshipDetail', params: { id } };
+    // El payload no trae la mascota: se abre el historial del propietario.
+    case 'medical_report':
+    case 'vaccination_schedule_item':
+      return { tab: 'HomeTab', screen: 'OwnerMedicalHistory' };
+    default:
+      return fallback;
+  }
+}
+
 /** Datos del dispositivo para el canje del QR y el registro push. */
 export async function describeThisDevice(): Promise<{
   platform: 'android' | 'ios';

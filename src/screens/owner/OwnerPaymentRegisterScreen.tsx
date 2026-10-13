@@ -25,6 +25,7 @@ import {
   PAYMENT_STATUS_LABEL,
   type Payment,
   type PaymentMethod,
+  type PaymentStatus,
 } from '@/types/models';
 
 type Nav = NativeStackNavigationProp<OwnerHomeStackParamList>;
@@ -78,6 +79,8 @@ function RegisterForm({ payment }: { payment: Payment }) {
         </Text>
       </Card>
 
+      <Items payment={payment} />
+
       <SectionTitle>Método de pago</SectionTitle>
       <FilterChips
         options={METHOD_OPTIONS}
@@ -90,7 +93,9 @@ function RegisterForm({ payment }: { payment: Payment }) {
         placeholder="N.º de referencia o transacción"
         value={reference}
         onChangeText={setReference}
+        keyboardType="default"
         autoCapitalize="characters"
+        autoCorrect={false}
       />
 
       <Button
@@ -100,6 +105,64 @@ function RegisterForm({ payment }: { payment: Payment }) {
         onPress={onSubmit}
         style={{ marginTop: 8 }}
       />
+    </>
+  );
+}
+
+/** El backend solo acepta registrar pagos pendientes o vencidos. */
+const PAYABLE: PaymentStatus[] = ['pending', 'overdue'];
+
+function Items({ payment }: { payment: Payment }) {
+  const { colors } = useTheme();
+  const items = payment.items ?? [];
+  if (items.length === 0) return null;
+  return (
+    <Card style={{ gap: 6 }}>
+      {items.map((item) => (
+        <View
+          key={item.id}
+          style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}
+        >
+          <Text style={{ fontSize: 14, color: colors.foreground, flexShrink: 1 }}>
+            {`${item.quantity ?? 1} × ${item.description ?? 'Servicio'}`}
+          </Text>
+          <Text style={{ fontSize: 14, fontWeight: '600', color: colors.foreground }}>
+            {formatMoney(item.total_price ?? 0, payment.currency)}
+          </Text>
+        </View>
+      ))}
+    </Card>
+  );
+}
+
+/** Pago que ya no se puede registrar (pagado, borrador o cancelado). */
+function PaymentSummary({ payment }: { payment: Payment }) {
+  const { colors } = useTheme();
+  const message =
+    payment.status === 'completed'
+      ? `Pagado el ${formatDate(payment.paid_at)}${
+          payment.payment_method
+            ? ` (${PAYMENT_METHOD_LABEL[payment.payment_method]})`
+            : ''
+        }.`
+      : payment.status === 'draft'
+        ? 'Este pago todavía no está listo para pagarse.'
+        : 'Este pago fue cancelado.';
+  return (
+    <>
+      <Card style={{ gap: 6 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}>
+            {payment.pet_name ?? 'Pago'}
+          </Text>
+          <Badge label={PAYMENT_STATUS_LABEL[payment.status]} variant="outline" />
+        </View>
+        <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>
+          {formatMoney(payment.amount, payment.currency)}
+        </Text>
+      </Card>
+      <InfoBanner tone="info" message={message} />
+      <Items payment={payment} />
     </>
   );
 }
@@ -119,7 +182,10 @@ export function OwnerPaymentRegisterScreen() {
       contentStyle={{ gap: 16, paddingBottom: 32 }}
     >
       <AsyncBoundary loading={loading && data === null} error={error} onRetry={reload}>
-        {data ? <RegisterForm payment={data} /> : null}
+        {data && PAYABLE.includes(data.status) ? <RegisterForm payment={data} /> : null}
+        {data && !PAYABLE.includes(data.status) ? (
+          <PaymentSummary payment={data} />
+        ) : null}
       </AsyncBoundary>
     </MobileShell>
   );

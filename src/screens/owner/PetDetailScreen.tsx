@@ -52,6 +52,14 @@ export function PetDetailScreen() {
       icon: 'reader',
       onPress: () => navigation.navigate('MedicalReports', { petId }),
     },
+    {
+      // Única entrada a los tratamientos en casa (antes solo se veían justo
+      // después de iniciar uno).
+      id: 'treatments',
+      label: 'Tratamientos',
+      icon: 'medkit',
+      onPress: () => navigation.navigate('Treatments'),
+    },
   ];
 
   const subtitle = pet

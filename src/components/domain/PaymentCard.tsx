@@ -37,6 +37,10 @@ export function PaymentCard({
       {onRegister ? (
         <Button
           label="Registrar pago"
+          // Varias tarjetas en la lista: el lector de pantalla dice cuál.
+          accessibilityLabel={`Registrar pago: ${[concept, amountLabel, dueLabel]
+            .filter(Boolean)
+            .join(', ')}`}
           variant="primary"
           size="sm"
           onPress={onRegister}

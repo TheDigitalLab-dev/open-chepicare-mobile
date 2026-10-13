@@ -9,6 +9,7 @@ import { AppointmentCard } from '@/components/domain';
 import type { OwnerAppointmentsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
 import { listAppointments } from '@/services/appointments';
+import { splitAppointments } from '@/utils/appointmentGroups';
 import { formatDateTime } from '@/utils/format';
 import {
   APPOINTMENT_STATUS_LABEL,
@@ -27,8 +28,6 @@ const STATUS_VARIANT: Record<AppointmentStatus, BadgeVariant> = {
   cancelled: 'destructive',
   rescheduled: 'warning',
 };
-
-const UPCOMING: AppointmentStatus[] = ['pending', 'confirmed', 'in_progress'];
 
 const FILTERS = [
   { id: 'upcoming', label: 'Próximas' },
@@ -51,11 +50,10 @@ export function AppointmentsListScreen() {
     }, [reload]),
   );
 
+  // Próximas: la más cercana primero. Pasadas: la más reciente primero.
   const appointments = useMemo(() => {
-    const list = data ?? [];
-    return list.filter((a) =>
-      filter === 'upcoming' ? UPCOMING.includes(a.status) : !UPCOMING.includes(a.status),
-    );
+    const { upcoming, past } = splitAppointments(data ?? []);
+    return filter === 'upcoming' ? upcoming : past;
   }, [data, filter]);
 
   const fab = useMemo(

@@ -3,17 +3,20 @@
  * Endpoints (PetsController, JSON): GET/POST `/pets`, GET/PATCH/DELETE `/pets/:id`.
  * Requiere sesión de Owner (Bearer). Espejo de `pet_json`.
  */
-import type { AdoptionStatus, Pet, PetSex, Species } from '@/types/models';
+import type { Pet, PetSex, Species } from '@/types/models';
 import { api } from './api';
 
+/**
+ * `null` vacía el campo en el servidor (`undefined` no lo toca). Sin
+ * `adoption_status`: lo gestiona la clínica y el backend lo ignora.
+ */
 export interface PetInput {
   name: string;
   species: Species;
-  breed?: string;
+  breed?: string | null;
   sex?: PetSex;
-  birth_date?: string; // YYYY-MM-DD
-  distinctive_features?: string;
-  adoption_status?: AdoptionStatus;
+  birth_date?: string | null; // YYYY-MM-DD
+  distinctive_features?: string | null;
 }
 
 export async function listPets(): Promise<Pet[]> {

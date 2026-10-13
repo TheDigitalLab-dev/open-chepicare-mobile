@@ -59,3 +59,28 @@ describe('petsService CRUD (crea, lee, actualiza y elimina de verdad)', () => {
     await expect(petsService.getPet(createdId)).rejects.toMatchObject({ status: 404 });
   });
 });
+
+describe('petsService: vaciar campos opcionales', () => {
+  it('raza, nacimiento y señas en null se borran en el servidor', async () => {
+    const pet = await petsService.createPet({
+      name: 'QA Vaciar',
+      species: 'dog',
+      sex: 'male',
+      breed: 'Mestizo',
+      birth_date: '2024-01-15',
+      distinctive_features: 'Mancha blanca',
+    });
+    try {
+      const cleared = await petsService.updatePet(pet.id, {
+        breed: null,
+        birth_date: null,
+        distinctive_features: null,
+      });
+      expect(cleared.breed ?? null).toBeNull();
+      expect(cleared.birth_date ?? null).toBeNull();
+      expect(cleared.distinctive_features ?? null).toBeNull();
+    } finally {
+      await petsService.deletePet(pet.id);
+    }
+  });
+});

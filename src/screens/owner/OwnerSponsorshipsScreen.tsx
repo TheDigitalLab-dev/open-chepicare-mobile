@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -12,7 +12,11 @@ import { syncReminders } from '@/services/reminderAlarms';
 import { sponsorshipReminders } from '@/utils/reminders';
 import { listSponsorships } from '@/services/sponsorships';
 import { formatMoney } from '@/utils/format';
-import type { Sponsorship } from '@/types/models';
+import {
+  SPONSORSHIP_RECURRENCE_LABEL,
+  SPONSORSHIP_STATUS_LABEL,
+  type Sponsorship,
+} from '@/types/models';
 
 type Nav = NativeStackNavigationProp<OwnerHomeStackParamList>;
 
@@ -20,6 +24,13 @@ export function OwnerSponsorshipsScreen() {
   const navigation = useNavigation<Nav>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
   const { data, loading, error, reload } = useAsync(() => listSponsorships());
+
+  // Al volver del detalle (p. ej. tras cancelar) se muestra el estado actual.
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+    }, [reload]),
+  );
 
   // O10 del plan: aviso 5 días antes del vencimiento del apadrinamiento.
   useEffect(() => {
@@ -32,10 +43,14 @@ export function OwnerSponsorshipsScreen() {
     ({ item: s }: ListRenderItemInfo<Sponsorship>) => (
       <ListRow
         title={s.pet?.name ?? `Apadrinamiento #${s.id}`}
-        subtitle={formatMoney(s.amount)}
+        subtitle={
+          s.recurrence
+            ? `${formatMoney(s.amount)} · ${SPONSORSHIP_RECURRENCE_LABEL[s.recurrence]}`
+            : formatMoney(s.amount)
+        }
         leading={() => (
           <Badge
-            label={s.status === 'active' ? 'Activo' : s.status}
+            label={SPONSORSHIP_STATUS_LABEL[s.status]}
             variant={s.status === 'active' ? 'success' : 'outline'}
           />
         )}
