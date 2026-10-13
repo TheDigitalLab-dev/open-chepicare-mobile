@@ -7,8 +7,11 @@ import {
   vaccinationReminders,
   vaccinationScheduleReminders,
 } from '@/utils/reminders';
+import { setClinicConfig, setClinicTimeZone } from '@/utils/clinicTime';
 
 const NOW = '2026-07-14T12:00:00.000Z';
+
+afterEach(() => setClinicConfig(null));
 
 describe('appointmentReminders', () => {
   const base = {
@@ -97,7 +100,7 @@ describe('appointmentReminders', () => {
 });
 
 describe('vaccinationReminders', () => {
-  it('avisa 3 días antes del vencimiento, a las 9:00 locales', () => {
+  it('avisa 3 días antes del vencimiento', () => {
     const specs = vaccinationReminders(
       [{ id: 9, vaccine_name: 'Antirrábica', next_due_date: '2026-07-30' }],
       NOW,
@@ -107,9 +110,28 @@ describe('vaccinationReminders', () => {
     expect(specs[0]!.identifier).toBe('vacc-9-due');
     expect(specs[0]!.title).toContain('Vacuna');
     expect(specs[0]!.body).toContain('Antirrábica');
-    const trigger = new Date(specs[0]!.triggerAt);
-    expect(trigger.getDate()).toBe(27); // 30 - 3 días
-    expect(trigger.getHours()).toBe(9); // hora local
+    expect(specs[0]!.body).toContain('30 de julio');
+  });
+
+  it('las 9:00 y el día son de la clínica, no del teléfono', () => {
+    // Fecha solo-día: 27 jul (30 − 3) a las 9:00 en Caracas = 13:00 UTC,
+    // sea cual sea la zona del teléfono.
+    setClinicTimeZone('America/Caracas');
+    const [caracas] = vaccinationReminders(
+      [{ id: 9, vaccine_name: 'Antirrábica', next_due_date: '2026-07-30' }],
+      NOW,
+    );
+    expect(caracas!.triggerAt).toBe('2026-07-27T13:00:00.000Z');
+    expect(caracas!.body).toContain('30 de julio');
+
+    // En Tokio (UTC+9) las 9:00 del 27 son las 00:00 UTC del mismo día.
+    setClinicTimeZone('Asia/Tokyo');
+    const [tokyo] = vaccinationReminders(
+      [{ id: 9, vaccine_name: 'Antirrábica', next_due_date: '2026-07-30' }],
+      NOW,
+    );
+    expect(tokyo!.triggerAt).toBe('2026-07-27T00:00:00.000Z');
+    expect(tokyo!.body).toContain('30 de julio');
   });
 
   it('omite vacunas sin fecha próxima o con aviso ya vencido', () => {
@@ -134,7 +156,16 @@ describe('dewormingReminders', () => {
     expect(specs[0]!.identifier).toBe('dew-4-due');
     expect(specs[0]!.body).toContain('Drontal');
     expect(specs[0]!.category).toBe('vacunas');
-    expect(new Date(specs[0]!.triggerAt).getDate()).toBe(22);
+    expect(specs[0]!.body).toContain('25 de julio');
+  });
+
+  it('calcula el aviso en la zona de la clínica', () => {
+    setClinicTimeZone('America/Caracas');
+    const [spec] = dewormingReminders(
+      [{ id: 4, product_name: 'Drontal', next_due_date: '2026-07-25' }],
+      NOW,
+    );
+    expect(spec!.triggerAt).toBe('2026-07-22T13:00:00.000Z');
   });
 
   it('omite sin fecha o en el pasado', () => {
@@ -162,9 +193,24 @@ describe('pendingPaymentReminders', () => {
     );
     expect(specs.map((s) => s.identifier)).toEqual(['pay-1-pending', 'pay-2-pending']);
     expect(specs[1]!.title).toContain('vencido');
-    const trigger = new Date(specs[0]!.triggerAt);
-    expect(trigger.getHours()).toBe(10);
     expect(specs[0]!.category).toBe('pagos');
+  });
+
+  it('"mañana a las 10:00" es de la clínica', () => {
+    // NOW = 14 jul 08:00 en Caracas → mañana 15 jul 10:00 = 14:00 UTC.
+    setClinicTimeZone('America/Caracas');
+    const [spec] = pendingPaymentReminders(
+      [{ id: 1, status: 'pending', amount: 25, currency: 'USD' }],
+      NOW,
+    );
+    expect(spec!.triggerAt).toBe('2026-07-15T14:00:00.000Z');
+
+    // A las 21:00 del 14 en Caracas (01:00 UTC del 15) "mañana" sigue siendo el 15.
+    const [late] = pendingPaymentReminders(
+      [{ id: 1, status: 'pending', amount: 25, currency: 'USD' }],
+      '2026-07-15T01:00:00.000Z',
+    );
+    expect(late!.triggerAt).toBe('2026-07-15T14:00:00.000Z');
   });
 });
 
@@ -250,7 +296,25 @@ describe('vaccinationScheduleReminders', () => {
     expect(specs).toHaveLength(1);
     expect(specs[0]!.identifier).toBe('vsched-7');
     expect(specs[0]!.body).toContain('Rocky');
+    expect(specs[0]!.body).toContain('20 de julio');
     expect(specs[0]!.category).toBe('agenda');
+  });
+
+  it('avisa el día previo a las 8:00 de la clínica', () => {
+    setClinicTimeZone('America/Caracas');
+    const [spec] = vaccinationScheduleReminders(
+      [
+        {
+          id: 7,
+          schedule_type: 'Refuerzo anual',
+          start_date: '2026-07-20',
+          status: 'pending',
+          pet: { name: 'Rocky' },
+        },
+      ],
+      NOW,
+    );
+    expect(spec!.triggerAt).toBe('2026-07-19T12:00:00.000Z');
   });
 });
 
@@ -266,6 +330,26 @@ describe('sponsorshipReminders', () => {
     expect(specs).toHaveLength(1);
     expect(specs[0]!.identifier).toBe('sponsor-3-renewal');
     expect(specs[0]!.body).toContain('Milo');
-    expect(new Date(specs[0]!.triggerAt).getDate()).toBe(20);
+    expect(specs[0]!.body).toContain('25 de julio');
+  });
+
+  it('avisa 5 días antes a las 9:00 de la clínica', () => {
+    setClinicTimeZone('America/Caracas');
+    const [spec] = sponsorshipReminders(
+      [{ id: 3, status: 'active', end_date: '2026-07-25', pet: { name: 'Milo' } }],
+      NOW,
+    );
+    expect(spec!.triggerAt).toBe('2026-07-20T13:00:00.000Z');
+  });
+
+  it('omite el aviso si su momento en la clínica ya pasó', () => {
+    // Fin el 19 → aviso el 14 a las 9:00 de Tokio (00:00 UTC), antes de NOW.
+    setClinicTimeZone('Asia/Tokyo');
+    expect(
+      sponsorshipReminders(
+        [{ id: 3, status: 'active', end_date: '2026-07-19', pet: null }],
+        NOW,
+      ),
+    ).toEqual([]);
   });
 });

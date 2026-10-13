@@ -18,6 +18,8 @@ import {
   learnClinicTimeZone,
   setClinicConfig,
   setClinicTimeZone,
+  shiftDayKey,
+  formatDayLong,
 } from '@/utils/clinicTime';
 import { formatDate, formatDateTime } from '@/utils/format';
 
@@ -244,5 +246,23 @@ describe('clinicToday', () => {
 
     setClinicConfig({ time_zone: 'Asia/Tokyo' });
     expect(clinicToday(boundary)).toBe('2026-04-01');
+  });
+});
+
+describe('días de calendario (fechas solo-día)', () => {
+  it('shiftDayKey desplaza días sin depender de zonas ni del horario de verano', () => {
+    expect(shiftDayKey('2026-07-30', -3)).toBe('2026-07-27');
+    expect(shiftDayKey('2026-03-01', -1)).toBe('2026-02-28');
+    expect(shiftDayKey('2026-12-31', 1)).toBe('2027-01-01');
+    setClinicConfig({ time_zone: 'Pacific/Kiritimati' });
+    expect(shiftDayKey('2026-03-08', 1)).toBe('2026-03-09');
+  });
+
+  it('formatDayLong muestra el día tal cual, en cualquier zona de la clínica', () => {
+    setClinicConfig({ time_zone: 'America/Caracas' });
+    expect(formatDayLong('2026-07-30')).toBe('30 de julio');
+    setClinicConfig({ time_zone: 'Asia/Tokyo' });
+    expect(formatDayLong('2026-07-30')).toBe('30 de julio');
+    expect(formatDayLong('no-es-fecha')).toBe('no-es-fecha');
   });
 });

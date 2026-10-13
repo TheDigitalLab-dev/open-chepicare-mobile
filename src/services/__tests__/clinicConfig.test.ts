@@ -11,9 +11,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import * as authService from '@/services/auth';
 import {
+  applyClinicConfig,
   CLINIC_CONFIG_STORAGE_KEY,
+  clinicConfigSettled,
   forgetClinicConfig,
   getClinicConfig,
+  refreshClinicConfig,
   restoreClinicConfig,
 } from '@/services/clinicConfig';
 import { api } from '@/services/api';
@@ -23,8 +26,10 @@ import {
   clinicMonth,
   clinicToday,
   getClinicTimeZone,
+  learnClinicTimeZone,
   setClinicConfig,
 } from '@/utils/clinicTime';
+import type { ClinicConfig } from '@/types/models';
 
 const OWNER = { login: 'owner1@example.com', password: 'password123' };
 const VET = { login: 'vet@pawcare.com', password: 'password123' };
@@ -192,5 +197,85 @@ describe('asistente de citas y formularios: mes inicial y "hoy" de la clínica',
 
     expect(clinicMonth(BOUNDARY)).toEqual({ month: 3, year: 2026 });
     expect(clinicToday(BOUNDARY)).toBe('2026-03-31');
+  });
+});
+
+describe('cambio de servidor: la clínica anterior no se arrastra', () => {
+  // El mismo backend con otra URL es, para la app, otro servidor.
+  const otherServer = () => getApiBaseUrl().replace('localhost', '127.0.0.1');
+  // Puerto sin servidor: "sin red" hacia el nuevo servidor.
+  const UNREACHABLE = 'http://127.0.0.1:9';
+  const TOKYO_CLINIC: ClinicConfig = {
+    name: 'Clínica anterior',
+    time_zone: 'Asia/Tokyo',
+    date_format: 'YYYY-MM-DD',
+    time_format: '12h',
+    language: 'es',
+    default_appointment_duration: 45,
+    allow_outside_hours: true,
+    max_advance_days: 90,
+  };
+
+  afterEach(async () => {
+    await resetServerUrl();
+    await clinicConfigSettled();
+  });
+
+  it('descarta la zona anterior y toma la del servidor nuevo antes del login', async () => {
+    expect(getApiBaseUrl()).toContain('localhost');
+    await applyClinicConfig(TOKYO_CLINIC);
+    expect(getClinicTimeZone()).toBe('Asia/Tokyo');
+
+    await setServerUrl(otherServer());
+
+    // Al instante deja de valer la de la clínica anterior…
+    expect(getClinicConfig()).toBeNull();
+    expect(getClinicTimeZone()).toBeUndefined();
+    // …y sin iniciar sesión llega la del nuevo (`clinic` de capabilities).
+    await clinicConfigSettled();
+    expect(await secureStore.hasSession()).toBe(false);
+    expect(getClinicTimeZone()).toBe(general.timezone);
+    expect(getClinicConfig()).toMatchObject({
+      time_zone: general.timezone,
+      date_format: general.date_format,
+      time_format: general.time_format,
+    });
+
+    // Queda guardada para arrancar sin red en el servidor nuevo.
+    forgetClinicConfig();
+    expect((await restoreClinicConfig())?.time_zone).toBe(general.timezone);
+  });
+
+  it('también descarta la zona aprendida de una cita (sin configuración de sesión)', async () => {
+    learnClinicTimeZone('Asia/Tokyo');
+    expect(getClinicTimeZone()).toBe('Asia/Tokyo');
+
+    await setServerUrl(UNREACHABLE);
+    await clinicConfigSettled();
+
+    // Sin red hacia el nuevo: la del dispositivo, nunca la anterior.
+    expect(getClinicTimeZone()).toBeUndefined();
+    expect(getClinicConfig()).toBeNull();
+  });
+
+  it('volver a guardar la misma URL no descarta la configuración', async () => {
+    await authService.login(OWNER.login, OWNER.password);
+    expect(getClinicTimeZone()).toBe(general.timezone);
+
+    await setServerUrl(getApiBaseUrl());
+
+    expect(getClinicTimeZone()).toBe(general.timezone);
+    expect(getClinicConfig()).not.toBeNull();
+  });
+
+  it('una respuesta tardía del servidor anterior no pisa al nuevo', async () => {
+    const late = refreshClinicConfig();
+    await setServerUrl(UNREACHABLE);
+
+    await late;
+    await clinicConfigSettled();
+
+    expect(getClinicTimeZone()).toBeUndefined();
+    expect(getClinicConfig()).toBeNull();
   });
 });

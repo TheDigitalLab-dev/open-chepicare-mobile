@@ -284,8 +284,7 @@ export interface Appointment {
 /** Pago resumido que trae el detalle de una cita (`payments[]`). */
 export interface AppointmentPayment {
   id: number;
-  /** BigDecimal serializado como texto ("500.0"). */
-  amount: number | string;
+  amount: number;
   amount_cents?: number | null;
   currency: string;
   status: PaymentStatus;
@@ -400,6 +399,17 @@ export interface LabExam {
 export type LabExamStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 export type LabExamResults = Record<string, string | number | boolean | null>;
 
+/** Archivo adjunto a un examen (`POST /owner/lab_exams/:id/files`). */
+export interface LabExamAttachment {
+  id: number;
+  category: string;
+  description?: string | null;
+  /** Relativa al servidor, pública y firmada (ver `absoluteServerUrl`). */
+  file_url: string;
+  filename: string;
+  content_type: string;
+}
+
 export interface Prescription {
   id: number;
   diagnosis?: string | null;
@@ -415,6 +425,11 @@ export interface PrescriptionItem {
   frequency?: string | null;
   duration?: string | null;
   special_instructions?: string | null;
+  /**
+   * Momento en que el propietario lo marcó como completado. Lo trae la
+   * respuesta de `complete`; el listado de consultas aún no lo incluye.
+   */
+  completed_at?: string | null;
 }
 
 export interface MedicalProfile {

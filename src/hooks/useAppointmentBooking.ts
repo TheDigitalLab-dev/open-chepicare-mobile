@@ -8,8 +8,9 @@
  *  - horarios libres (`/owner-time-slots`: sin horas pasadas, ocupadas ni
  *    ausencias, en todos los turnos del veterinario).
  *
- * Con `appointmentId` precarga la cita (solo pendientes o confirmadas) y envía
- * un PATCH con los campos que cambiaron. Cada carga ignora las respuestas de
+ * Con `appointmentId` precarga la cita (solo pendientes o confirmadas), pide los
+ * horarios sin contar la propia cita (`exclude_appointment_id`) y envía un
+ * PATCH con los campos que cambiaron. Cada carga ignora las respuestas de
  * peticiones anteriores (tocar días rápido no mezcla veterinarios).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -178,20 +179,12 @@ export function useAppointmentBooking(appointmentId?: number): AppointmentBookin
       const req = ++slotsReq.current;
       setSlots({ data: [], loading: true, error: null });
       try {
-        const free = (await getAvailableTimeSlots(day, vetId, serviceId))
+        // Al reprogramar, el servidor no cuenta la propia cita como ocupada
+        // (`exclude_appointment_id`): se ofrecen su horario y los que solo
+        // chocaban con ella, con el mismo cálculo que valida el PATCH.
+        const free = (await getAvailableTimeSlots(day, vetId, serviceId, keep?.id))
           .filter((s) => s.available)
           .map((s) => s.time);
-        // Al reprogramar, el horario actual de la cita lo ocupa ella misma: se
-        // sigue ofreciendo si es el mismo día y veterinario.
-        if (
-          keep &&
-          keep.assigned_to_id === vetId &&
-          clinicDayKey(keep.scheduled_at, keep.time_zone) === day
-        ) {
-          const own = clinicHourKey(keep.scheduled_at, keep.time_zone);
-          if (!free.includes(own)) free.push(own);
-          free.sort();
-        }
         if (req === slotsReq.current)
           setSlots({ data: free, loading: false, error: null });
       } catch (e) {

@@ -10,10 +10,15 @@ export function formatDate(iso?: string | null): string {
 }
 
 /**
- * Importe con su moneda. Acepta texto porque algunos JSON del backend
- * serializan BigDecimal como cadena ("500.0").
+ * Importe con su moneda. El backend envía los importes como número JSON; aun
+ * así, un texto numérico ("500.0") se muestra y un valor no numérico o ausente
+ * da "—" en vez de "NaN" (datos guardados por versiones anteriores).
  */
-export function formatMoney(amount: number | string, currency = 'COP'): string {
+export function formatMoney(
+  amount: number | string | null | undefined,
+  currency = 'COP',
+): string {
+  if (amount === null || amount === undefined || amount === '') return '—';
   const value = typeof amount === 'number' ? amount : Number(amount);
   if (!Number.isFinite(value)) return '—';
   const prefix = currency === 'COP' ? '$' : `${currency} `;

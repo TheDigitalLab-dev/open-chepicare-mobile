@@ -8,8 +8,11 @@
  */
 import {
   clinicDayKey,
+  clinicToday,
   clinicWallTimeToInstant,
   formatClinicDateTime,
+  formatDayLong,
+  shiftDayKey,
 } from './clinicTime';
 
 export interface ReminderSpec {
@@ -40,6 +43,20 @@ interface VaccinationLike {
 
 const HOUR_MS = 60 * 60 * 1000;
 const SKIP_STATUSES = new Set(['cancelled', 'completed']);
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Instante de un aviso para una fecha solo-día del backend (vencimiento,
+ * próxima dosis, fin de apadrinamiento…): `daysBefore` días antes, a la hora
+ * `time` de la CLÍNICA. La fecha es un día de calendario de la clínica; con la
+ * zona del teléfono el aviso sonaría a otra hora (o en otro día) si el
+ * propietario está en otra zona. `null` si la fecha no es válida.
+ */
+function dateOnlyTrigger(day: string, daysBefore: number, time: string): number | null {
+  if (!DATE_ONLY.test(day)) return null;
+  const at = Date.parse(clinicWallTimeToInstant(shiftDayKey(day, -daysBefore), time));
+  return Number.isNaN(at) ? null : at;
+}
 
 // Hora de la cita en la zona de la clínica (la del aviso, no la del teléfono).
 function formatWhen(iso: string, timeZone?: string | null): string {
@@ -80,7 +97,7 @@ export function appointmentReminders(
   return specs;
 }
 
-/** Aviso 3 días antes del vencimiento de la próxima dosis, a las 9:00 locales. */
+/** Aviso 3 días antes del vencimiento de la próxima dosis, a las 9:00 de la clínica. */
 export function vaccinationReminders(
   vaccinations: VaccinationLike[],
   nowIso: string,
@@ -90,20 +107,14 @@ export function vaccinationReminders(
 
   for (const vacc of vaccinations) {
     if (!vacc.next_due_date) continue;
-    const due = new Date(`${vacc.next_due_date}T09:00:00`);
-    if (Number.isNaN(due.getTime())) continue;
-
-    const trigger = new Date(due.getTime());
-    trigger.setDate(trigger.getDate() - 3);
-    if (trigger.getTime() <= now) continue;
+    const trigger = dateOnlyTrigger(vacc.next_due_date, 3, '09:00');
+    if (trigger === null || trigger <= now) continue;
 
     specs.push({
       identifier: `vacc-${vacc.id}-due`,
       title: '💉 Vacuna próxima a vencer',
-      body: `${vacc.vaccine_name} — vence el ${new Date(
-        `${vacc.next_due_date}T09:00:00`,
-      ).toLocaleDateString('es-VE', { day: 'numeric', month: 'long' })}`,
-      triggerAt: trigger.toISOString(),
+      body: `${vacc.vaccine_name} — vence el ${formatDayLong(vacc.next_due_date)}`,
+      triggerAt: new Date(trigger).toISOString(),
       category: 'vacunas',
     });
   }
@@ -116,7 +127,7 @@ interface DewormingLike {
   next_due_date?: string | null;
 }
 
-/** O4 — desparasitación: aviso 3 días antes de la próxima aplicación, 9:00. */
+/** O4 — desparasitación: aviso 3 días antes de la próxima aplicación, 9:00 de la clínica. */
 export function dewormingReminders(
   dewormings: DewormingLike[],
   nowIso: string,
@@ -126,17 +137,14 @@ export function dewormingReminders(
 
   for (const dew of dewormings) {
     if (!dew.next_due_date) continue;
-    const due = new Date(`${dew.next_due_date}T09:00:00`);
-    if (Number.isNaN(due.getTime())) continue;
-    const trigger = new Date(due.getTime());
-    trigger.setDate(trigger.getDate() - 3);
-    if (trigger.getTime() <= now) continue;
+    const trigger = dateOnlyTrigger(dew.next_due_date, 3, '09:00');
+    if (trigger === null || trigger <= now) continue;
 
     specs.push({
       identifier: `dew-${dew.id}-due`,
       title: '🪱 Desparasitación pendiente',
-      body: `${dew.product_name} — próxima aplicación el ${due.toLocaleDateString('es-VE', { day: 'numeric', month: 'long' })}`,
-      triggerAt: trigger.toISOString(),
+      body: `${dew.product_name} — próxima aplicación el ${formatDayLong(dew.next_due_date)}`,
+      triggerAt: new Date(trigger).toISOString(),
       category: 'vacunas',
     });
   }
@@ -150,16 +158,14 @@ interface PaymentLike {
   currency: string;
 }
 
-/** O8 — pagos pendientes o vencidos: recordatorio mañana a las 10:00. */
+/** O8 — pagos pendientes o vencidos: recordatorio mañana a las 10:00 (de la clínica). */
 export function pendingPaymentReminders(
   payments: PaymentLike[],
   nowIso: string,
 ): ReminderSpec[] {
   const now = new Date(nowIso);
   if (Number.isNaN(now.getTime())) return [];
-  const trigger = new Date(now.getTime());
-  trigger.setDate(trigger.getDate() + 1);
-  trigger.setHours(10, 0, 0, 0);
+  const triggerAt = clinicWallTimeToInstant(shiftDayKey(clinicToday(now), 1), '10:00');
 
   const specs: ReminderSpec[] = [];
   for (const p of payments) {
@@ -168,7 +174,7 @@ export function pendingPaymentReminders(
       identifier: `pay-${p.id}-pending`,
       title: p.status === 'overdue' ? '⚠️ Pago vencido' : '💳 Pago pendiente',
       body: `${p.currency} ${p.amount} por pagar en el consultorio.`,
-      triggerAt: trigger.toISOString(),
+      triggerAt,
       category: 'pagos',
     });
   }
@@ -223,7 +229,7 @@ interface SponsorshipLike {
   pet: { name: string } | null;
 }
 
-/** O10 — apadrinamiento por vencer: aviso 5 días antes del fin, 9:00. */
+/** O10 — apadrinamiento por vencer: aviso 5 días antes del fin, 9:00 de la clínica. */
 export function sponsorshipReminders(
   sponsorships: SponsorshipLike[],
   nowIso: string,
@@ -233,17 +239,14 @@ export function sponsorshipReminders(
 
   for (const sp of sponsorships) {
     if (!sp.end_date || sp.status !== 'active') continue;
-    const end = new Date(`${sp.end_date}T09:00:00`);
-    if (Number.isNaN(end.getTime())) continue;
-    const trigger = new Date(end.getTime());
-    trigger.setDate(trigger.getDate() - 5);
-    if (trigger.getTime() <= now) continue;
+    const trigger = dateOnlyTrigger(sp.end_date, 5, '09:00');
+    if (trigger === null || trigger <= now) continue;
 
     specs.push({
       identifier: `sponsor-${sp.id}-renewal`,
       title: '💚 Apadrinamiento por renovar',
-      body: `${sp.pet?.name ? `${sp.pet.name} — ` : ''}vence el ${end.toLocaleDateString('es-VE', { day: 'numeric', month: 'long' })}. ¡Gracias por tu apoyo!`,
-      triggerAt: trigger.toISOString(),
+      body: `${sp.pet?.name ? `${sp.pet.name} — ` : ''}vence el ${formatDayLong(sp.end_date)}. ¡Gracias por tu apoyo!`,
+      triggerAt: new Date(trigger).toISOString(),
       category: 'pagos',
     });
   }
@@ -258,7 +261,7 @@ interface VaccinationScheduleLike {
   pet: { name: string } | null;
 }
 
-/** A10 — calendario de vacunación de la clínica: aviso el día previo, 8:00. */
+/** A10 — calendario de vacunación de la clínica: aviso el día previo, 8:00 de la clínica. */
 export function vaccinationScheduleReminders(
   schedules: VaccinationScheduleLike[],
   nowIso: string,
@@ -268,17 +271,14 @@ export function vaccinationScheduleReminders(
 
   for (const sched of schedules) {
     if (!sched.start_date || SKIP_STATUSES.has(sched.status)) continue;
-    const start = new Date(`${sched.start_date}T08:00:00`);
-    if (Number.isNaN(start.getTime())) continue;
-    const trigger = new Date(start.getTime());
-    trigger.setDate(trigger.getDate() - 1);
-    if (trigger.getTime() <= now) continue;
+    const trigger = dateOnlyTrigger(sched.start_date, 1, '08:00');
+    if (trigger === null || trigger <= now) continue;
 
     specs.push({
       identifier: `vsched-${sched.id}`,
       title: '💉 Vacunación programada',
-      body: `${sched.pet?.name ? `${sched.pet.name} — ` : ''}${sched.schedule_type} el ${start.toLocaleDateString('es-VE', { day: 'numeric', month: 'long' })}`,
-      triggerAt: trigger.toISOString(),
+      body: `${sched.pet?.name ? `${sched.pet.name} — ` : ''}${sched.schedule_type} el ${formatDayLong(sched.start_date)}`,
+      triggerAt: new Date(trigger).toISOString(),
       category: 'agenda',
     });
   }
