@@ -16,7 +16,7 @@ beforeAll(async () => {
   owner2Id = (await authService.fetchCurrentUser()).id;
   await authService.login('owner1@example.com', 'password123');
   owner1Id = (await authService.fetchCurrentUser()).id;
-  await authService.login('admin@pawcare.com', 'password123');
+  await authService.login('admin@chepicare.com', 'password123');
 });
 
 afterAll(async () => {
@@ -68,7 +68,7 @@ describe('useOwnerPets', () => {
     expect(result.current.error?.kind).toBe('unauthorized');
     expect(result.current.loading).toBe(false);
 
-    await authService.login('admin@pawcare.com', 'password123');
+    await authService.login('admin@chepicare.com', 'password123');
     await act(() => result.current.reload());
     expect(result.current.error).toBeNull();
     expect(result.current.pets.map((p) => p.name)).toEqual(

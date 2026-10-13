@@ -94,7 +94,7 @@ configurada; sin ella el chat escrito sigue funcionando.
 | --- | --- |
 | «El código venció o ya se usó…» | Genera un QR nuevo en la web. |
 | «Demasiados intentos» | Espera un minuto antes de volver a escanear. |
-| «Sin permiso de micrófono» | Actívalo en los ajustes del teléfono para PawCare. |
+| «Sin permiso de micrófono» | Actívalo en los ajustes del teléfono para ChepiCare. |
 | El dictado termina «Con error» | El servidor no pudo transcribir/interpretar: el motivo aparece en la tarjeta. Avisa al administrador. |
 | El progreso tarda en verse | Sin conexión en tiempo real la app consulta cada pocos segundos; espera o revisa tu red. |
 

@@ -100,7 +100,7 @@ describe('aislamiento entre propietarios', () => {
   }, 60000);
 
   it('el personal no usa los endpoints del propietario (403 con mensaje)', async () => {
-    await authService.login('vet@pawcare.com', 'password123');
+    await authService.login('vet@chepicare.com', 'password123');
     await expect(appointmentsService.listAppointments()).rejects.toMatchObject({
       kind: 'forbidden',
       message: 'No tienes permiso para realizar esta acción.',

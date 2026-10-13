@@ -97,7 +97,7 @@ export function AdminModulesScreen() {
         />
         <ListRow
           title="Emparejar con código QR"
-          subtitle="Conecta la app a otro servidor PawCare"
+          subtitle="Conecta la app a otro servidor ChepiCare"
           onPress={() => navigation.navigate('PairingScan')}
         />
       </View>

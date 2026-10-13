@@ -8,7 +8,7 @@ import { ActionTileGrid, HeroCard, ThemeToggle, type ActionTile } from '@/compon
 import { Button, SectionTitle } from '@/components';
 import type { PublicStackParamList } from '@/navigation/types';
 
-/** Hub público de PawCare: punto de entrada a las secciones abiertas. */
+/** Hub público de ChepiCare: punto de entrada a las secciones abiertas. */
 export function PublicLandingScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<PublicStackParamList>>();
   const { colors } = useTheme();
@@ -49,7 +49,7 @@ export function PublicLandingScreen() {
   return (
     <MobileShell scroll contentStyle={styles.content}>
       <View style={styles.brandBlock}>
-        <Text style={[styles.brand, { color: colors.primary }]}>PawCare</Text>
+        <Text style={[styles.brand, { color: colors.primary }]}>ChepiCare</Text>
         <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
           Cuidado veterinario a domicilio
         </Text>

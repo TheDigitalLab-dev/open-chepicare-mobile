@@ -165,10 +165,10 @@ export async function describeThisDevice(): Promise<{
   return {
     platform,
     device_name: model
-      ? `${model} (PawCare)`
+      ? `${model} (ChepiCare)`
       : platform === 'ios'
-        ? 'iPhone (PawCare)'
-        : 'Android (PawCare)',
+        ? 'iPhone (ChepiCare)'
+        : 'Android (ChepiCare)',
     ...(token ? { expo_push_token: token } : {}),
   };
 }

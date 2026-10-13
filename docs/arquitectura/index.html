@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Arquitectura de Pawcare Mobile · Pawcare Mobile</title>
+<title>Arquitectura de ChepiCare Mobile · ChepiCare Mobile</title>
 <style>
 :root{
   --bg:#f7f6f2; --panel:#ffffff; --ink:#1f2a2e; --muted:#5b6b70; --line:#e4e2da;
@@ -89,12 +89,12 @@ footer.pager{display:flex;justify-content:space-between;margin-top:52px;
 </head>
 <body>
 <div class="layout">
-<aside><div class="brand"><span class="dot"></span> Pawcare · Arquitectura</div><nav><a href="index.html" class="active">Inicio</a><a href="vision-general.html" class="">Visión general</a><a href="navegacion.html" class="">Navegación y roles</a><a href="sesion-autenticacion.html" class="">Sesión y autenticación</a><a href="capa-http.html" class="">Capa HTTP</a><a href="configuracion-servidor.html" class="">Configuración de servidor</a><a href="servicios-dominio.html" class="">Servicios de dominio</a><a href="pantallas-publico.html" class="">Área pública</a><a href="pantallas-owner.html" class="">Área del dueño</a><a href="pantallas-admin.html" class="">Área del staff</a><a href="componentes-ui.html" class="">Componentes y tema</a><a href="estado-datos.html" class="">Estado, datos y hooks</a><a href="local-first.html" class="">Local-first y sincronización</a><a href="testing.html" class="">Testing y calidad</a></nav><div class="meta">Expo SDK 56 · React Native 0.85 · TypeScript estricto.<br>Generado desde <code>docs/arquitectura/build.py</code>.</div></aside>
+<aside><div class="brand"><span class="dot"></span> ChepiCare · Arquitectura</div><nav><a href="index.html" class="active">Inicio</a><a href="vision-general.html" class="">Visión general</a><a href="navegacion.html" class="">Navegación y roles</a><a href="sesion-autenticacion.html" class="">Sesión y autenticación</a><a href="capa-http.html" class="">Capa HTTP</a><a href="configuracion-servidor.html" class="">Configuración de servidor</a><a href="servicios-dominio.html" class="">Servicios de dominio</a><a href="pantallas-publico.html" class="">Área pública</a><a href="pantallas-owner.html" class="">Área del dueño</a><a href="pantallas-admin.html" class="">Área del staff</a><a href="componentes-ui.html" class="">Componentes y tema</a><a href="estado-datos.html" class="">Estado, datos y hooks</a><a href="local-first.html" class="">Local-first y sincronización</a><a href="testing.html" class="">Testing y calidad</a></nav><div class="meta">Expo SDK 56 · React Native 0.85 · TypeScript estricto.<br>Generado desde <code>docs/arquitectura/build.py</code>.</div></aside>
 <main>
-<h1>Arquitectura de Pawcare Mobile</h1>
+<h1>Arquitectura de ChepiCare Mobile</h1>
 <p class="subtitle">Guía técnica por módulos, con diagramas ampliables al hacer click.</p>
-<section id="que-es"><h2>¿Qué es Pawcare Mobile?</h2>
-<p>Aplicación móvil <b>Android</b> (Expo / React Native) para una clínica veterinaria a domicilio. Sirve a tres audiencias desde una sola app: el <b>público</b> (sin sesión), el <b>dueño</b> de mascotas y el <b>staff</b> clínico. Toda pantalla consume <b>datos reales</b> del backend Rails <code>pawcare</code> a través de su servicio de dominio — sin datos mockeados.</p>
+<section id="que-es"><h2>¿Qué es ChepiCare Mobile?</h2>
+<p>Aplicación móvil <b>Android</b> (Expo / React Native) para una clínica veterinaria a domicilio. Sirve a tres audiencias desde una sola app: el <b>público</b> (sin sesión), el <b>dueño</b> de mascotas y el <b>staff</b> clínico. Toda pantalla consume <b>datos reales</b> del backend Rails <code>open-chepicare-web</code> a través de su servicio de dominio — sin datos mockeados.</p>
 <div class="pills"><span class="pill">Expo SDK 56</span><span class="pill">React Native 0.85</span><span class="pill">React 19</span><span class="pill">TypeScript estricto</span><span class="pill">React Navigation</span><span class="pill">expo-sqlite</span><span class="pill">Jest (integración real)</span></div>
 </section><section id="mapa"><h2>Mapa de la documentación</h2>
 <p>Cada módulo tiene su propia página autocontenida. Los diagramas se <b>amplían al hacer click</b> (arrastra para mover, rueda para zoom).</p>
@@ -129,7 +129,7 @@ flowchart TB
     CFG["Config de servidor&lt;br/&gt;serverConfig"]
     DB[("SQLite local&lt;br/&gt;expo-sqlite (local-first)")]
   end
-  BE["Backend Rails&lt;br/&gt;pawcare (JSON + Bearer)"]
+  BE["Backend Rails&lt;br/&gt;open-chepicare-web (JSON + Bearer)"]
 
   UI --&gt; NAV
   UI --&gt; COMP
@@ -144,7 +144,7 @@ flowchart TB
   <figcaption><span class="zoom-hint">🔍 Click para ampliar</span></figcaption>
 </figure>
 </section><section id="instalacion"><h2>Instalación rápida</h2>
-<div class="callout info"><span class="ic">ℹ️</span><div>Requisitos: <b>Node ≥ 20</b>, <b>Yarn 4</b> (Corepack), y para Android un <b>emulador</b> o dispositivo con <b>Expo Go</b>. El backend <code>pawcare</code> debe estar corriendo (por defecto en <code>http://localhost:3000</code>).</div></div>
+<div class="callout info"><span class="ic">ℹ️</span><div>Requisitos: <b>Node ≥ 20</b>, <b>Yarn 4</b> (Corepack), y para Android un <b>emulador</b> o dispositivo con <b>Expo Go</b>. El backend <code>open-chepicare-web</code> debe estar corriendo (por defecto en <code>http://localhost:3000</code>).</div></div>
 <pre class="code"># 1) Dependencias
 corepack enable
 yarn install

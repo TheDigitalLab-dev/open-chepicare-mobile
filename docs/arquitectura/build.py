@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generador de la documentación de arquitectura de Pawcare Mobile.
+Generador de la documentación de arquitectura de ChepiCare Mobile.
 
 Produce un HTML autocontenido por módulo en `docs/arquitectura/`. Cada archivo
 comparte un "shell" común (estilos + Mermaid + lightbox con zoom) e incluye el
@@ -157,7 +157,7 @@ def nav_html(active: str) -> str:
         for slug, label in NAV
     )
     return (
-        '<aside><div class="brand"><span class="dot"></span> Pawcare · Arquitectura</div>'
+        '<aside><div class="brand"><span class="dot"></span> ChepiCare · Arquitectura</div>'
         f"<nav>{links}</nav>"
         '<div class="meta">Expo SDK 56 · React Native 0.85 · TypeScript estricto.<br>'
         "Generado desde <code>docs/arquitectura/build.py</code>.</div></aside>"
@@ -184,7 +184,7 @@ def page(slug: str, title: str, subtitle: str, content: str) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{h(title)} · Pawcare Mobile</title>
+<title>{h(title)} · ChepiCare Mobile</title>
 <style>{STYLE}</style>
 </head>
 <body>

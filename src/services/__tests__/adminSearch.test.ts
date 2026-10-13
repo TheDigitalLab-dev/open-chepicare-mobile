@@ -13,7 +13,7 @@ let owner1Id: number;
 beforeAll(async () => {
   await authService.login('owner1@example.com', 'password123');
   owner1Id = (await authService.fetchCurrentUser()).id;
-  await authService.login('admin@pawcare.com', 'password123');
+  await authService.login('admin@chepicare.com', 'password123');
 });
 
 afterAll(async () => {

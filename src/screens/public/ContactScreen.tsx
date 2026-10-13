@@ -32,7 +32,7 @@ export function ContactScreen() {
       />
       <ListRow
         title="Correo"
-        subtitle="contacto@pawcare.com"
+        subtitle="contacto@chepicare.com"
         leading={() => <Ionicons name="mail" size={22} color={colors.primary} />}
         showChevron={false}
       />

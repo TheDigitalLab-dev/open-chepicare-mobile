@@ -1,5 +1,5 @@
 /**
- * Tipos del asistente IA de PawCare (dictado de consultas por voz, chat,
+ * Tipos del asistente IA de ChepiCare (dictado de consultas por voz, chat,
  * capacidades del servidor y push de la categoría `asistente`).
  *
  * Reflejan el contrato real de `open-chepicare-web` (rama feat/voice-dictation-mcp):

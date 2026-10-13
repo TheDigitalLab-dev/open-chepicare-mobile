@@ -7,7 +7,7 @@ import * as petsService from '@/services/pets';
 import * as secureStore from '@/utils/secureStore';
 
 beforeAll(async () => {
-  await authService.login('admin@pawcare.com', 'password123');
+  await authService.login('admin@chepicare.com', 'password123');
 });
 
 afterAll(async () => {
@@ -72,7 +72,7 @@ describe('adminService (listas reales del staff)', () => {
     await authService.login('owner1@example.com', 'password123');
     const ownerId = (await authService.fetchCurrentUser()).id;
 
-    await authService.login('admin@pawcare.com', 'password123');
+    await authService.login('admin@chepicare.com', 'password123');
     const created = await adminService.createAdminPet({
       name: 'QA-Admin-Pet',
       species: 'dog',
@@ -89,7 +89,7 @@ describe('adminService (listas reales del staff)', () => {
   }, 20000);
 
   it('crea una consulta y la elimina (real)', async () => {
-    await authService.login('admin@pawcare.com', 'password123');
+    await authService.login('admin@chepicare.com', 'password123');
     const pets = await adminService.listAdminPets();
     if (pets.length === 0) return;
 
@@ -140,7 +140,7 @@ describe('adminService (listas reales del staff)', () => {
   });
 
   it('crea una cita como admin y la elimina (real)', async () => {
-    await authService.login('admin@pawcare.com', 'password123');
+    await authService.login('admin@chepicare.com', 'password123');
     const pets = await adminService.listAdminPets();
     const pet = pets.find((p) => p.proprietary_id != null);
     if (!pet || pet.proprietary_id == null) return;

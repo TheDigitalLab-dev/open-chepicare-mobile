@@ -6,7 +6,7 @@
  *
  * El backend lo invoca como haría con el CLI real (`claude -p --mcp-config
  * <json> ...`). Este script lee esa configuración y llama DE VERDAD al servidor
- * MCP embebido de PawCare con el token del usuario que escribió:
+ * MCP embebido de ChepiCare con el token del usuario que escribió:
  *   1. `search_pets` (riesgo read)    → se ejecuta.
  *   2. `register_deworming` (confirm) → queda como propuesta revisable.
  * Así los tests ejercitan permisos, política "Borrador revisable", auditoría
@@ -20,7 +20,7 @@ const fs = require('node:fs');
 
 const args = process.argv.slice(2);
 if (args[0] === '--version') {
-  process.stdout.write('0.0.0 (PawCare test agent)\n');
+  process.stdout.write('0.0.0 (ChepiCare test agent)\n');
   process.exit(0);
 }
 
@@ -53,7 +53,7 @@ async function main() {
   await rpc('initialize', {
     protocolVersion: '2025-06-18',
     capabilities: {},
-    clientInfo: { name: 'pawcare-test-agent', version: '0.0.0' },
+    clientInfo: { name: 'chepicare-test-agent', version: '0.0.0' },
   });
   const found = await rpc('tools/call', { name: 'search_pets', arguments: { query: 'Max', limit: 1 } });
   const text = (found.content || []).map((c) => c.text || '').join('');
@@ -73,7 +73,7 @@ async function main() {
       is_error: false,
       num_turns: 3,
       result: `Propuse registrar una desparasitación para la mascota #${petId}. Revísala y confírmala.`,
-      session_id: 'pawcare-test-agent',
+      session_id: 'chepicare-test-agent',
     }),
   );
 }

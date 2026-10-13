@@ -46,7 +46,7 @@ describe('cableUrlFor', () => {
 
 describe('connectAiUpdates (real)', () => {
   it('se suscribe con Bearer y recibe el progreso del dictado', async () => {
-    await authService.login('vet@pawcare.com', 'password123');
+    await authService.login('vet@chepicare.com', 'password123');
     const petId = (await adminService.listAdminPets())[0]!.id;
 
     const statuses: AiUpdatesStatus[] = [];

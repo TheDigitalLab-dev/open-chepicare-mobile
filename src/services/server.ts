@@ -1,5 +1,5 @@
 /**
- * Capacidades del servidor PawCare al que está conectada la app
+ * Capacidades del servidor ChepiCare al que está conectada la app
  * (`GET /auth/mobile/capabilities`). Es público; con sesión de personal agrega
  * los permisos efectivos del usuario. Con "Sin inteligencia artificial" en
  * Configuración > IA, `ai.enabled` es false y la app oculta chat y dictado.

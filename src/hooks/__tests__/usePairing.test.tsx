@@ -12,7 +12,7 @@ import { issuePairingCode } from '@/testing/pairingServer';
 
 const BACKEND = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 
-async function freshQr(email = 'vet@pawcare.com'): Promise<string> {
+async function freshQr(email = 'vet@chepicare.com'): Promise<string> {
   await authService.login(email, 'password123');
   const issued = await issuePairingCode((await secureStore.getAccessToken())!);
   await secureStore.clearTokens();
@@ -36,7 +36,7 @@ describe('usePairing', () => {
     expect(result.current.status).toBe('paired');
     expect(result.current.error).toBeNull();
     expect(onPaired).toHaveBeenCalledTimes(1);
-    expect(onPaired.mock.calls[0][0].user.email).toBe('vet@pawcare.com');
+    expect(onPaired.mock.calls[0][0].user.email).toBe('vet@chepicare.com');
     expect(result.current.accountType).toBe('staff');
     expect(result.current.serverName?.length).toBeGreaterThan(0);
     expect(getApiBaseUrl()).toBe(BACKEND);
@@ -68,7 +68,7 @@ describe('usePairing', () => {
 
     await act(() => result.current.pair('https://otra-cosa.example.com'));
     expect(result.current.status).toBe('error');
-    expect(result.current.error).toMatch(/no es un código de PawCare/i);
+    expect(result.current.error).toMatch(/no es un código de ChepiCare/i);
     expect(result.current.accountType).toBeNull();
 
     act(() => result.current.reset());
@@ -78,7 +78,7 @@ describe('usePairing', () => {
 
   it('un servidor inalcanzable se explica y la app no queda apuntando a él', async () => {
     const { result } = renderHook(() => usePairing({ onPaired: () => {} }));
-    const qr = `pawcare://pair?v=1&server=${encodeURIComponent('http://127.0.0.1:59999')}&code=abc&account=owner`;
+    const qr = `chepicare://pair?v=1&server=${encodeURIComponent('http://127.0.0.1:59999')}&code=abc&account=owner`;
 
     await act(() => result.current.pair(qr));
     expect(result.current.status).toBe('error');

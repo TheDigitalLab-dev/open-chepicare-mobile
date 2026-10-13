@@ -209,7 +209,7 @@ describe('useServerChange', () => {
 
   it('con un QR de otro servidor: confirmar cierra la sesión anterior y canjea el código', async () => {
     // El propietario usa la app contra OTHER; el QR del veterinario apunta a BACKEND.
-    await authService.login('vet@pawcare.com', 'password123');
+    await authService.login('vet@chepicare.com', 'password123');
     const issued = await issuePairingCode((await secureStore.getAccessToken())!);
     await secureStore.clearTokens();
     await setServerUrl(OTHER);
@@ -237,7 +237,7 @@ describe('useServerChange', () => {
     await act(() => result.current.change.confirm());
 
     expect(result.current.pairing.status).toBe('paired');
-    expect(onPaired.mock.calls[0][0].user.email).toBe('vet@pawcare.com');
+    expect(onPaired.mock.calls[0][0].user.email).toBe('vet@chepicare.com');
     expect(getApiBaseUrl()).toBe(BACKEND);
     expect(await refreshAccepted(ownerRefresh)).toBe(false);
   }, 45000);

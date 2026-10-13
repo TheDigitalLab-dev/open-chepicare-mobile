@@ -60,7 +60,7 @@ describe('authService.logout', () => {
 
 describe('permiso de vacunación (can_vaccinate)', () => {
   it('la sesión del staff trae can_vaccinate (el admin del seed lo tiene activo)', async () => {
-    await authService.login('admin@pawcare.com', 'password123');
+    await authService.login('admin@chepicare.com', 'password123');
 
     const me = await authService.fetchCurrentUser();
 
