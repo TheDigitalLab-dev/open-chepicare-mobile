@@ -19,6 +19,7 @@ export { ConsultationDetailScreen } from './ConsultationDetailScreen';
 export { MedicalReportsScreen } from './MedicalReportsScreen';
 export { MedicalReportDetailScreen } from './MedicalReportDetailScreen';
 export { LabExamsScreen } from './LabExamsScreen';
+export { LabExamDetailScreen } from './LabExamDetailScreen';
 export { TreatmentsScreen } from './TreatmentsScreen';
 export { TreatmentStartScreen } from './TreatmentStartScreen';
 

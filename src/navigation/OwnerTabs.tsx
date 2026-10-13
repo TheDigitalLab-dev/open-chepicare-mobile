@@ -12,6 +12,7 @@ import {
   ConsultationsScreen,
   DewormingsScreen,
   EditProfileScreen,
+  LabExamDetailScreen,
   LabExamsScreen,
   MedicalProfileScreen,
   MedicalReportDetailScreen,
@@ -84,6 +85,7 @@ function OwnerPetsStack() {
         component={MedicalReportDetailScreen}
       />
       <PetsStack.Screen name="LabExams" component={LabExamsScreen} />
+      <PetsStack.Screen name="LabExamDetail" component={LabExamDetailScreen} />
       <PetsStack.Screen name="Treatments" component={TreatmentsScreen} />
       <PetsStack.Screen name="TreatmentStart" component={TreatmentStartScreen} />
     </PetsStack.Navigator>
