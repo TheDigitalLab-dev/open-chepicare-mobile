@@ -117,14 +117,28 @@ export async function getAvailableVets(date: string): Promise<AvailableVet[]> {
  * Horarios libres ("HH:MM") de un veterinario para un día y servicio. Los
  * calcula el servidor: excluye horas pasadas, ocupadas y las que cruzan
  * ausencias o cierres, en todos los turnos del veterinario.
+ *
+ * Al reprogramar, `excludeAppointmentId` (una cita propia) hace que esa cita no
+ * cuente como ocupada: su horario y los que solo chocaban con ella se ofrecen.
+ * Un id ajeno el servidor lo ignora.
  */
 export async function getAvailableTimeSlots(
   date: string,
   vetId: number,
   serviceId: number,
+  excludeAppointmentId?: number,
 ): Promise<TimeSlot[]> {
-  const { time_slots } = await api.get<{ time_slots: TimeSlot[] }>('/owner-time-slots', {
-    params: { date, vet_id: vetId, service_id: serviceId },
+  const { time_slots, time_zone } = await api.get<{
+    time_slots: TimeSlot[];
+    time_zone?: string;
+  }>('/owner-time-slots', {
+    params: {
+      date,
+      vet_id: vetId,
+      service_id: serviceId,
+      exclude_appointment_id: excludeAppointmentId,
+    },
   });
+  learnClinicTimeZone(time_zone);
   return time_slots;
 }

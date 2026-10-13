@@ -35,13 +35,16 @@ async function renderBooking(id?: number) {
 }
 
 /** Avanza al mes siguiente (siempre con días libres en el seed) y elige todo. */
-async function pickFirstFreeSlot(hook: Awaited<ReturnType<typeof renderBooking>>) {
+async function pickFirstFreeSlot(
+  hook: Awaited<ReturnType<typeof renderBooking>>,
+  serviceId?: number,
+) {
   const { result } = hook;
   await act(() => result.current.nextMonth());
   await waitFor(() => expect(result.current.days.data?.length).toBeGreaterThan(0), WAIT);
   act(() => {
     result.current.selectPet(result.current.pets.data![0]!.id);
-    result.current.selectService(result.current.services.data![0]!.id);
+    result.current.selectService(serviceId ?? result.current.services.data![0]!.id);
   });
   await act(() =>
     result.current.selectDay(
@@ -91,8 +94,13 @@ describe('useAppointmentBooking', () => {
 
   it('agenda una cita y luego la reprograma con PATCH', async () => {
     const hook = await renderBooking();
-    await pickFirstFreeSlot(hook);
+    // Servicio de más de 30 min: la cita ocupa también los horarios siguientes.
+    const longService = hook.result.current.services.data!.find(
+      (s) => (s.duration_minutes ?? 0) > 30,
+    );
+    await pickFirstFreeSlot(hook, longService?.id);
     const [first, second] = hook.result.current.slots.data;
+    const day = hook.result.current.selection.day!;
 
     act(() => {
       hook.result.current.selectTime(first!);
@@ -123,8 +131,21 @@ describe('useAppointmentBooking', () => {
         }),
       );
       expect(edit.result.current.notes).toBe('Primera visita');
-      // Su propio horario se sigue ofreciendo (el servidor lo marca ocupado).
-      await waitFor(() => expect(edit.result.current.slots.data).toContain(first), WAIT);
+      // El servidor no cuenta la propia cita (`exclude_appointment_id`): se
+      // ofrecen su horario y los que solo chocaban con ella.
+      const withoutOwn = (
+        await appointmentsService.getAvailableTimeSlots(
+          day,
+          created!.assigned_to_id!,
+          created!.service_id,
+          id,
+        )
+      ).map((s) => s.time);
+      expect(withoutOwn).toContain(first);
+      await waitFor(
+        () => expect(edit.result.current.slots.data).toEqual(withoutOwn),
+        WAIT,
+      );
 
       act(() => {
         edit.result.current.selectTime(second!);
