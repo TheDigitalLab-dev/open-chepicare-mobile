@@ -14,10 +14,11 @@ import {
   ServerSettingsScreen,
   WelcomeScreen,
 } from '@/screens/auth';
-import type { OwnerRegistration } from '@/screens/auth/RegisterScreen';
+import type { OwnerRegistration } from '@/types/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { ApiError } from '@/types/api';
 import { forgotPasswordErrorMessage, loginErrorMessage } from '@/utils/authErrors';
+import { registerErrorMessage } from '@/utils/registration';
 import type { AuthStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -94,15 +95,19 @@ function RegisterRoute() {
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] =
     useState<Partial<Record<keyof OwnerRegistration, string>>>();
+  const [errorMessage, setErrorMessage] = useState<string>();
 
   const onSubmit = useCallback(
     async (data: OwnerRegistration) => {
       setSubmitting(true);
       setFieldErrors(undefined);
+      setErrorMessage(undefined);
       try {
         await register(data);
       } catch (err) {
+        // Por campo (422) junto a cada campo; lo demás, en un aviso general.
         setFieldErrors(firstFieldErrors(err));
+        setErrorMessage(registerErrorMessage(err));
       } finally {
         setSubmitting(false);
       }
@@ -116,6 +121,7 @@ function RegisterRoute() {
       onSubmit={onSubmit}
       submitting={submitting}
       fieldErrors={fieldErrors}
+      errorMessage={errorMessage}
     />
   );
 }

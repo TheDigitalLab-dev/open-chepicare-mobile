@@ -3,27 +3,17 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/theme';
 import { AppHeader, MobileShell } from '@/components/layout';
-import { Button, FilterChips, SectionTitle, TextField } from '@/components/ui';
+import {
+  Button,
+  FilterChips,
+  InfoBanner,
+  SectionTitle,
+  TextField,
+} from '@/components/ui';
+import type { OwnerRegistration, OwnerSex, PhoneType } from '@/types/auth';
+import { validateRegistration } from '@/utils/registration';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD = 8;
-
-export type OwnerSex = 'male' | 'female' | 'other';
-export type PhoneType = 'whatsapp' | 'telegram' | 'regular';
-
-export interface OwnerRegistration {
-  first_name: string;
-  last_name: string;
-  identity_document: string;
-  email: string;
-  username: string;
-  password: string;
-  password_confirmation: string;
-  address: string;
-  sex: OwnerSex;
-  phone: string;
-  phone_type: PhoneType;
-}
+export type { OwnerRegistration, OwnerSex, PhoneType } from '@/types/auth';
 
 export interface RegisterScreenProps {
   onBack?: () => void;
@@ -31,7 +21,23 @@ export interface RegisterScreenProps {
   submitting?: boolean;
   /** Errores 422 por campo provenientes del backend. */
   fieldErrors?: Partial<Record<keyof OwnerRegistration, string>>;
+  /** Error general (sin red, 5xx, 429 o errores fuera del formulario). */
+  errorMessage?: string;
 }
+
+const EMPTY_FORM: OwnerRegistration = {
+  first_name: '',
+  last_name: '',
+  identity_document: '',
+  email: '',
+  username: '',
+  password: '',
+  password_confirmation: '',
+  address: '',
+  sex: 'female',
+  phone: '',
+  phone_type: 'whatsapp',
+};
 
 const SEX_OPTIONS = [
   { id: 'female', label: 'Femenino' },
@@ -50,35 +56,18 @@ export function RegisterScreen({
   onSubmit,
   submitting,
   fieldErrors,
+  errorMessage,
 }: RegisterScreenProps) {
   const { colors } = useTheme();
-  const [form, setForm] = useState<OwnerRegistration>({
-    first_name: '',
-    last_name: '',
-    identity_document: '',
-    email: '',
-    username: '',
-    password: '',
-    password_confirmation: '',
-    address: '',
-    sex: 'female',
-    phone: '',
-    phone_type: 'whatsapp',
-  });
+  const [form, setForm] = useState<OwnerRegistration>(EMPTY_FORM);
 
   const set = <K extends keyof OwnerRegistration>(key: K, value: OwnerRegistration[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const emailValid = EMAIL_RE.test(form.email.trim());
-  const passwordValid = form.password.length >= MIN_PASSWORD;
-  const match = form.password === form.password_confirmation;
-  const requiredFilled =
-    form.first_name.trim() &&
-    form.last_name.trim() &&
-    form.identity_document.trim() &&
-    form.username.trim();
-  const canSubmit =
-    !!requiredFilled && emailValid && passwordValid && match && !submitting;
+  const { canSubmit, ...localErrors } = validateRegistration(form);
+  // El error del servidor manda sobre la validación local del campo.
+  const errorFor = (key: keyof OwnerRegistration): string | undefined =>
+    fieldErrors?.[key] ?? (localErrors as Partial<Record<string, string>>)[key];
 
   return (
     <MobileShell
@@ -86,25 +75,34 @@ export function RegisterScreen({
       header={<AppHeader title="Crear cuenta" onBack={onBack} />}
       contentStyle={styles.content}
     >
+      {errorMessage ? <InfoBanner tone="destructive" message={errorMessage} /> : null}
+
       <SectionTitle>Datos personales</SectionTitle>
       <TextField
         label="Nombre"
         value={form.first_name}
         onChangeText={(v) => set('first_name', v)}
-        error={fieldErrors?.first_name}
+        keyboardType="default"
+        autoCapitalize="words"
+        error={errorFor('first_name')}
       />
       <TextField
         label="Apellido"
         value={form.last_name}
         onChangeText={(v) => set('last_name', v)}
-        error={fieldErrors?.last_name}
+        keyboardType="default"
+        autoCapitalize="words"
+        error={errorFor('last_name')}
       />
       <TextField
         label="Documento de identidad"
         value={form.identity_document}
         onChangeText={(v) => set('identity_document', v)}
-        keyboardType="numeric"
-        error={fieldErrors?.identity_document}
+        // Admite prefijos como "V-" o "E-": no es solo numérico.
+        keyboardType="default"
+        autoCapitalize="characters"
+        autoCorrect={false}
+        error={errorFor('identity_document')}
       />
       <View>
         <Text style={[styles.label, { color: colors.foreground }]}>Sexo</Text>
@@ -124,17 +122,14 @@ export function RegisterScreen({
         autoCorrect={false}
         keyboardType="email-address"
         textContentType="emailAddress"
-        error={
-          fieldErrors?.email ??
-          (form.email.length > 0 && !emailValid ? 'Correo inválido.' : undefined)
-        }
+        error={errorFor('email')}
       />
       <TextField
         label="Teléfono"
         value={form.phone}
         onChangeText={(v) => set('phone', v)}
         keyboardType="phone-pad"
-        error={fieldErrors?.phone}
+        error={errorFor('phone')}
       />
       <View>
         <Text style={[styles.label, { color: colors.foreground }]}>Tipo de teléfono</Text>
@@ -148,7 +143,8 @@ export function RegisterScreen({
         label="Dirección"
         value={form.address}
         onChangeText={(v) => set('address', v)}
-        error={fieldErrors?.address}
+        keyboardType="default"
+        error={errorFor('address')}
       />
 
       <SectionTitle>Acceso</SectionTitle>
@@ -156,41 +152,35 @@ export function RegisterScreen({
         label="Usuario"
         value={form.username}
         onChangeText={(v) => set('username', v)}
+        keyboardType="default"
         autoCapitalize="none"
         autoCorrect={false}
-        error={fieldErrors?.username}
+        error={errorFor('username')}
       />
       <TextField
         label="Contraseña"
         value={form.password}
         onChangeText={(v) => set('password', v)}
+        keyboardType="default"
         secureTextEntry
         textContentType="newPassword"
-        error={
-          fieldErrors?.password ??
-          (form.password.length > 0 && !passwordValid
-            ? `Mínimo ${MIN_PASSWORD} caracteres.`
-            : undefined)
-        }
+        error={errorFor('password')}
       />
       <TextField
         label="Confirmar contraseña"
         value={form.password_confirmation}
         onChangeText={(v) => set('password_confirmation', v)}
+        keyboardType="default"
         secureTextEntry
         textContentType="newPassword"
-        error={
-          form.password_confirmation.length > 0 && !match
-            ? 'Las contraseñas no coinciden.'
-            : undefined
-        }
+        error={errorFor('password_confirmation')}
       />
 
       <Button
         label="Crear cuenta"
         fullWidth
         loading={submitting}
-        disabled={!canSubmit}
+        disabled={!canSubmit || submitting}
         onPress={() => onSubmit?.({ ...form, email: form.email.trim() })}
         style={styles.submit}
       />

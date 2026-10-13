@@ -28,6 +28,9 @@ export function TextField({
         <Text style={[styles.label, { color: colors.foreground }]}>{label}</Text>
       ) : null}
       <TextInput
+        // Teclado explícito siempre (AGENTS.md); cada campo declara el suyo.
+        keyboardType="default"
+        accessibilityLabel={label}
         {...inputProps}
         placeholderTextColor={colors.mutedForeground}
         onFocus={(e) => {
