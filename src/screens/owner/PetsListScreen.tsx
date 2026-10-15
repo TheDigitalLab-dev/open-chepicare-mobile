@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -8,6 +8,7 @@ import { AsyncBoundary, Avatar, Fab, SearchBar } from '@/components/ui';
 import { ListRow } from '@/components/domain';
 import type { OwnerPetsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { listPets } from '@/services/pets';
 import { formatDate } from '@/utils/format';
 import { SPECIES_EMOJI, SPECIES_LABEL, type Pet } from '@/types/models';
@@ -20,11 +21,7 @@ export function PetsListScreen() {
   const { data, loading, error, reload } = useAsync(listPets);
 
   // Refresca al volver a la pantalla (p. ej. tras crear/editar una mascota).
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
 
   const filtered = useMemo(() => {
     const list = data ?? [];

@@ -69,6 +69,33 @@ describe('processChangeAlerts', () => {
 
   afterEach(() => db.close());
 
+  it('rendimiento: con 5 000 registros sin cambios no reescribe ningún snapshot', () => {
+    // Antes: un UPSERT por registro, cada uno en su propia transacción, en el
+    // hilo de JS y en cada foco de la pantalla (segundos de bloqueo a 10k).
+    const many = Array.from({ length: 5000 }, (_, i) => payment({ id: i + 1 }));
+    processChangeAlerts(exec, many, ownerPaymentAlerts);
+
+    const writes: string[] = [];
+    const counting: SqlExecutor = {
+      ...exec,
+      run: (sql, params) => {
+        writes.push(sql);
+        exec.run(sql, params);
+      },
+    };
+    processChangeAlerts(counting, many, ownerPaymentAlerts);
+    expect(writes).toHaveLength(0);
+
+    // Un solo cambio → una sola escritura de snapshot (más su aviso).
+    const changed = many.map((p) =>
+      p.id === 42 ? { ...p, status: 'completed' as const } : p,
+    );
+    processChangeAlerts(counting, changed, ownerPaymentAlerts);
+    const snapshotWrites = writes.filter((sql) => sql.includes('entity_snapshots'));
+    expect(snapshotWrites).toHaveLength(1);
+    expect(createNotificationCenter(exec).list()).toHaveLength(1);
+  });
+
   it('la primera sincronización siembra en silencio (sin avisos históricos)', () => {
     processChangeAlerts(
       exec,

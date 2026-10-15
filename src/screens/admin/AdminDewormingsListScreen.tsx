@@ -1,11 +1,12 @@
 import { useCallback } from 'react';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 
 import { AppHeader, MobileShell } from '@/components/layout';
 import { AsyncBoundary, ListFooter } from '@/components/ui';
 import { TimelineItem } from '@/components/domain';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { listAdminDewormings } from '@/services/admin';
 import { formatDate } from '@/utils/format';
 import type { Deworming } from '@/types/models';
@@ -15,11 +16,7 @@ export function AdminDewormingsListScreen() {
   const { items, loading, loadingMore, error, moreError, reload, loadMore } =
     usePaginatedList((page) => listAdminDewormings(page));
 
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
 
   const count = items.length;
   const renderItem = useCallback(

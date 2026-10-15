@@ -41,13 +41,38 @@ const DEFAULT_TIME_FORMAT: ClinicTimeFormat = '24h';
 let dateFormat: ClinicDateFormat = DEFAULT_DATE_FORMAT;
 let timeFormat: ClinicTimeFormat = DEFAULT_TIME_FORMAT;
 
-function isValidTimeZone(tz: string): boolean {
-  try {
-    new Intl.DateTimeFormat(LOCALE, { timeZone: tz });
-    return true;
-  } catch {
-    return false;
+// Crear un Intl.DateTimeFormat es caro (en Hermes, del orden de 0,1–0,5 ms) y
+// las listas y recordatorios formatean cada elemento: se reutilizan por
+// zona/opciones (O(1) amortizado por fecha en vez de 1–3 construcciones).
+const formatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function formatterFor(
+  locale: string,
+  options: Intl.DateTimeFormatOptions,
+): Intl.DateTimeFormat {
+  const key = `${locale}|${JSON.stringify(options)}`;
+  let formatter = formatterCache.get(key);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale, options);
+    formatterCache.set(key, formatter);
   }
+  return formatter;
+}
+
+const validZones = new Map<string, boolean>();
+
+function isValidTimeZone(tz: string): boolean {
+  let valid = validZones.get(tz);
+  if (valid === undefined) {
+    try {
+      formatterFor(LOCALE, { timeZone: tz });
+      valid = true;
+    } catch {
+      valid = false;
+    }
+    validZones.set(tz, valid);
+  }
+  return valid;
 }
 
 /** Fija solo la zona de la clínica (IANA). `null` o inválida → la del dispositivo. */
@@ -97,7 +122,7 @@ function parseInstant(iso: string): Date | null {
 }
 
 function format(d: Date, options: Intl.DateTimeFormatOptions, timeZone?: string): string {
-  return new Intl.DateTimeFormat(LOCALE, { ...options, timeZone }).format(d);
+  return formatterFor(LOCALE, { ...options, timeZone }).format(d);
 }
 
 /** Hora según `time_format` de la clínica: "14:30" o "2:30 p. m.". */
@@ -165,7 +190,7 @@ interface WallParts {
 }
 
 function wallParts(d: Date, timeZone: string | undefined): WallParts {
-  const parts = new Intl.DateTimeFormat('en-US', {
+  const parts = formatterFor('en-US', {
     timeZone,
     year: 'numeric',
     month: 'numeric',

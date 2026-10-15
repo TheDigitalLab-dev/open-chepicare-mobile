@@ -7,7 +7,7 @@ import { AppHeader, MobileShell } from '@/components/layout';
 import { Badge, Button, Card, EmptyState, InfoBanner } from '@/components/ui';
 import { useTreatments } from '@/hooks/useTreatments';
 import type { ActiveTreatment } from '@/services/treatments';
-import { formatDate } from '@/utils/format';
+import { formatDateTime } from '@/utils/format';
 
 /** Ajustes rápidos de la próxima toma (minutos): evitan la toma de medianoche. */
 const SHIFTS: { label: string; minutes: number }[] = [
@@ -19,12 +19,10 @@ const SHIFTS: { label: string; minutes: number }[] = [
   { label: '+2 h', minutes: 120 },
 ];
 
+// Fecha y hora en la misma zona y con el formato de la clínica (antes: la
+// fecha en la zona de la clínica y la hora en la del teléfono).
 function formatDoseTime(iso: string): string {
-  const time = new Date(iso).toLocaleTimeString('es-VE', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-  return `${formatDate(iso)} · ${time}`;
+  return formatDateTime(iso);
 }
 
 function TreatmentCard({

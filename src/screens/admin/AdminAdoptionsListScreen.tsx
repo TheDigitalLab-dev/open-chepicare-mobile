@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
@@ -9,6 +9,7 @@ import type { AdminPatientsStackParamList } from '@/navigation/types';
 import { ListRow } from '@/components/domain';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useChangeAlerts } from '@/hooks/useChangeAlerts';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { adminAdoptionAlerts } from '@/services/changeAlertConfigs';
 import { listAdminAdoptions, type AdoptionRecord } from '@/services/admin';
 import { formatDate } from '@/utils/format';
@@ -26,11 +27,7 @@ export function AdminAdoptionsListScreen() {
   // A5 del plan: registros de adopción nuevos al centro de notificaciones.
   useChangeAlerts(loading ? null : items, adminAdoptionAlerts);
 
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
 
   const renderItem = useCallback(
     ({ item: record }: ListRenderItemInfo<AdoptionRecord>) => (

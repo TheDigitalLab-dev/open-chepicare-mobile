@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
@@ -8,6 +8,7 @@ import { AsyncBoundary, Badge, Fab, ListFooter } from '@/components/ui';
 import { ListRow } from '@/components/domain';
 import type { AdminMoreStackParamList } from '@/navigation/types';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { listAdminConsultations } from '@/services/admin';
 import { formatDateTime } from '@/utils/format';
 import type { Consultation } from '@/types/models';
@@ -23,11 +24,7 @@ export function AdminConsultationsListScreen() {
   const { items, loading, loadingMore, error, moreError, reload, loadMore } =
     usePaginatedList((page) => listAdminConsultations(page));
 
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
 
   const fab = useMemo(
     () => (

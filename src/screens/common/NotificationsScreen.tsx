@@ -7,14 +7,12 @@ import { Button, Card, EmptyState } from '@/components/ui';
 import { useNotifications } from '@/hooks/useNotifications';
 import type { AppNotification } from '@/services/notificationCenter';
 import { useTheme } from '@/theme';
-import { formatDate } from '@/utils/format';
+import { formatDateTime } from '@/utils/format';
 
+// Fecha y hora en la misma zona y con el formato de la clínica (antes: la
+// fecha en la zona de la clínica y la hora en la del teléfono).
 function formatWhen(iso: string): string {
-  const time = new Date(iso).toLocaleTimeString('es-VE', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-  return `${formatDate(iso)} · ${time}`;
+  return formatDateTime(iso);
 }
 
 function NotificationRow({ item }: { item: AppNotification }) {

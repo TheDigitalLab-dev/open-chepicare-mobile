@@ -14,6 +14,7 @@ import {
 import { AppointmentCard } from '@/components/domain';
 import type { AdminAgendaStackParamList } from '@/navigation/types';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { useChangeAlerts } from '@/hooks/useChangeAlerts';
 import { adminAppointmentAlerts } from '@/services/changeAlertConfigs';
 import { syncClinicAgendaReminder } from '@/services/reminderAlarms';
@@ -71,14 +72,15 @@ export function AdminAppointmentsListScreen() {
   // A1/A2 del plan: citas nuevas y cancelaciones al centro de notificaciones.
   useChangeAlerts(loading ? null : items, adminAppointmentAlerts);
 
+  // Al volver a la agenda se recarga (el montaje ya cargó la página 1).
+  useReloadOnFocus(reload);
+  // A3/V2: resumen local de la agenda de mañana a las 7:30 (consulta propia).
   useFocusEffect(
     useCallback(() => {
-      void reload();
-      // A3/V2: resumen local de la agenda de mañana a las 7:30 (consulta propia).
       syncClinicAgendaReminder().catch(() => {
         // Sin red: se reintenta en la próxima visita a la agenda.
       });
-    }, [reload]),
+    }, []),
   );
 
   const fab = useMemo(

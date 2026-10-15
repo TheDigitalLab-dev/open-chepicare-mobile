@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
@@ -8,6 +8,7 @@ import { AsyncBoundary, Fab, PetAvatar, SearchBar } from '@/components/ui';
 import { ListRow } from '@/components/domain';
 import type { AdminPatientsStackParamList } from '@/navigation/types';
 import { useRemoteSearch } from '@/hooks/useRemoteSearch';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { listAdminPets } from '@/services/admin';
 import { formatDate } from '@/utils/format';
 import { SPECIES_EMOJI, SPECIES_LABEL, type Pet } from '@/types/models';
@@ -22,11 +23,7 @@ export function AdminPetsListScreen() {
   // encontraba entre los primeros 25 pacientes.
   const { query, setQuery, data, loading, error, reload } = useRemoteSearch(searchPets);
 
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
 
   const pets = data ?? [];
 

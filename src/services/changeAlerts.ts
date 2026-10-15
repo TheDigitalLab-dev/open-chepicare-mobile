@@ -52,36 +52,52 @@ export function processChangeAlerts<T>(
   );
   const categoryOn = !pref || pref.enabled === 1;
 
-  const center = createNotificationCenter(exec);
-  for (const event of categoryOn ? events : []) {
-    const item = byId.get(event.id);
-    if (!item) continue;
-    const text = config.describe(event, item);
-    if (!text) continue;
-    center.add({
-      type: config.category,
-      title: text.title,
-      body: text.body ?? null,
-      dedupeKey: `${config.entity}:${event.id}:${event.state}`,
-    });
-  }
+  // Solo se escribe lo que cambió (altas y cambios de estado), todo en UNA
+  // transacción: O(cambios) escrituras en vez de un UPSERT con su commit por
+  // registro en cada foco de la pantalla.
+  const changedIds = new Set(events.map((e) => e.id));
+  const toWrite = current.filter(
+    (snap) => changedIds.has(snap.id) || !previous.has(snap.id),
+  );
+  if (seeded && toWrite.length === 0) return;
 
-  // Actualiza el snapshot (upsert) y marca la entidad como sembrada.
   const now = new Date().toISOString();
-  for (const snap of current) {
-    exec.run(
-      `INSERT INTO entity_snapshots (entity, entity_id, state, updated_at)
-       VALUES (?, ?, ?, ?)
-       ON CONFLICT (entity, entity_id) DO UPDATE SET state = excluded.state,
-         updated_at = excluded.updated_at`,
-      [config.entity, snap.id, snap.state, now],
-    );
-  }
-  if (!seeded) {
-    exec.run(
-      `INSERT OR IGNORE INTO entity_snapshots (entity, entity_id, state, updated_at)
-       VALUES (?, ?, '1', ?)`,
-      [config.entity, SENTINEL, now],
-    );
+  exec.exec('BEGIN');
+  try {
+    const center = createNotificationCenter(exec);
+    for (const event of categoryOn ? events : []) {
+      const item = byId.get(event.id);
+      if (!item) continue;
+      const text = config.describe(event, item);
+      if (!text) continue;
+      center.add({
+        type: config.category,
+        title: text.title,
+        body: text.body ?? null,
+        dedupeKey: `${config.entity}:${event.id}:${event.state}`,
+      });
+    }
+
+    // Actualiza el snapshot (upsert) y marca la entidad como sembrada.
+    for (const snap of toWrite) {
+      exec.run(
+        `INSERT INTO entity_snapshots (entity, entity_id, state, updated_at)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT (entity, entity_id) DO UPDATE SET state = excluded.state,
+           updated_at = excluded.updated_at`,
+        [config.entity, snap.id, snap.state, now],
+      );
+    }
+    if (!seeded) {
+      exec.run(
+        `INSERT OR IGNORE INTO entity_snapshots (entity, entity_id, state, updated_at)
+         VALUES (?, ?, '1', ?)`,
+        [config.entity, SENTINEL, now],
+      );
+    }
+    exec.exec('COMMIT');
+  } catch (e) {
+    exec.exec('ROLLBACK');
+    throw e;
   }
 }

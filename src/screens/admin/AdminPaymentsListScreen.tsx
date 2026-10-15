@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, type ListRenderItemInfo } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
@@ -14,6 +14,7 @@ import { PaymentCard } from '@/components/domain';
 import type { AdminMoreStackParamList } from '@/navigation/types';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useChangeAlerts } from '@/hooks/useChangeAlerts';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { adminPaymentAlerts } from '@/services/changeAlertConfigs';
 import { listAdminPayments, type AdminPaymentFilters } from '@/services/admin';
 import { formatDate, formatMoney } from '@/utils/format';
@@ -59,11 +60,7 @@ export function AdminPaymentsListScreen() {
   // A4 del plan: pagos nuevos por verificar al centro de notificaciones.
   useChangeAlerts(loading ? null : items, adminPaymentAlerts);
 
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
 
   const renderItem = useCallback(
     ({ item: p }: ListRenderItemInfo<Payment>) => (

@@ -1,10 +1,4 @@
-import { useCallback } from 'react';
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-  type RouteProp,
-} from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -13,6 +7,7 @@ import { AsyncBoundary, Badge, Button, type BadgeVariant } from '@/components/ui
 import { DetailHero, ListRow } from '@/components/domain';
 import type { AdminMoreStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { getAdminPayment } from '@/services/admin';
 import { formatDate, formatMoney } from '@/utils/format';
 import {
@@ -91,11 +86,7 @@ export function AdminPaymentDetailScreen() {
     error,
     reload,
   } = useAsync(() => getAdminPayment(params.id));
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
   const notFound = error?.kind === 'notFound';
 
   return (

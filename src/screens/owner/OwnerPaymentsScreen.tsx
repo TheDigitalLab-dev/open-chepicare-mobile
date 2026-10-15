@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -8,6 +8,7 @@ import { AsyncBoundary, FilterChips, type BadgeVariant } from '@/components/ui';
 import { PaymentCard } from '@/components/domain';
 import type { OwnerHomeStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { listPayments } from '@/services/payments';
 import { formatDate, formatMoney } from '@/utils/format';
 import { PAYMENT_STATUS_LABEL, type Payment, type PaymentStatus } from '@/types/models';
@@ -36,11 +37,7 @@ export function OwnerPaymentsScreen() {
   const [filter, setFilter] = useState<Filter>('all');
   const { data, loading, error, reload } = useAsync(() => listPayments());
 
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
 
   const payments = useMemo(() => {
     const list = data ?? [];
