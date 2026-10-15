@@ -28,6 +28,7 @@ import {
 } from '@/services/appointments';
 import { listPets } from '@/services/pets';
 import { ApiError, toApiError } from '@/types/api';
+import { canReschedule } from '@/utils/appointmentGroups';
 import type { Appointment, Pet, Service } from '@/types/models';
 import {
   clinicDayKey,
@@ -209,6 +210,14 @@ export function useAppointmentBooking(appointmentId?: number): AppointmentBookin
         if (!EDITABLE_STATUSES.includes(appt.status)) {
           throw new ApiError({
             message: 'Esta cita ya no se puede modificar.',
+            status: 422,
+            kind: 'validation',
+          });
+        }
+        // Mismo límite que el backend: se avisa al abrir, no tras 5 pasos.
+        if (!canReschedule(appt, new Date().toISOString())) {
+          throw new ApiError({
+            message: 'Solo se pueden modificar citas futuras.',
             status: 422,
             kind: 'validation',
           });

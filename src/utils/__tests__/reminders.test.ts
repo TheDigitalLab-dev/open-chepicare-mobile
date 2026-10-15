@@ -10,6 +10,7 @@ import {
 import { setClinicConfig, setClinicTimeZone } from '@/utils/clinicTime';
 
 const NOW = '2026-07-14T12:00:00.000Z';
+const PET = 3;
 
 afterEach(() => setClinicConfig(null));
 
@@ -18,6 +19,19 @@ describe('appointmentReminders', () => {
     pet: { id: 1, name: 'Luna', species: 'dog' },
     service: { id: 2, name: 'Consulta general' },
   };
+
+  it('no avisa de citas inactivas (cancelada, completada o reprogramada)', () => {
+    const specs = appointmentReminders(
+      (['cancelled', 'completed', 'rescheduled'] as const).map((status, i) => ({
+        id: 20 + i,
+        scheduled_at: '2026-07-16T15:00:00.000Z',
+        status,
+        ...base,
+      })),
+      NOW,
+    );
+    expect(specs).toEqual([]);
+  });
 
   it('genera avisos 24 h y 2 h antes de una cita futura', () => {
     const specs = appointmentReminders(
@@ -104,10 +118,11 @@ describe('vaccinationReminders', () => {
     const specs = vaccinationReminders(
       [{ id: 9, vaccine_name: 'Antirrábica', next_due_date: '2026-07-30' }],
       NOW,
+      PET,
     );
 
     expect(specs).toHaveLength(1);
-    expect(specs[0]!.identifier).toBe('vacc-9-due');
+    expect(specs[0]!.identifier).toBe('vacc-p3-9-due');
     expect(specs[0]!.title).toContain('Vacuna');
     expect(specs[0]!.body).toContain('Antirrábica');
     expect(specs[0]!.body).toContain('30 de julio');
@@ -120,6 +135,7 @@ describe('vaccinationReminders', () => {
     const [caracas] = vaccinationReminders(
       [{ id: 9, vaccine_name: 'Antirrábica', next_due_date: '2026-07-30' }],
       NOW,
+      PET,
     );
     expect(caracas!.triggerAt).toBe('2026-07-27T13:00:00.000Z');
     expect(caracas!.body).toContain('30 de julio');
@@ -129,6 +145,7 @@ describe('vaccinationReminders', () => {
     const [tokyo] = vaccinationReminders(
       [{ id: 9, vaccine_name: 'Antirrábica', next_due_date: '2026-07-30' }],
       NOW,
+      PET,
     );
     expect(tokyo!.triggerAt).toBe('2026-07-27T00:00:00.000Z');
     expect(tokyo!.body).toContain('30 de julio');
@@ -141,6 +158,7 @@ describe('vaccinationReminders', () => {
         { id: 2, vaccine_name: 'Moquillo', next_due_date: '2026-07-10' },
       ],
       NOW,
+      PET,
     );
     expect(specs).toEqual([]);
   });
@@ -151,9 +169,10 @@ describe('dewormingReminders', () => {
     const specs = dewormingReminders(
       [{ id: 4, product_name: 'Drontal', next_due_date: '2026-07-25' }],
       NOW,
+      PET,
     );
     expect(specs).toHaveLength(1);
-    expect(specs[0]!.identifier).toBe('dew-4-due');
+    expect(specs[0]!.identifier).toBe('dew-p3-4-due');
     expect(specs[0]!.body).toContain('Drontal');
     expect(specs[0]!.category).toBe('vacunas');
     expect(specs[0]!.body).toContain('25 de julio');
@@ -164,6 +183,7 @@ describe('dewormingReminders', () => {
     const [spec] = dewormingReminders(
       [{ id: 4, product_name: 'Drontal', next_due_date: '2026-07-25' }],
       NOW,
+      PET,
     );
     expect(spec!.triggerAt).toBe('2026-07-22T13:00:00.000Z');
   });
@@ -176,41 +196,63 @@ describe('dewormingReminders', () => {
           { id: 2, product_name: 'B', next_due_date: '2026-07-01' },
         ],
         NOW,
+        PET,
       ),
     ).toEqual([]);
   });
 });
 
 describe('pendingPaymentReminders', () => {
-  it('recuerda mañana a las 10:00 los pagos pendientes y vencidos (O8)', () => {
+  it('un solo aviso resumen para todos los pagos abiertos (O8)', () => {
     const specs = pendingPaymentReminders(
       [
         { id: 1, status: 'pending', amount: 25, currency: 'USD' },
-        { id: 2, status: 'overdue', amount: 10, currency: 'USD' },
+        { id: 2, status: 'overdue', amount: 10.5, currency: 'USD' },
         { id: 3, status: 'completed', amount: 99, currency: 'USD' },
       ],
       NOW,
     );
-    expect(specs.map((s) => s.identifier)).toEqual(['pay-1-pending', 'pay-2-pending']);
-    expect(specs[1]!.title).toContain('vencido');
+    expect(specs).toHaveLength(1);
+    expect(specs[0]!.identifier).toBe('pay-summary');
+    expect(specs[0]!.title).toContain('vencido');
+    expect(specs[0]!.body).toBe('Tienes 2 pagos por pagar en el consultorio.');
     expect(specs[0]!.category).toBe('pagos');
   });
 
-  it('"mañana a las 10:00" es de la clínica', () => {
-    // NOW = 14 jul 08:00 en Caracas → mañana 15 jul 10:00 = 14:00 UTC.
-    setClinicTimeZone('America/Caracas');
+  it('con un solo pago muestra el importe formateado', () => {
     const [spec] = pendingPaymentReminders(
-      [{ id: 1, status: 'pending', amount: 25, currency: 'USD' }],
+      [{ id: 1, status: 'pending', amount: 12.5, currency: 'USD' }],
       NOW,
     );
-    expect(spec!.triggerAt).toBe('2026-07-15T14:00:00.000Z');
+    expect(spec!.body).toBe('USD 12,50 por pagar en el consultorio.');
+    expect(spec!.title).toBe('💳 Pago pendiente');
+  });
 
-    // A las 21:00 del 14 en Caracas (01:00 UTC del 15) "mañana" sigue siendo el 15.
-    const [late] = pendingPaymentReminders(
-      [{ id: 1, status: 'pending', amount: 25, currency: 'USD' }],
-      '2026-07-15T01:00:00.000Z',
+  it('sin pagos abiertos no hay aviso', () => {
+    expect(
+      pendingPaymentReminders(
+        [{ id: 3, status: 'completed', amount: 9, currency: 'USD' }],
+        NOW,
+      ),
+    ).toEqual([]);
+  });
+
+  it('a las 10:00 de la clínica de HOY si aún no pasaron; si no, de mañana', () => {
+    setClinicTimeZone('America/Caracas');
+    const one = [{ id: 1, status: 'pending', amount: 25, currency: 'USD' }];
+    // NOW = 14 jul 08:00 en Caracas → hoy 14 jul 10:00 = 14:00 UTC (antes: mañana,
+    // y como se recalcula en cada visita, nunca sonaba).
+    expect(pendingPaymentReminders(one, NOW)[0]!.triggerAt).toBe(
+      '2026-07-14T14:00:00.000Z',
     );
-    expect(late!.triggerAt).toBe('2026-07-15T14:00:00.000Z');
+    // 11:00 en Caracas → mañana 15 jul 10:00.
+    expect(pendingPaymentReminders(one, '2026-07-14T15:00:00.000Z')[0]!.triggerAt).toBe(
+      '2026-07-15T14:00:00.000Z',
+    );
+    // 21:00 del 14 en Caracas (01:00 UTC del 15) → 15 jul 10:00.
+    expect(pendingPaymentReminders(one, '2026-07-15T01:00:00.000Z')[0]!.triggerAt).toBe(
+      '2026-07-15T14:00:00.000Z',
+    );
   });
 });
 

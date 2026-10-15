@@ -126,6 +126,7 @@ jest.mock('expo-notifications', () => {
   // listeners. `__tapNotification(data)` simula que el usuario toca una push.
   // (Nombres `mock*`: jest-hoist solo deja referenciar esos dentro del factory.)
   const responseListeners = new Set<(mockResponse: unknown) => void>();
+  const mockScheduled = new Map<string, Record<string, unknown>>();
   return {
     getLastNotificationResponseAsync: jest.fn(async () => null),
     clearLastNotificationResponseAsync: jest.fn(async () => undefined),
@@ -142,10 +143,26 @@ jest.mock('expo-notifications', () => {
     setNotificationChannelAsync: jest.fn(async () => null),
     requestPermissionsAsync: jest.fn(async () => ({ granted: true })),
     getPermissionsAsync: jest.fn(async () => ({ granted: true })),
-    scheduleNotificationAsync: jest.fn(async () => `notif-${++counter}`),
-    getAllScheduledNotificationsAsync: jest.fn(async () => []),
-    cancelScheduledNotificationAsync: jest.fn(async () => undefined),
-    cancelAllScheduledNotificationsAsync: jest.fn(async () => undefined),
+    // Registro en memoria de lo programado (como el del sistema operativo): un
+    // identificador repetido reemplaza al anterior y cancelar lo quita.
+    scheduleNotificationAsync: jest.fn(
+      async (mockRequest: {
+        identifier?: string;
+        content: unknown;
+        trigger: unknown;
+      }) => {
+        const identifier = mockRequest.identifier ?? `notif-${++counter}`;
+        mockScheduled.set(identifier, { ...mockRequest, identifier });
+        return identifier;
+      },
+    ),
+    getAllScheduledNotificationsAsync: jest.fn(async () => [...mockScheduled.values()]),
+    cancelScheduledNotificationAsync: jest.fn(async (mockId: string) => {
+      mockScheduled.delete(mockId);
+    }),
+    cancelAllScheduledNotificationsAsync: jest.fn(async () => {
+      mockScheduled.clear();
+    }),
     setNotificationHandler: jest.fn(),
     AndroidImportance: { MAX: 5 },
     SchedulableTriggerInputTypes: { DATE: 'date' },

@@ -22,7 +22,12 @@ export function formatMoney(
   const value = typeof amount === 'number' ? amount : Number(amount);
   if (!Number.isFinite(value)) return '—';
   const prefix = currency === 'COP' ? '$' : `${currency} `;
-  return `${prefix}${value.toLocaleString('es-CO')}`;
+  // Enteros sin decimales («$1.500»); con centavos, siempre dos («USD 30,50»).
+  const decimals = Number.isInteger(value) ? 0 : 2;
+  return `${prefix}${value.toLocaleString('es-CO', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
 }
 
 /** `timeZone`: la de la cita (`appointment.time_zone`), si la trae. */

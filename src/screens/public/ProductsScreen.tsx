@@ -1,12 +1,12 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary, ProductCard, SearchBar } from '@/components';
-import { useAsync } from '@/hooks/useAsync';
-import { listProducts } from '@/services/public';
+import { AsyncBoundary, ListFooter, ProductCard, SearchBar } from '@/components';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
+import { listProductsPage } from '@/services/public';
 import { formatMoney } from '@/utils/format';
 import type { Product } from '@/types/models';
 import type { PublicStackParamList } from '@/navigation/types';
@@ -14,13 +14,14 @@ import type { PublicStackParamList } from '@/navigation/types';
 export function ProductsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<PublicStackParamList>>();
   const [query, setQuery] = useState('');
-  const { data, loading, error, reload } = useAsync(() => listProducts());
-
-  const filtered = useMemo(() => {
-    const list = data ?? [];
-    const q = query.trim().toLowerCase();
-    return q ? list.filter((p) => p.name.toLowerCase().includes(q)) : list;
-  }, [data, query]);
+  const [search, setSearch] = useState('');
+  // Búsqueda en el servidor (con pausa al escribir) y scroll infinito.
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(query.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+  const { items, loading, loadingMore, error, moreError, reload, loadMore } =
+    usePaginatedList((page) => listProductsPage({ search }, page), search);
 
   const renderItem = useCallback(
     ({ item: product }: ListRenderItemInfo<Product>) => (
@@ -48,10 +49,10 @@ export function ProductsScreen() {
       <SearchBar value={query} onChangeText={setQuery} placeholder="Buscar productos…" />
 
       <AsyncBoundary
-        loading={loading && data === null}
+        loading={loading && items.length === 0}
         error={error}
         onRetry={reload}
-        empty={filtered.length === 0}
+        empty={items.length === 0}
         emptyIcon="cart"
         emptyTitle={query ? 'Sin resultados' : 'Sin productos'}
         emptyDescription={
@@ -59,7 +60,12 @@ export function ProductsScreen() {
         }
       >
         <FlatList
-          data={filtered}
+          data={items}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            <ListFooter loading={loadingMore} error={moreError} onRetry={loadMore} />
+          }
           keyExtractor={(product) => String(product.id)}
           renderItem={renderItem}
           numColumns={2}

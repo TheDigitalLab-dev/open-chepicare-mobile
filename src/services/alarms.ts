@@ -12,6 +12,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
+import { categoryEnabled } from './notificationPrefs';
 import type { TreatmentDose, TreatmentsRepo } from './treatments';
 
 export const MEDICATION_CHANNEL_ID = 'medication-alarms';
@@ -29,8 +30,20 @@ Notifications.setNotificationHandler({
 
 /** Cota de alarmas programadas por tratamiento (iOS limita ~64 pendientes en total). */
 const MAX_SCHEDULED_PER_TREATMENT = 20;
-/** Presupuesto global de programadas para no chocar con el límite del SO (~64). */
-const MAX_SCHEDULED_TOTAL = 60;
+/**
+ * Presupuesto de alarmas de MEDICACIÓN entre todos los tratamientos. Los
+ * recordatorios (citas, vacunas, pagos…) tienen el suyo (`reminderAlarms`):
+ * 40 + 20 < 64 del SO. Antes compartían uno y con 30 citas futuras los
+ * recordatorios lo agotaban y no se programaba ninguna toma.
+ */
+export const MAX_MEDICATION_TOTAL = 40;
+
+/** Marca de las notificaciones de medicación (para contarlas y cancelarlas). */
+export const MEDICATION_KIND = 'medication';
+
+function kindOf(n: Notifications.NotificationRequest): unknown {
+  return (n.content.data as Record<string, unknown> | null | undefined)?.kind;
+}
 
 let channelReady = false;
 
@@ -74,33 +87,38 @@ function alarmContent(ctx: AlarmContext, scheduledAt: string) {
     title: `💊 ${pet}${ctx.medicationName}`,
     body: `${ctx.dose ? `${ctx.dose} · ` : ''}toma de las ${time}`,
     sound: 'default' as const,
+    data: { kind: MEDICATION_KIND },
   };
 }
 
 /**
  * Reprograma las alarmas de un tratamiento: cancela las existentes y agenda las
- * tomas pendientes FUTURAS (hasta la cota). Registra cada id en la toma.
+ * tomas pendientes FUTURAS (hasta la cota). Registra cada id en la toma. Con la
+ * categoría «Tratamientos» apagada en Preferencias solo cancela.
  */
 export async function syncTreatmentAlarms(
   repo: TreatmentsRepo,
   treatmentId: string,
   ctx: AlarmContext,
+  enabled: boolean = categoryEnabled('tratamientos'),
 ): Promise<void> {
   await ensureChannel();
   const doses = repo.listDoses(treatmentId);
   await cancelDoseAlarms(doses);
+  if (!enabled) return;
 
-  // Presupuesto global: respeta el límite del SO contando lo ya programado por
-  // OTROS tratamientos y recordatorios.
-  let alreadyScheduled = 0;
+  // Presupuesto de medicación: lo ya programado por OTROS tratamientos.
+  let otherMedication = 0;
   try {
-    alreadyScheduled = (await Notifications.getAllScheduledNotificationsAsync()).length;
+    otherMedication = (await Notifications.getAllScheduledNotificationsAsync()).filter(
+      (n) => kindOf(n) === MEDICATION_KIND,
+    ).length;
   } catch {
     // Sin acceso a las programadas: se usa solo la cota por tratamiento.
   }
   const budget = Math.min(
     MAX_SCHEDULED_PER_TREATMENT,
-    Math.max(0, MAX_SCHEDULED_TOTAL - alreadyScheduled),
+    Math.max(0, MAX_MEDICATION_TOTAL - otherMedication),
   );
 
   const nowMs = Date.now();
@@ -123,6 +141,40 @@ export async function syncTreatmentAlarms(
       repo.setDoseNotificationId(dose.id, id);
     }),
   );
+}
+
+/**
+ * Reprograma las alarmas de TODOS los tratamientos activos. Cada uno agenda
+ * como mucho 20 tomas y solo se rellenaban al marcar o mover una: si el dueño
+ * daba la medicina sin marcarla, las alarmas se acababan a mitad del
+ * tratamiento. Se llama al abrir la app y al volver a Tratamientos.
+ */
+export async function syncAllTreatmentAlarms(
+  repo: TreatmentsRepo,
+  enabled: boolean = categoryEnabled('tratamientos'),
+): Promise<void> {
+  for (const t of repo.listActiveTreatments()) {
+    await syncTreatmentAlarms(
+      repo,
+      t.id,
+      { petName: t.petName, medicationName: t.medicationName, dose: t.dose },
+      enabled,
+    );
+  }
+}
+
+/** Cancela las alarmas de medicación programadas (categoría apagada). */
+export async function cancelMedicationAlarms(): Promise<void> {
+  try {
+    const all = await Notifications.getAllScheduledNotificationsAsync();
+    await Promise.allSettled(
+      all
+        .filter((n) => kindOf(n) === MEDICATION_KIND)
+        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
+    );
+  } catch {
+    // Sin acceso al programador.
+  }
 }
 
 /** Cancela TODAS las notificaciones locales programadas (cierre de sesión). */

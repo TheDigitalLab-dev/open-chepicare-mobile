@@ -15,6 +15,7 @@ import {
   shiftDayKey,
 } from './clinicTime';
 import { VACCINATION_SCHEDULE_TYPE_LABEL } from '@/types/models';
+import { formatMoney } from './format';
 
 export interface ReminderSpec {
   identifier: string;
@@ -43,7 +44,8 @@ interface VaccinationLike {
 }
 
 const HOUR_MS = 60 * 60 * 1000;
-const SKIP_STATUSES = new Set(['cancelled', 'completed']);
+// Inactivas en el backend (`Appointment::INACTIVE_STATUSES`) o ya atendidas.
+const SKIP_STATUSES = new Set(['cancelled', 'completed', 'rescheduled']);
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
@@ -98,10 +100,16 @@ export function appointmentReminders(
   return specs;
 }
 
-/** Aviso 3 días antes del vencimiento de la próxima dosis, a las 9:00 de la clínica. */
+/**
+ * Aviso 3 días antes del vencimiento de la próxima dosis, a las 9:00 de la
+ * clínica. El identificador lleva la mascota (`vacc-p<pet>-<id>-due`): cada
+ * pantalla sincroniza solo la familia de SU mascota (antes abrir las vacunas
+ * de una mascota cancelaba los avisos de las demás).
+ */
 export function vaccinationReminders(
   vaccinations: VaccinationLike[],
   nowIso: string,
+  petId: number,
 ): ReminderSpec[] {
   const now = Date.parse(nowIso);
   const specs: ReminderSpec[] = [];
@@ -112,7 +120,7 @@ export function vaccinationReminders(
     if (trigger === null || trigger <= now) continue;
 
     specs.push({
-      identifier: `vacc-${vacc.id}-due`,
+      identifier: `vacc-p${petId}-${vacc.id}-due`,
       title: '💉 Vacuna próxima a vencer',
       body: `${vacc.vaccine_name} — vence el ${formatDayLong(vacc.next_due_date)}`,
       triggerAt: new Date(trigger).toISOString(),
@@ -132,6 +140,7 @@ interface DewormingLike {
 export function dewormingReminders(
   dewormings: DewormingLike[],
   nowIso: string,
+  petId: number,
 ): ReminderSpec[] {
   const now = Date.parse(nowIso);
   const specs: ReminderSpec[] = [];
@@ -142,7 +151,7 @@ export function dewormingReminders(
     if (trigger === null || trigger <= now) continue;
 
     specs.push({
-      identifier: `dew-${dew.id}-due`,
+      identifier: `dew-p${petId}-${dew.id}-due`,
       title: '🪱 Desparasitación pendiente',
       body: `${dew.product_name} — próxima aplicación el ${formatDayLong(dew.next_due_date)}`,
       triggerAt: new Date(trigger).toISOString(),
@@ -159,27 +168,41 @@ interface PaymentLike {
   currency: string;
 }
 
-/** O8 — pagos pendientes o vencidos: recordatorio mañana a las 10:00 (de la clínica). */
+/**
+ * O8 — pagos pendientes o vencidos: UN aviso resumen a las 10:00 de la clínica
+ * (hoy si aún no son las 10, si no mañana). Antes había uno por pago, todos a
+ * la misma hora, y se reprogramaba a «mañana» en cada visita al inicio: quien
+ * abría la app a diario antes de las 10 nunca lo recibía.
+ */
 export function pendingPaymentReminders(
   payments: PaymentLike[],
   nowIso: string,
 ): ReminderSpec[] {
   const now = new Date(nowIso);
   if (Number.isNaN(now.getTime())) return [];
-  const triggerAt = clinicWallTimeToInstant(shiftDayKey(clinicToday(now), 1), '10:00');
+  const open = payments.filter((p) => p.status === 'pending' || p.status === 'overdue');
+  if (open.length === 0) return [];
 
-  const specs: ReminderSpec[] = [];
-  for (const p of payments) {
-    if (p.status !== 'pending' && p.status !== 'overdue') continue;
-    specs.push({
-      identifier: `pay-${p.id}-pending`,
-      title: p.status === 'overdue' ? '⚠️ Pago vencido' : '💳 Pago pendiente',
-      body: `${p.currency} ${p.amount} por pagar en el consultorio.`,
+  const today = clinicToday(now);
+  let triggerAt = clinicWallTimeToInstant(today, '10:00');
+  if (Date.parse(triggerAt) <= now.getTime()) {
+    triggerAt = clinicWallTimeToInstant(shiftDayKey(today, 1), '10:00');
+  }
+
+  const overdue = open.some((p) => p.status === 'overdue');
+  const body =
+    open.length === 1
+      ? `${formatMoney(open[0]!.amount, open[0]!.currency)} por pagar en el consultorio.`
+      : `Tienes ${open.length} pagos por pagar en el consultorio.`;
+  return [
+    {
+      identifier: 'pay-summary',
+      title: overdue ? '⚠️ Pago vencido' : '💳 Pago pendiente',
+      body,
       triggerAt,
       category: 'pagos',
-    });
-  }
-  return specs;
+    },
+  ];
 }
 
 interface AgendaAppointmentLike {

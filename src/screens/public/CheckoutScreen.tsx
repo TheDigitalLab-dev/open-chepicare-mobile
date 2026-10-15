@@ -40,7 +40,9 @@ function CheckoutForm({ product, quantity }: { product: Product; quantity: numbe
   const { colors } = useTheme();
 
   const stock = product.stock_quantity ?? Number.MAX_SAFE_INTEGER;
-  const [qty, setQty] = useState(() => Math.max(1, Math.min(quantity, stock)));
+  const [qty, setQty] = useState(() =>
+    Math.max(stock > 0 ? 1 : 0, Math.min(quantity, stock)),
+  );
   const [payment, setPayment] = useState<OrderPaymentMethod>('in_store');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -53,7 +55,9 @@ function CheckoutForm({ product, quantity }: { product: Product; quantity: numbe
   const unit = Number(product.sale_price);
   const total = unit * qty;
 
+  // Sin existencias no se puede pedir (antes la cantidad arrancaba en 1).
   const canSubmit =
+    stock > 0 &&
     name.trim().length > 0 &&
     email.trim().length > 0 &&
     phone.trim().length > 0 &&
@@ -72,8 +76,10 @@ function CheckoutForm({ product, quantity }: { product: Product; quantity: numbe
         notes: notes.trim() || undefined,
         items: [{ product_id: product.id, quantity: qty }],
       });
+      // `replace`: volver atrás no debe mostrar el formulario lleno (un segundo
+      // «Confirmar» creaba otro pedido igual).
       if (requiresPaymentProof(payment)) {
-        navigation.navigate('UploadProof', { orderId: order.id });
+        navigation.replace('UploadProof', { orderId: order.id });
       } else {
         navigation.navigate('PublicLanding');
       }

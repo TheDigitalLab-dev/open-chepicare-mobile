@@ -7,7 +7,7 @@ import { AsyncBoundary } from '@/components/ui';
 import { TimelineItem } from '@/components/domain';
 import type { OwnerPetsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
-import { syncReminders } from '@/services/reminderAlarms';
+import { LEGACY_DEWORMING_REMINDER, syncReminders } from '@/services/reminderAlarms';
 import { dewormingReminders } from '@/utils/reminders';
 import { listDewormings } from '@/services/medical';
 import { formatDate } from '@/utils/format';
@@ -24,8 +24,12 @@ export function DewormingsScreen() {
   // O4 del plan: aviso local 3 días antes de la próxima desparasitación.
   useEffect(() => {
     if (!data) return;
-    void syncReminders('dew-', dewormingReminders(data, new Date().toISOString()));
-  }, [data]);
+    void syncReminders(
+      `dew-p${petId}-`,
+      dewormingReminders(data, new Date().toISOString(), petId),
+      LEGACY_DEWORMING_REMINDER,
+    );
+  }, [data, petId]);
   const items = data ?? [];
 
   const renderItem = useCallback(

@@ -24,3 +24,17 @@ export function splitAppointments(
     past: list.filter((a) => !isUpcoming(a)).sort((a, b) => time(b) - time(a)),
   };
 }
+
+/**
+ * El propietario solo puede reprogramar citas pendientes o confirmadas que aún
+ * no empezaron (el backend responde 422 «Solo se pueden modificar citas
+ * futuras»). Antes el botón aparecía en una cita pendiente ya pasada y el
+ * error llegaba al final de los 5 pasos del asistente.
+ */
+export function canReschedule(
+  a: Pick<Appointment, 'status' | 'scheduled_at'>,
+  nowIso: string,
+): boolean {
+  if (a.status !== 'pending' && a.status !== 'confirmed') return false;
+  return Date.parse(a.scheduled_at) > Date.parse(nowIso);
+}

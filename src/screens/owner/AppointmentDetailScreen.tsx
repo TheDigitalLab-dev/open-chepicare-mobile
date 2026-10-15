@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { canReschedule } from '@/utils/appointmentGroups';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { Alert, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -206,15 +207,17 @@ function Details({
               onPress={() => void run(() => confirmAppointment(appointment.id))}
             />
           ) : null}
-          <Button
-            label="Reprogramar"
-            variant="outline"
-            fullWidth
-            disabled={busy}
-            onPress={() =>
-              navigation.navigate('AppointmentWizard', { id: appointment.id })
-            }
-          />
+          {canReschedule(appointment, new Date().toISOString()) ? (
+            <Button
+              label="Reprogramar"
+              variant="outline"
+              fullWidth
+              disabled={busy}
+              onPress={() =>
+                navigation.navigate('AppointmentWizard', { id: appointment.id })
+              }
+            />
+          ) : null}
           <Button
             label="Cancelar cita"
             variant="destructive"

@@ -169,7 +169,7 @@ export function OwnerDashboardScreen() {
     );
   }, [appointments.data]);
 
-  // O8: recordatorio local (mañana 10:00) de pagos pendientes o vencidos.
+  // O8: un recordatorio local (próximas 10:00) de los pagos pendientes o vencidos.
   useEffect(() => {
     if (!payments.data) return;
     void syncReminders(

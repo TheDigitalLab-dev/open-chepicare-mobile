@@ -9,7 +9,7 @@ import { ListRow } from '@/components/domain';
 import type { OwnerPetsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
 import { useChangeAlerts } from '@/hooks/useChangeAlerts';
-import { ownerMedicalReportAlerts } from '@/services/changeAlertConfigs';
+import { ownerMedicalReportAlertsFor } from '@/services/changeAlertConfigs';
 import { listMedicalReports } from '@/services/medical';
 import { formatDate } from '@/utils/format';
 import type { MedicalReport } from '@/types/models';
@@ -25,7 +25,7 @@ export function MedicalReportsScreen() {
   const { data, loading, error, reload } = useAsync(() => listMedicalReports(petId));
 
   // O5 del plan: informes médicos nuevos quedan en el centro de notificaciones.
-  useChangeAlerts(data, ownerMedicalReportAlerts);
+  useChangeAlerts(data, ownerMedicalReportAlertsFor(petId));
   const items = data ?? [];
 
   const renderItem = useCallback(

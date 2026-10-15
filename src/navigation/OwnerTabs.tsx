@@ -34,6 +34,7 @@ import {
 } from '@/screens/owner';
 import { NotificationPrefsScreen, NotificationsScreen } from '@/screens/common';
 import { PairingScanScreen, ServerSettingsScreen } from '@/screens/auth';
+import { useTreatmentAlarmsResync } from '@/hooks/useTreatmentAlarmsResync';
 import type {
   OwnerAppointmentsStackParamList,
   OwnerHomeStackParamList,
@@ -121,6 +122,8 @@ const Tab = createBottomTabNavigator<OwnerTabParamList>();
 
 export function OwnerTabs() {
   const { colors } = useTheme();
+  // Alarmas de medicación al día al abrir la app y al volver a ella.
+  useTreatmentAlarmsResync();
   return (
     <Tab.Navigator
       screenOptions={{

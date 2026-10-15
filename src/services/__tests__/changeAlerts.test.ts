@@ -11,10 +11,11 @@ import { processChangeAlerts } from '@/services/changeAlerts';
 import {
   adminPaymentAlerts,
   ownerAppointmentAlerts,
+  ownerMedicalReportAlertsFor,
   ownerPaymentAlerts,
 } from '@/services/changeAlertConfigs';
 import { createNotificationCenter } from '@/services/notificationCenter';
-import type { Appointment, Payment } from '@/types/models';
+import type { Appointment, MedicalReport, Payment } from '@/types/models';
 
 function nodeExecutor(db: DatabaseSync): SqlExecutor {
   return {
@@ -94,6 +95,35 @@ describe('processChangeAlerts', () => {
     const snapshotWrites = writes.filter((sql) => sql.includes('entity_snapshots'));
     expect(snapshotWrites).toHaveLength(1);
     expect(createNotificationCenter(exec).list()).toHaveLength(1);
+  });
+
+  it('informes: abrir otra mascota no presenta sus informes viejos como nuevos', () => {
+    const report = (id: number, petId: number) =>
+      ({
+        id,
+        pet_id: petId,
+        title: `Informe ${id}`,
+        created_at: '2026-07-01',
+      }) as MedicalReport;
+    processChangeAlerts(exec, [report(1, 10)], ownerMedicalReportAlertsFor(10));
+    processChangeAlerts(
+      exec,
+      [report(2, 20), report(3, 20)],
+      ownerMedicalReportAlertsFor(20),
+    );
+    expect(createNotificationCenter(exec).list()).toHaveLength(0);
+
+    // Un informe nuevo de la mascota 20 sí avisa.
+    processChangeAlerts(
+      exec,
+      [report(2, 20), report(3, 20), report(4, 20)],
+      ownerMedicalReportAlertsFor(20),
+    );
+    expect(
+      createNotificationCenter(exec)
+        .list()
+        .map((n) => n.body),
+    ).toEqual(['Informe 4']);
   });
 
   it('la primera sincronización siembra en silencio (sin avisos históricos)', () => {

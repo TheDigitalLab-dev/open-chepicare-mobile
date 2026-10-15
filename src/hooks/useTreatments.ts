@@ -20,6 +20,7 @@ import {
   syncTreatmentAlarms,
 } from '@/services/alarms';
 import { createNotificationCenter } from '@/services/notificationCenter';
+import { createNotificationPrefs } from '@/services/notificationPrefs';
 import {
   createTreatmentsRepo,
   type ActiveTreatment,
@@ -46,6 +47,9 @@ export function useTreatments(executor?: SqlExecutor): UseTreatments {
   const exec = useMemo(() => executor ?? initDatabase(), [executor]);
   const repo = useMemo(() => createTreatmentsRepo(exec), [exec]);
   const center = useMemo(() => createNotificationCenter(exec), [exec]);
+  const prefs = useMemo(() => createNotificationPrefs(exec), [exec]);
+  // Preferencia «Tratamientos» apagada: las tomas se registran, sin alarmas.
+  const alarmsOn = useCallback(() => prefs.isEnabled('tratamientos'), [prefs]);
   // Estado inicial perezoso: la primera lectura ocurre una sola vez al montar
   // (la base es local y síncrona); las mutaciones refrescan vía `reload`.
   const [treatments, setTreatments] = useState<ActiveTreatment[]>(() =>
@@ -67,11 +71,16 @@ export function useTreatments(executor?: SqlExecutor): UseTreatments {
       setPermissionDenied(!granted);
       if (granted) {
         try {
-          await syncTreatmentAlarms(repo, created.id, {
-            petName: created.petName,
-            medicationName: created.medicationName,
-            dose: created.dose,
-          });
+          await syncTreatmentAlarms(
+            repo,
+            created.id,
+            {
+              petName: created.petName,
+              medicationName: created.medicationName,
+              dose: created.dose,
+            },
+            alarmsOn(),
+          );
         } catch {
           // El tratamiento ya quedó registrado; las alarmas se reintentan en la
           // próxima acción sobre el tratamiento.
@@ -84,7 +93,7 @@ export function useTreatments(executor?: SqlExecutor): UseTreatments {
       });
       reload();
     },
-    [repo, center, reload],
+    [repo, center, reload, alarmsOn],
   );
 
   const markTaken = useCallback<UseTreatments['markTaken']>(
@@ -96,17 +105,22 @@ export function useTreatments(executor?: SqlExecutor): UseTreatments {
         // Si la toma se registró antes de que sonara, su alarma ya no aplica; y
         // se recargan las siguientes (la cota por tratamiento deja espacio).
         await cancelDoseAlarms([dose]);
-        await syncTreatmentAlarms(repo, treatment.id, {
-          petName: treatment.petName,
-          medicationName: treatment.medicationName,
-          dose: treatment.dose,
-        });
+        await syncTreatmentAlarms(
+          repo,
+          treatment.id,
+          {
+            petName: treatment.petName,
+            medicationName: treatment.medicationName,
+            dose: treatment.dose,
+          },
+          alarmsOn(),
+        );
       } catch {
         // La toma ya quedó registrada; las alarmas se reintentan luego.
       }
       reload();
     },
-    [repo, reload],
+    [repo, reload, alarmsOn],
   );
 
   const moveNextDose = useCallback<UseTreatments['moveNextDose']>(
@@ -119,17 +133,22 @@ export function useTreatments(executor?: SqlExecutor): UseTreatments {
       if (newTimeMs <= Date.now()) return;
       repo.rescheduleFromDose(dose.id, new Date(newTimeMs).toISOString());
       try {
-        await syncTreatmentAlarms(repo, treatment.id, {
-          petName: treatment.petName,
-          medicationName: treatment.medicationName,
-          dose: treatment.dose,
-        });
+        await syncTreatmentAlarms(
+          repo,
+          treatment.id,
+          {
+            petName: treatment.petName,
+            medicationName: treatment.medicationName,
+            dose: treatment.dose,
+          },
+          alarmsOn(),
+        );
       } catch {
         // El horario ya quedó guardado; las alarmas se reintentan luego.
       }
       reload();
     },
-    [repo, reload],
+    [repo, reload, alarmsOn],
   );
 
   const finish = useCallback<UseTreatments['finish']>(
