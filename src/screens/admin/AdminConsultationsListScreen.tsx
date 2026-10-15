@@ -4,10 +4,10 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary, Badge, Fab } from '@/components/ui';
+import { AsyncBoundary, Badge, Fab, ListFooter } from '@/components/ui';
 import { ListRow } from '@/components/domain';
 import type { AdminMoreStackParamList } from '@/navigation/types';
-import { useAsync } from '@/hooks/useAsync';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { listAdminConsultations } from '@/services/admin';
 import { formatDateTime } from '@/utils/format';
 import type { Consultation } from '@/types/models';
@@ -20,8 +20,8 @@ const BADGE_IN_PROGRESS = <Badge label="En curso" variant="warning" />;
 
 export function AdminConsultationsListScreen() {
   const navigation = useNavigation<Nav>();
-  const { data, loading, error, reload } = useAsync(() => listAdminConsultations());
-  const items = data ?? [];
+  const { items, loading, loadingMore, error, moreError, reload, loadMore } =
+    usePaginatedList((page) => listAdminConsultations(page));
 
   useFocusEffect(
     useCallback(() => {
@@ -63,7 +63,7 @@ export function AdminConsultationsListScreen() {
       fab={fab}
     >
       <AsyncBoundary
-        loading={loading && data === null}
+        loading={loading && items.length === 0}
         error={error}
         onRetry={reload}
         empty={items.length === 0}
@@ -73,6 +73,11 @@ export function AdminConsultationsListScreen() {
       >
         <FlatList
           data={items}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            <ListFooter loading={loadingMore} error={moreError} onRetry={loadMore} />
+          }
           keyExtractor={(c) => String(c.id)}
           renderItem={renderItem}
           style={styles.list}

@@ -300,6 +300,23 @@ describe('vaccinationScheduleReminders', () => {
     expect(specs[0]!.category).toBe('agenda');
   });
 
+  it('el aviso nombra el tipo de esquema en español, no el enum del backend', () => {
+    const [spec] = vaccinationScheduleReminders(
+      [
+        {
+          id: 9,
+          schedule_type: 'puppy_dog',
+          start_date: '2026-07-20',
+          status: 'active',
+          pet: { name: 'Rocky' },
+        },
+      ],
+      NOW,
+    );
+    expect(spec!.body).toBe('Rocky — Esquema cachorro (perro) el 20 de julio');
+    expect(spec!.body).not.toContain('puppy_dog');
+  });
+
   it('avisa el día previo a las 8:00 de la clínica', () => {
     setClinicTimeZone('America/Caracas');
     const [spec] = vaccinationScheduleReminders(

@@ -14,6 +14,7 @@ import {
   formatDayLong,
   shiftDayKey,
 } from './clinicTime';
+import { VACCINATION_SCHEDULE_TYPE_LABEL } from '@/types/models';
 
 export interface ReminderSpec {
   identifier: string;
@@ -277,7 +278,7 @@ export function vaccinationScheduleReminders(
     specs.push({
       identifier: `vsched-${sched.id}`,
       title: '💉 Vacunación programada',
-      body: `${sched.pet?.name ? `${sched.pet.name} — ` : ''}${sched.schedule_type} el ${formatDayLong(sched.start_date)}`,
+      body: `${sched.pet?.name ? `${sched.pet.name} — ` : ''}Esquema ${(VACCINATION_SCHEDULE_TYPE_LABEL[sched.schedule_type] ?? sched.schedule_type).toLowerCase()} el ${formatDayLong(sched.start_date)}`,
       triggerAt: new Date(trigger).toISOString(),
       category: 'agenda',
     });

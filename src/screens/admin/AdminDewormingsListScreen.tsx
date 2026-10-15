@@ -3,17 +3,17 @@ import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary } from '@/components/ui';
+import { AsyncBoundary, ListFooter } from '@/components/ui';
 import { TimelineItem } from '@/components/domain';
-import { useAsync } from '@/hooks/useAsync';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { listAdminDewormings } from '@/services/admin';
 import { formatDate } from '@/utils/format';
 import type { Deworming } from '@/types/models';
 
 export function AdminDewormingsListScreen() {
   const navigation = useNavigation();
-  const { data, loading, error, reload } = useAsync(() => listAdminDewormings());
-  const items = data ?? [];
+  const { items, loading, loadingMore, error, moreError, reload, loadMore } =
+    usePaginatedList((page) => listAdminDewormings(page));
 
   useFocusEffect(
     useCallback(() => {
@@ -45,7 +45,7 @@ export function AdminDewormingsListScreen() {
       contentStyle={styles.content}
     >
       <AsyncBoundary
-        loading={loading && data === null}
+        loading={loading && items.length === 0}
         error={error}
         onRetry={reload}
         empty={items.length === 0}
@@ -55,6 +55,11 @@ export function AdminDewormingsListScreen() {
       >
         <FlatList
           data={items}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            <ListFooter loading={loadingMore} error={moreError} onRetry={loadMore} />
+          }
           keyExtractor={(d) => String(d.id)}
           renderItem={renderItem}
           style={styles.list}

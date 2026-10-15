@@ -1,13 +1,13 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary, SearchBar } from '@/components/ui';
+import { AsyncBoundary, ListFooter, SearchBar } from '@/components/ui';
 import { ListRow } from '@/components/domain';
 import type { AdminMoreStackParamList } from '@/navigation/types';
-import { useAsync } from '@/hooks/useAsync';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { listAdminMedicalReports } from '@/services/admin';
 import { formatDate } from '@/utils/format';
 import type { MedicalReport } from '@/types/models';
@@ -18,13 +18,14 @@ export function AdminMedicalReportsListScreen() {
   const navigation = useNavigation<Nav>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
   const [query, setQuery] = useState('');
-  const { data, loading, error, reload } = useAsync(() => listAdminMedicalReports());
-
-  const reports = useMemo(() => {
-    const list = data ?? [];
-    const q = query.trim().toLowerCase();
-    return q ? list.filter((r) => r.title.toLowerCase().includes(q)) : list;
-  }, [data, query]);
+  const [petSearch, setPetSearch] = useState('');
+  // La búsqueda la hace el servidor (antes filtraba solo la primera página).
+  useEffect(() => {
+    const timer = setTimeout(() => setPetSearch(query.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+  const { items, loading, loadingMore, error, moreError, reload, loadMore } =
+    usePaginatedList((page) => listAdminMedicalReports({ petSearch }, page), petSearch);
 
   const renderItem = useCallback(
     ({ item: r }: ListRenderItemInfo<MedicalReport>) => (
@@ -42,19 +43,28 @@ export function AdminMedicalReportsListScreen() {
       header={<AppHeader title="Reportes médicos" onBack={back} />}
       contentStyle={styles.content}
     >
-      <SearchBar value={query} onChangeText={setQuery} placeholder="Buscar reporte…" />
+      <SearchBar
+        value={query}
+        onChangeText={setQuery}
+        placeholder="Buscar por mascota…"
+      />
 
       <AsyncBoundary
-        loading={loading && data === null}
+        loading={loading && items.length === 0}
         error={error}
         onRetry={reload}
-        empty={reports.length === 0}
+        empty={items.length === 0}
         emptyIcon="document-text"
         emptyTitle="Sin reportes"
         emptyDescription="No hay reportes médicos."
       >
         <FlatList
-          data={reports}
+          data={items}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            <ListFooter loading={loadingMore} error={moreError} onRetry={loadMore} />
+          }
           keyExtractor={(r) => String(r.id)}
           renderItem={renderItem}
           style={styles.list}

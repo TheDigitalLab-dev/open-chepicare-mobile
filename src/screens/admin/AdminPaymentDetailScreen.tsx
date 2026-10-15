@@ -1,4 +1,10 @@
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { useCallback } from 'react';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+  type RouteProp,
+} from '@react-navigation/native';
 import { View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -7,7 +13,7 @@ import { AsyncBoundary, Badge, Button, type BadgeVariant } from '@/components/ui
 import { DetailHero, ListRow } from '@/components/domain';
 import type { AdminMoreStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
-import { listAdminPayments } from '@/services/admin';
+import { getAdminPayment } from '@/services/admin';
 import { formatDate, formatMoney } from '@/utils/format';
 import {
   PAYMENT_METHOD_LABEL,
@@ -76,8 +82,21 @@ export function AdminPaymentDetailScreen() {
   const { params } = useRoute<Rt>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
-  const { data, loading, error, reload } = useAsync(() => listAdminPayments());
-  const payment = (data ?? []).find((p) => p.id === params.id) ?? null;
+  // Por id (antes se buscaba en la primera página de la lista: un pago más
+  // antiguo que los 25 últimos salía «no encontrado»). Se refresca al volver
+  // de «Registrar pago» para no ofrecer de nuevo el botón.
+  const {
+    data: payment,
+    loading,
+    error,
+    reload,
+  } = useAsync(() => getAdminPayment(params.id));
+  useFocusEffect(
+    useCallback(() => {
+      void reload();
+    }, [reload]),
+  );
+  const notFound = error?.kind === 'notFound';
 
   return (
     <MobileShell
@@ -86,10 +105,10 @@ export function AdminPaymentDetailScreen() {
       contentStyle={{ gap: 12, paddingBottom: 32 }}
     >
       <AsyncBoundary
-        loading={loading && data === null}
-        error={error}
+        loading={loading && payment === null}
+        error={notFound ? null : error}
         onRetry={reload}
-        empty={data !== null && payment === null}
+        empty={notFound}
         emptyIcon="card"
         emptyTitle="Pago no encontrado"
       >

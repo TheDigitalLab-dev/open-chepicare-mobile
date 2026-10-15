@@ -124,6 +124,10 @@ const RAILS_MESSAGE_TRANSLATIONS: [RegExp, string][] = [
   ],
   [/^Appointment could not be completed$/i, 'No se pudo completar la cita vinculada.'],
   [/^Appointment not found$/i, 'No se encontró la cita.'],
+  [
+    /^Payment cannot be registered \(status: \w+\)$/i,
+    'Este pago ya no se puede registrar (ya fue cobrado o anulado).',
+  ],
   // full_messages de Appointment: el backend antepone el atributo en inglés
   // ("Scheduled at se cruza con…", "Status no puede pasar de…").
   [/^Scheduled at /, 'La fecha y hora '],

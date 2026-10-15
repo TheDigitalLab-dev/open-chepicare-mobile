@@ -7,8 +7,14 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-import type { ReminderSpec } from '@/utils/reminders';
+import {
+  clinicAgendaReminders,
+  vaccinationScheduleReminders,
+  type ReminderSpec,
+} from '@/utils/reminders';
+import { clinicToday, clinicWallTimeToInstant, shiftDayKey } from '@/utils/clinicTime';
 
+import { listActiveVaccinationSchedules, listAdminAppointmentsUntil } from './admin';
 import { ensureAlarmPermissions } from './alarms';
 import { categoryEnabled } from './notificationPrefs';
 
@@ -72,5 +78,31 @@ export async function syncReminders(
         },
       }),
     ),
+  );
+}
+
+/**
+ * A3/V2 — resumen de la agenda de mañana (7:30 de la clínica). Cuenta las citas
+ * de mañana con una consulta propia (hasta el fin de mañana), no con la página
+ * que la agenda tenga cargada: con más de una página de citas de hoy, la cuenta
+ * salía 0 y el aviso se cancelaba.
+ */
+export async function syncClinicAgendaReminder(now: Date = new Date()): Promise<void> {
+  const dayAfterTomorrow = shiftDayKey(clinicToday(now), 2);
+  const until = new Date(
+    Date.parse(clinicWallTimeToInstant(dayAfterTomorrow, '00:00')) - 1,
+  ).toISOString();
+  const appointments = await listAdminAppointmentsUntil(until);
+  await syncReminders('agenda-', clinicAgendaReminders(appointments, now.toISOString()));
+}
+
+/** A10 — aviso el día previo a cada vacunación programada (esquemas activos). */
+export async function syncVaccinationScheduleReminders(
+  now: Date = new Date(),
+): Promise<void> {
+  const schedules = await listActiveVaccinationSchedules();
+  await syncReminders(
+    'vsched-',
+    vaccinationScheduleReminders(schedules, now.toISOString()),
   );
 }

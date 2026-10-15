@@ -3,9 +3,10 @@ import { Text, View } from 'react-native';
 
 import { useTheme } from '@/theme';
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary, Badge, Card, SectionTitle } from '@/components/ui';
+import { AsyncBoundary, Badge, Button, Card, SectionTitle } from '@/components/ui';
 import { DetailHero, ListRow } from '@/components/domain';
 import type { AdminMoreStackParamList } from '@/navigation/types';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAsync } from '@/hooks/useAsync';
 import { getAdminConsultation } from '@/services/admin';
 import { formatDateTime } from '@/utils/format';
@@ -56,7 +57,7 @@ function Body({ consultation }: { consultation: Consultation }) {
 }
 
 export function AdminConsultationDetailScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<AdminMoreStackParamList>>();
   const { params } = useRoute<Rt>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
@@ -82,6 +83,28 @@ export function AdminConsultationDetailScreen() {
         {consultation ? (
           <>
             <Body consultation={consultation} />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button
+                label="Recetas"
+                variant="outline"
+                style={{ flex: 1 }}
+                onPress={() =>
+                  navigation.navigate('AdminPrescriptions', {
+                    consultationId: consultation.id,
+                  })
+                }
+              />
+              <Button
+                label="Exámenes"
+                variant="outline"
+                style={{ flex: 1 }}
+                onPress={() =>
+                  navigation.navigate('AdminLabExams', {
+                    consultationId: consultation.id,
+                  })
+                }
+              />
+            </View>
             <VoiceDictationSection
               petId={consultation.pet_id}
               consultationId={consultation.id}

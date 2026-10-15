@@ -114,7 +114,7 @@ export type OwnerProfileStackParamList = {
 // --- Admin -----------------------------------------------------------------
 export type AdminTabParamList = {
   AdminHomeTab: undefined;
-  PatientsTab: undefined;
+  PatientsTab: NavigatorScreenParams<AdminPatientsStackParamList> | undefined;
   AgendaTab: undefined;
   MoreTab: undefined;
 };

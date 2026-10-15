@@ -4,10 +4,10 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary, Fab } from '@/components/ui';
+import { AsyncBoundary, Fab, ListFooter } from '@/components/ui';
 import { TimelineItem } from '@/components/domain';
 import type { AdminMoreStackParamList } from '@/navigation/types';
-import { useAsync } from '@/hooks/useAsync';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { listAdminVaccinations } from '@/services/admin';
 import { formatDate } from '@/utils/format';
 import type { Vaccination } from '@/types/models';
@@ -16,8 +16,8 @@ type Nav = NativeStackNavigationProp<AdminMoreStackParamList>;
 
 export function AdminVaccinationsListScreen() {
   const navigation = useNavigation<Nav>();
-  const { data, loading, error, reload } = useAsync(() => listAdminVaccinations());
-  const items = data ?? [];
+  const { items, loading, loadingMore, error, moreError, reload, loadMore } =
+    usePaginatedList((page) => listAdminVaccinations(page));
 
   useFocusEffect(
     useCallback(() => {
@@ -60,7 +60,7 @@ export function AdminVaccinationsListScreen() {
       fab={fab}
     >
       <AsyncBoundary
-        loading={loading && data === null}
+        loading={loading && items.length === 0}
         error={error}
         onRetry={reload}
         empty={items.length === 0}
@@ -70,6 +70,11 @@ export function AdminVaccinationsListScreen() {
       >
         <FlatList
           data={items}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            <ListFooter loading={loadingMore} error={moreError} onRetry={loadMore} />
+          }
           keyExtractor={(v) => String(v.id)}
           renderItem={renderItem}
           style={styles.list}

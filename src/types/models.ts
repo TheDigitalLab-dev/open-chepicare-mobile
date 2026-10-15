@@ -548,3 +548,17 @@ export interface AdoptionPet {
   distinctive_features?: string | null;
   birth_date?: string | null;
 }
+
+/** Tipo de esquema de vacunación (enum del backend `VaccinationSchedule`). */
+export const VACCINATION_SCHEDULE_TYPE_LABEL: Record<string, string> = {
+  puppy_dog: 'Cachorro (perro)',
+  puppy_cat: 'Cachorro (gato)',
+  annual: 'Anual',
+  custom: 'Personalizado',
+};
+
+export const VACCINATION_SCHEDULE_STATUS_LABEL: Record<string, string> = {
+  active: 'Activo',
+  completed: 'Completado',
+  cancelled: 'Cancelado',
+};
