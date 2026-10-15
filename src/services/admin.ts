@@ -302,7 +302,11 @@ export async function updateAdminPet(
   id: number,
   input: Partial<AdminPetInput>,
 ): Promise<Pet> {
-  const { pet } = await api.patch<{ pet: Pet }>(`/admin/pets/${id}`, { pet: input });
+  // Con un dueño nuevo, el tipo va explícito: el backend admite Owner y User y
+  // conservaría el tipo anterior (p. ej. una mascota de un miembro del personal).
+  const pet_params =
+    input.proprietary_id !== undefined ? { ...input, proprietary_type: 'Owner' } : input;
+  const { pet } = await api.patch<{ pet: Pet }>(`/admin/pets/${id}`, { pet: pet_params });
   return pet;
 }
 

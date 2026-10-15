@@ -129,6 +129,11 @@ const RAILS_MESSAGE_TRANSLATIONS: [RegExp, string][] = [
   [/^Appointment could not be completed$/i, 'No se pudo completar la cita vinculada.'],
   [/^Appointment not found$/i, 'No se encontró la cita.'],
   [
+    /^Birth date cannot be in the future$/i,
+    'La fecha de nacimiento no puede ser futura.',
+  ],
+  [/cannot be in the future/i, 'no puede ser futura'],
+  [
     /^Payment cannot be registered \(status: \w+\)$/i,
     'Este pago ya no se puede registrar (ya fue cobrado o anulado).',
   ],
