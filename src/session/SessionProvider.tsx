@@ -190,7 +190,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setRole(roleForUser(authed));
       },
       endSession: async () => {
-        await forgetLocalUser();
+        // El escáner del QR llama a esto al desmontarse, y se desmonta A MITAD
+        // del canje (el árbol se monta de nuevo para el servidor nuevo): si ya
+        // hay una sesión nueva guardada, o se guarda mientras se purga, no se
+        // pisa (antes la app quedaba en público con la sesión nueva guardada).
+        if (await secureStore.hasSession()) return;
+        const epoch = secureStore.getTokenEpoch();
+        await clearLocalUserData();
+        if (secureStore.getTokenEpoch() !== epoch) return;
+        await secureStore.clearLocalDataOwner();
         setUser(null);
         setRole('public');
       },
