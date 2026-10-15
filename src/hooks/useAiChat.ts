@@ -90,8 +90,9 @@ export interface AiChatState {
   busyToolCallId: number | null;
   liveStatus: AiUpdatesStatus;
   reload: () => Promise<void>;
-  sendText: (text: string) => Promise<void>;
-  sendVoice: (audio: AudioSource) => Promise<void>;
+  /** true si se envió; false si estaba vacío o falló (`actionError`). */
+  sendText: (text: string) => Promise<boolean>;
+  sendVoice: (audio: AudioSource) => Promise<boolean>;
   confirm: (toolCallId: number) => Promise<void>;
   reject: (toolCallId: number) => Promise<void>;
 }
@@ -188,16 +189,18 @@ export function useAiChat(conversationId: number | null): AiChatState {
   }, [waiting, liveStatus, reload]);
 
   const send = useCallback(
-    async (request: (id: number) => Promise<SentMessages>) => {
+    async (request: (id: number) => Promise<SentMessages>): Promise<boolean> => {
       const id = idRef.current;
-      if (id === null) return;
+      if (id === null) return false;
       setSending(true);
       setActionError(null);
       try {
         const sent = await request(id);
         upsert([sent.user_message, sent.assistant_message]);
+        return true;
       } catch (e) {
         setActionError(toApiError(e));
+        return false;
       } finally {
         setSending(false);
       }
@@ -206,10 +209,11 @@ export function useAiChat(conversationId: number | null): AiChatState {
   );
 
   const sendText = useCallback(
-    async (text: string) => {
+    /** true si se envió; false si estaba vacío o falló (`actionError`). */
+    async (text: string): Promise<boolean> => {
       const content = text.trim();
-      if (content.length === 0) return;
-      await send((id) => sendMessage(id, content));
+      if (content.length === 0) return false;
+      return send((id) => sendMessage(id, content));
     },
     [send],
   );

@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -17,6 +17,7 @@ import {
 import type { OwnerHomeStackParamList, OwnerTabParamList } from '@/navigation/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useAsync } from '@/hooks/useAsync';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { listPets } from '@/services/pets';
 import { listAppointments } from '@/services/appointments';
 import { listPayments } from '@/services/payments';
@@ -156,7 +157,7 @@ export function OwnerDashboardScreen() {
     void reloadPayments();
   }, [reloadPets, reloadAppointments, reloadPayments]);
 
-  useFocusEffect(reloadAll);
+  useReloadOnFocus(reloadAll);
 
   // O1 del plan: recordatorios locales (24 h y 2 h antes) de las citas ya
   // sincronizadas. Identificadores estables: reprogramar reemplaza, no duplica.
@@ -168,7 +169,7 @@ export function OwnerDashboardScreen() {
     );
   }, [appointments.data]);
 
-  // O8: recordatorio local (mañana 10:00) de pagos pendientes o vencidos.
+  // O8: un recordatorio local (próximas 10:00) de los pagos pendientes o vencidos.
   useEffect(() => {
     if (!payments.data) return;
     void syncReminders(

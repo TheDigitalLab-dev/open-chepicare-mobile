@@ -65,4 +65,18 @@ describe('useNotifications', () => {
     expect(result.current.items).toHaveLength(1);
     expect(result.current.unreadCount).toBe(1);
   });
+
+  it('si la base local falla (corrupta, sin espacio) no rompe la cabecera', () => {
+    // Base real cerrada: toda consulta lanza, como una base que no abre.
+    const broken = new DatabaseSync(':memory:');
+    const brokenExec = nodeExecutor(broken);
+    broken.close();
+
+    const { result } = renderHook(() => useNotifications(brokenExec));
+    expect(result.current.items).toEqual([]);
+    expect(result.current.unreadCount).toBe(0);
+    act(() => result.current.refresh());
+    act(() => result.current.markAllRead());
+    expect(result.current.unreadCount).toBe(0);
+  });
 });

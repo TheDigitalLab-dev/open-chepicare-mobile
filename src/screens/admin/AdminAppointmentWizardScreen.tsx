@@ -11,36 +11,29 @@ import {
   Avatar,
   Button,
   FilterChips,
+  IconButton,
   InfoBanner,
   SearchBar,
   SectionTitle,
 } from '@/components/ui';
 import { ListRow, StepIndicator } from '@/components/domain';
 import type { AdminAgendaStackParamList } from '@/navigation/types';
-import { useAsync } from '@/hooks/useAsync';
+import { useAdminSchedule, type AdminScheduleState } from '@/hooks/useAdminSchedule';
 
 import {
   createAdminAppointment,
-  getAdminAvailableDays,
-  getAdminAvailableVets,
-  getAdminTimeSlots,
   listAdminOwners,
   listAdminServices,
+  type AdminAppointmentInput,
   type AdminOwner,
   type AdminService,
 } from '@/services/admin';
 import { useOwnerPets } from '@/hooks/useOwnerPets';
 import { useRemoteSearch, type RemoteSearchState } from '@/hooks/useRemoteSearch';
-import { ApiError, toApiError } from '@/types/api';
-import { clinicMonth, clinicWallDateTime } from '@/utils/clinicTime';
+import { ApiError } from '@/types/api';
+import { clinicWallDateTime } from '@/utils/clinicTime';
 import { formatDate } from '@/utils/format';
-import {
-  SPECIES_EMOJI,
-  SPECIES_LABEL,
-  type AvailableVet,
-  type Pet,
-  type Species,
-} from '@/types/models';
+import { SPECIES_EMOJI, SPECIES_LABEL, type Pet, type Species } from '@/types/models';
 
 type Nav = NativeStackNavigationProp<AdminAgendaStackParamList>;
 
@@ -71,10 +64,81 @@ function ownerName(o: AdminOwner): string {
   return o.full_name ?? `${o.first_name} ${o.last_name}`.trim();
 }
 
-/** Deduplica veterinarios (el backend repite el id por turnos partidos). */
-function uniqueVets(vets: AvailableVet[]): AvailableVet[] {
-  const seen = new Set<number>();
-  return vets.filter((v) => (seen.has(v.id) ? false : (seen.add(v.id), true)));
+const MONTH_NAMES = [
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+];
+
+/** Paso «Día»: navegación por meses (antes solo el mes en curso). */
+function DayStep({
+  schedule,
+  selectedDay,
+  onSelect,
+}: {
+  schedule: AdminScheduleState;
+  selectedDay?: string;
+  onSelect: (day: string) => void;
+}) {
+  const { colors } = useTheme();
+  const { days, month } = schedule;
+  return (
+    <StepSection
+      title="Elige el día"
+      boundary={{
+        loading: days.loading,
+        error: days.error,
+        onRetry: () => void days.reload(),
+        empty: days.data.length === 0,
+        emptyIcon: 'calendar',
+        emptyTitle: 'Sin días disponibles',
+        emptyDescription: 'No hay disponibilidad este mes. Prueba con el siguiente.',
+      }}
+      search={
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <IconButton
+            icon="chevron-back"
+            accessibilityLabel="Mes anterior"
+            disabled={!schedule.canGoPrevMonth || days.loading}
+            onPress={() => void schedule.prevMonth()}
+          />
+          <Text
+            accessibilityRole="header"
+            style={{ fontSize: 16, fontWeight: '600', color: colors.foreground }}
+          >
+            {`${MONTH_NAMES[month.month - 1]} ${month.year}`}
+          </Text>
+          <IconButton
+            icon="chevron-forward"
+            accessibilityLabel="Mes siguiente"
+            disabled={!schedule.canGoNextMonth || days.loading}
+            onPress={() => void schedule.nextMonth()}
+          />
+        </View>
+      }
+    >
+      <FilterChips
+        options={days.data.map((d) => ({ id: d, label: formatDate(d) }))}
+        selectedId={selectedDay ?? ''}
+        onSelect={onSelect}
+      />
+    </StepSection>
+  );
 }
 
 /** Sección de un paso del asistente: título + estados de carga/error/vacío. */
@@ -233,31 +297,116 @@ function ServiceStep({
   );
 }
 
+/** Qué dato exige cada paso para poder avanzar. */
+const STEP_FIELD: (keyof Selection)[] = [
+  'ownerId',
+  'petId',
+  'serviceId',
+  'day',
+  'vetId',
+  'time',
+];
+
+/** Datos de la cita a crear, o null si falta alguno. */
+function appointmentInput(sel: Selection): AdminAppointmentInput | null {
+  const { ownerId, petId, serviceId, day, vetId, time } = sel;
+  if (STEP_FIELD.some((field) => sel[field] === undefined)) return null;
+  return {
+    owner_id: ownerId!,
+    pet_id: petId!,
+    service_id: serviceId!,
+    assigned_to_id: vetId!,
+    scheduled_at: clinicWallDateTime(day!, time!),
+  };
+}
+
+function VetStep({
+  schedule,
+  selectedId,
+  onSelect,
+  onRetry,
+}: {
+  schedule: AdminScheduleState;
+  selectedId?: number;
+  onSelect: (vetId: number) => void;
+  onRetry: () => void;
+}) {
+  const { vets } = schedule;
+  return (
+    <StepSection
+      title="Elige el veterinario"
+      boundary={{
+        loading: vets.loading,
+        error: vets.error,
+        onRetry,
+        empty: vets.data.length === 0,
+        emptyIcon: 'person',
+        emptyTitle: 'Sin veterinarios',
+        emptyDescription: 'No hay veterinarios disponibles ese día.',
+      }}
+    >
+      {vets.data.map((v) => (
+        <ListRow
+          key={v.id}
+          title={`${v.first_name} ${v.last_name}`}
+          showChevron={false}
+          trailing={selectedId === v.id ? CHECK_EL : undefined}
+          onPress={() => onSelect(v.id)}
+        />
+      ))}
+    </StepSection>
+  );
+}
+
+function SlotStep({
+  schedule,
+  selected,
+  onSelect,
+  onRetry,
+}: {
+  schedule: AdminScheduleState;
+  selected?: string;
+  onSelect: (time: string) => void;
+  onRetry: () => void;
+}) {
+  const { slots } = schedule;
+  return (
+    <StepSection
+      title="Elige la hora"
+      boundary={{
+        loading: slots.loading,
+        error: slots.error,
+        onRetry,
+        empty: slots.data.length === 0,
+        emptyIcon: 'time',
+        emptyTitle: 'Sin horarios',
+        emptyDescription: 'No hay horarios disponibles para ese veterinario.',
+      }}
+    >
+      <FilterChips
+        options={slots.data.map((t) => ({ id: t, label: t }))}
+        selectedId={selected ?? ''}
+        onSelect={onSelect}
+      />
+    </StepSection>
+  );
+}
+
 export function AdminAppointmentWizardScreen() {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
-  // Mes de la clínica (no del teléfono): el backend calcula "hoy" en su zona. La
-  // zona llega con la sesión (`clinic`), así que ya está al abrir el asistente.
-  const [{ month, year }] = useState(() => clinicMonth());
-
   // Dueños y servicios se buscan en el servidor: las listas son paginadas y la
   // primera página (25) no basta para elegir entre todos.
   const owners = useRemoteSearch(searchOwners);
   const services = useRemoteSearch(searchServices);
-  const days = useAsync(() => getAdminAvailableDays(month, year));
+  // Días (por mes), veterinarios y horarios; solo cuenta la última respuesta.
+  const schedule = useAdminSchedule();
 
   const [step, setStep] = useState(0);
   const [sel, setSel] = useState<Selection>({});
   const patch = (p: Partial<Selection>) => setSel((prev) => ({ ...prev, ...p }));
-
-  const [vets, setVets] = useState<AvailableVet[]>([]);
-  const [vetsLoading, setVetsLoading] = useState(false);
-  const [vetsError, setVetsError] = useState<ApiError | null>(null);
-  const [slots, setSlots] = useState<string[]>([]);
-  const [slotsLoading, setSlotsLoading] = useState(false);
-  const [slotsError, setSlotsError] = useState<ApiError | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
@@ -268,71 +417,31 @@ export function AdminAppointmentWizardScreen() {
 
   const selectOwner = (ownerId: number) => patch({ ownerId, petId: undefined });
 
-  const selectDay = async (d: string) => {
+  const selectDay = (d: string) => {
     patch({ day: d, vetId: undefined, time: undefined });
-    setVets([]);
-    setSlots([]);
-    setVetsLoading(true);
-    setVetsError(null);
-    try {
-      setVets(uniqueVets(await getAdminAvailableVets(d)));
-    } catch (e) {
-      setVets([]);
-      setVetsError(toApiError(e));
-    } finally {
-      setVetsLoading(false);
-    }
+    void schedule.loadVets(d);
   };
 
-  const selectVet = async (vetId: number) => {
+  const selectVet = (vetId: number) => {
     patch({ vetId, time: undefined });
-    setSlots([]);
-    if (sel.day === undefined || sel.serviceId === undefined) return;
-    setSlotsLoading(true);
-    setSlotsError(null);
-    try {
-      const result = await getAdminTimeSlots(sel.day, vetId, sel.serviceId);
-      setSlots(result.flatMap((s) => (s.available ? [s.time] : [])));
-    } catch (e) {
-      setSlots([]);
-      setSlotsError(toApiError(e));
-    } finally {
-      setSlotsLoading(false);
+    if (sel.day === undefined || sel.serviceId === undefined) {
+      schedule.clearSlots();
+      return;
     }
+    void schedule.loadSlots(sel.day, vetId, sel.serviceId);
   };
 
-  const canAdvance =
-    (step === 0 && sel.ownerId !== undefined) ||
-    (step === 1 && sel.petId !== undefined) ||
-    (step === 2 && sel.serviceId !== undefined) ||
-    (step === 3 && sel.day !== undefined) ||
-    (step === 4 && sel.vetId !== undefined) ||
-    (step === 5 && sel.time !== undefined);
+  const canAdvance = sel[STEP_FIELD[step]!] !== undefined;
 
   const isLast = step === STEP_LABELS.length - 1;
 
   const submit = async () => {
-    const { ownerId, petId, serviceId, day, vetId, time } = sel;
-    if (
-      ownerId === undefined ||
-      petId === undefined ||
-      serviceId === undefined ||
-      day === undefined ||
-      vetId === undefined ||
-      time === undefined
-    ) {
-      return;
-    }
+    const input = appointmentInput(sel);
+    if (!input) return;
     setSubmitting(true);
     setSubmitError(undefined);
     try {
-      await createAdminAppointment({
-        owner_id: ownerId,
-        pet_id: petId,
-        service_id: serviceId,
-        assigned_to_id: vetId,
-        scheduled_at: clinicWallDateTime(day, time),
-      });
+      await createAdminAppointment(input);
       back?.();
     } catch (e) {
       setSubmitError(e instanceof ApiError ? e.message : 'No se pudo agendar la cita.');
@@ -345,9 +454,6 @@ export function AdminAppointmentWizardScreen() {
     if (isLast) void submit();
     else setStep((s) => s + 1);
   };
-
-  const dayOptions = (days.data ?? []).map((d) => ({ id: d, label: formatDate(d) }));
-  const slotOptions = slots.map((s) => ({ id: s, label: s }));
 
   return (
     <MobileShell
@@ -383,74 +489,25 @@ export function AdminAppointmentWizardScreen() {
       ) : null}
 
       {step === 3 ? (
-        <StepSection
-          title="Elige el día"
-          boundary={{
-            loading: days.loading && days.data === null,
-            error: days.error,
-            onRetry: days.reload,
-            empty: (days.data ?? []).length === 0,
-            emptyIcon: 'calendar',
-            emptyTitle: 'Sin días disponibles',
-            emptyDescription: 'No hay disponibilidad este mes.',
-          }}
-        >
-          <FilterChips
-            options={dayOptions}
-            selectedId={sel.day ?? ''}
-            onSelect={(id) => void selectDay(id)}
-          />
-        </StepSection>
+        <DayStep schedule={schedule} selectedDay={sel.day} onSelect={selectDay} />
       ) : null}
 
       {step === 4 ? (
-        <StepSection
-          title="Elige el veterinario"
-          boundary={{
-            loading: vetsLoading,
-            error: vetsError,
-            onRetry: () => {
-              if (sel.day) void selectDay(sel.day);
-            },
-            empty: vets.length === 0,
-            emptyIcon: 'person',
-            emptyTitle: 'Sin veterinarios',
-            emptyDescription: 'No hay veterinarios disponibles ese día.',
-          }}
-        >
-          {vets.map((v) => (
-            <ListRow
-              key={v.id}
-              title={`${v.first_name} ${v.last_name}`}
-              showChevron={false}
-              trailing={sel.vetId === v.id ? CHECK_EL : undefined}
-              onPress={() => void selectVet(v.id)}
-            />
-          ))}
-        </StepSection>
+        <VetStep
+          schedule={schedule}
+          selectedId={sel.vetId}
+          onSelect={selectVet}
+          onRetry={() => sel.day && selectDay(sel.day)}
+        />
       ) : null}
 
       {step === 5 ? (
-        <StepSection
-          title="Elige la hora"
-          boundary={{
-            loading: slotsLoading,
-            error: slotsError,
-            onRetry: () => {
-              if (sel.vetId !== undefined) void selectVet(sel.vetId);
-            },
-            empty: slotOptions.length === 0,
-            emptyIcon: 'time',
-            emptyTitle: 'Sin horarios',
-            emptyDescription: 'No hay horarios disponibles para ese veterinario.',
-          }}
-        >
-          <FilterChips
-            options={slotOptions}
-            selectedId={sel.time ?? ''}
-            onSelect={(id) => patch({ time: id })}
-          />
-        </StepSection>
+        <SlotStep
+          schedule={schedule}
+          selected={sel.time}
+          onSelect={(time) => patch({ time })}
+          onRetry={() => sel.vetId !== undefined && selectVet(sel.vetId)}
+        />
       ) : null}
 
       <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>

@@ -111,4 +111,35 @@ describe('SessionProvider', () => {
     expect(result.current.user?.email).toBe('owner2@example.com');
     expect(purges()).toBeGreaterThan(0);
   }, 30000);
+
+  it('emparejar otra cuenta con sesión abierta: el fin de la sesión vieja no pisa la nueva', async () => {
+    // Al canjear un QR de otro servidor con sesión abierta, el escáner se
+    // desmonta a mitad del canje (el árbol se monta de nuevo para el servidor
+    // nuevo) y llama a endSession() mientras el canje guarda la sesión nueva.
+    const { result } = await renderSession();
+    await act(() => result.current.signIn('owner1@example.com', PASSWORD));
+    await secureStore.clearTokens(); // la sesión vieja ya se cerró en su servidor
+
+    await act(async () => {
+      const ending = result.current.endSession();
+      // El canje abre la sesión nueva (tokens reales) mientras tanto.
+      const user = await authService.login('vet@chepicare.com', PASSWORD);
+      await Promise.all([ending, result.current.adoptSession(user)]);
+    });
+    expect(result.current.role).toBe('admin');
+    expect(result.current.user?.email).toBe('vet@chepicare.com');
+    expect(await secureStore.getAccessToken()).not.toBeNull();
+
+    // Si endSession llega DESPUÉS de guardar la sesión nueva, tampoco la pisa.
+    await act(() => result.current.endSession());
+    expect(result.current.role).toBe('admin');
+  }, 30000);
+
+  it('endSession sin sesión nueva en curso sí vuelve a público', async () => {
+    const { result } = await renderSession();
+    await act(() => result.current.signIn('owner1@example.com', PASSWORD));
+    await secureStore.clearTokens();
+    await act(() => result.current.endSession());
+    expect(result.current.role).toBe('public');
+  }, 30000);
 });

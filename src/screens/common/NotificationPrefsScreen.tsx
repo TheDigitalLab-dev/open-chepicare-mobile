@@ -9,6 +9,7 @@ import {
   createNotificationPrefs,
   NOTIFICATION_CATEGORIES,
 } from '@/services/notificationPrefs';
+import { applyNotificationPref } from '@/services/notificationPrefEffects';
 import { useTheme } from '@/theme';
 
 /**
@@ -21,17 +22,22 @@ export function NotificationPrefsScreen() {
   const navigation = useNavigation();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
-  const prefs = useMemo(() => createNotificationPrefs(initDatabase()), []);
+  const exec = useMemo(() => initDatabase(), []);
+  const prefs = useMemo(() => createNotificationPrefs(exec), [exec]);
   const [enabled, setEnabled] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(prefs.all().map((p) => [p.category, p.enabled])),
   );
 
   const toggle = useCallback(
     (category: string, value: boolean) => {
-      prefs.setEnabled(category, value);
       setEnabled((prev) => ({ ...prev, [category]: value }));
+      // Guarda y cancela/reprograma lo ya agendado de esa categoría.
+      applyNotificationPref(exec, category, value).catch(() => {
+        // La preferencia ya quedó guardada; lo programado se ajusta en la
+        // próxima sincronización.
+      });
     },
-    [prefs],
+    [exec],
   );
 
   return (

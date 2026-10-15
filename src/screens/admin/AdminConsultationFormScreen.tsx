@@ -7,6 +7,7 @@ import { useRemoteSearch } from '@/hooks/useRemoteSearch';
 import { RemoteSearchPicker } from '@/components/domain';
 import { createAdminConsultation, listAdminPets } from '@/services/admin';
 import { ApiError } from '@/types/api';
+import { isValidDayKey, parseDecimalInput } from '@/utils/formInput';
 import type { Pet } from '@/types/models';
 import { clinicToday } from '@/utils/clinicTime';
 
@@ -42,17 +43,29 @@ function ConsultationForm() {
 
   const onSubmit = async () => {
     if (form.petId === undefined) return;
+    const date = form.date.trim();
+    if (!isValidDayKey(date)) {
+      setError('La fecha debe tener el formato AAAA-MM-DD.');
+      return;
+    }
+    // Coma o punto decimal (teclado en español); antes «4,5» se enviaba vacío.
+    const weight = parseDecimalInput(form.weight);
+    const temperature = parseDecimalInput(form.temperature);
+    if (!weight.ok || !temperature.ok) {
+      setError('El peso y la temperatura deben ser números (p. ej. 4,5).');
+      return;
+    }
     setSubmitting(true);
     setError(undefined);
     try {
       await createAdminConsultation({
         pet_id: form.petId,
-        consultation_date: form.date.trim(),
+        consultation_date: date,
         diagnosis: form.diagnosis.trim() || undefined,
         treatment: form.treatment.trim() || undefined,
         notes: form.notes.trim() || undefined,
-        weight: form.weight.trim() ? Number(form.weight) : undefined,
-        temperature: form.temperature.trim() ? Number(form.temperature) : undefined,
+        weight: weight.value,
+        temperature: temperature.value,
       });
       if (back) back();
     } catch (e) {

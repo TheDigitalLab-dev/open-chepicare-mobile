@@ -18,19 +18,19 @@ describe('adminService (listas reales del staff)', () => {
   it('lista mascotas, citas y pagos de toda la clínica', async () => {
     const [pets, appointments, payments] = await Promise.all([
       adminService.listAdminPets(),
-      adminService.listAdminAppointments(),
+      adminService.listAdminAppointments({ scope: 'upcoming' }),
       adminService.listAdminPayments(),
     ]);
     expect(Array.isArray(pets)).toBe(true);
-    expect(Array.isArray(appointments)).toBe(true);
-    expect(Array.isArray(payments)).toBe(true);
+    expect(Array.isArray(appointments.items)).toBe(true);
+    expect(Array.isArray(payments.items)).toBe(true);
   });
 
-  it('trae citas de cualquier fecha (scope=all, no solo futuras)', async () => {
-    // Regresión: el backend filtra por scope "upcoming" por defecto; la agenda
-    // del admin debe ver TODAS las citas (el seed tiene decenas de citas pasadas).
-    const appointments = await adminService.listAdminAppointments();
-    expect(appointments.length).toBeGreaterThan(0);
+  it('la agenda también ve las citas pasadas (pestaña «Pasadas»)', async () => {
+    // El backend filtra por scope "upcoming" por defecto; el seed tiene decenas
+    // de citas pasadas que la agenda debe poder consultar.
+    const appointments = await adminService.listAdminAppointments({ scope: 'past' });
+    expect(appointments.items.length).toBeGreaterThan(0);
   });
 
   it('lista registros médicos (consultas, vacunas, desparasitaciones)', async () => {
@@ -39,19 +39,19 @@ describe('adminService (listas reales del staff)', () => {
       adminService.listAdminVaccinations(),
       adminService.listAdminDewormings(),
     ]);
-    expect(Array.isArray(consultations)).toBe(true);
-    expect(Array.isArray(vaccinations)).toBe(true);
-    expect(Array.isArray(dewormings)).toBe(true);
+    expect(Array.isArray(consultations.items)).toBe(true);
+    expect(Array.isArray(vaccinations.items)).toBe(true);
+    expect(Array.isArray(dewormings.items)).toBe(true);
   });
 
   it('lista mascotas en adopción', async () => {
     const adoptions = await adminService.listAdminAdoptions();
-    expect(Array.isArray(adoptions)).toBe(true);
+    expect(Array.isArray(adoptions.items)).toBe(true);
   });
 
   it('lista esquemas de vacunación', async () => {
     const schedules = await adminService.listVaccinationSchedules();
-    expect(Array.isArray(schedules)).toBe(true);
+    expect(Array.isArray(schedules.items)).toBe(true);
   });
 
   // Nota: /admin/medical-reports-list es lento/flaky en el backend (genera
@@ -59,7 +59,7 @@ describe('adminService (listas reales del staff)', () => {
   // estados de carga/error. No se cubre con test de integración por esa razón.
 
   it('obtiene una consulta completa con recetas y exámenes', async () => {
-    const consultations = await adminService.listAdminConsultations();
+    const { items: consultations } = await adminService.listAdminConsultations();
     if (consultations.length === 0) return;
     const full = await adminService.getAdminConsultation(consultations[0]!.id);
     expect(full.id).toBe(consultations[0]!.id);
@@ -133,7 +133,7 @@ describe('adminService (listas reales del staff)', () => {
   }, 20000);
 
   it('obtiene una adopción por id si existe', async () => {
-    const adoptions = await adminService.listAdminAdoptions();
+    const { items: adoptions } = await adminService.listAdminAdoptions();
     if (adoptions.length === 0) return;
     const full = await adminService.getAdminAdoption(adoptions[0]!.id);
     expect(full.id).toBe(adoptions[0]!.id);

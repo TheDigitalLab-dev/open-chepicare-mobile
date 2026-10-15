@@ -8,7 +8,7 @@ import { TimelineItem } from '@/components/domain';
 import type { OwnerPetsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
 import { listVaccinations } from '@/services/medical';
-import { syncReminders } from '@/services/reminderAlarms';
+import { LEGACY_VACCINATION_REMINDER, syncReminders } from '@/services/reminderAlarms';
 import { vaccinationReminders } from '@/utils/reminders';
 import { formatDate } from '@/utils/format';
 import type { Vaccination } from '@/types/models';
@@ -25,8 +25,12 @@ export function VaccinationsScreen() {
   // O3 del plan: aviso local 3 días antes del vencimiento de la próxima dosis.
   useEffect(() => {
     if (!data) return;
-    void syncReminders('vacc-', vaccinationReminders(data, new Date().toISOString()));
-  }, [data]);
+    void syncReminders(
+      `vacc-p${petId}-`,
+      vaccinationReminders(data, new Date().toISOString(), petId),
+      LEGACY_VACCINATION_REMINDER,
+    );
+  }, [data, petId]);
 
   const renderItem = useCallback(
     ({ item: v, index }: ListRenderItemInfo<Vaccination>) => (

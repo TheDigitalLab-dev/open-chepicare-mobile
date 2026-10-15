@@ -9,15 +9,17 @@ import type {
   Consultation,
   Deworming,
   MedicalProfile,
+  AppointmentStatus,
   MedicalReport,
   Payment,
+  PaymentStatus,
   Pet,
   Vaccination,
 } from '@/types/models';
-import type { SearchOptions } from '@/types/api';
+import type { Paginated, SearchOptions } from '@/types/api';
 import { learnClinicTimeZone, learnFromAppointments } from '@/utils/clinicTime';
 import { api } from './api';
-import { fetchAllPages } from './pagination';
+import { fetchAllPages, fetchPage, MAX_PER_PAGE } from './pagination';
 
 /** Registro de adopción del admin (adoptions-list / show). */
 export interface AdoptionRecord {
@@ -48,18 +50,35 @@ export async function getAdminConsultation(id: number): Promise<Consultation> {
   return consultation;
 }
 
-export async function listVaccinationSchedules(): Promise<VaccinationSchedule[]> {
-  const { schedules } = await api.get<{ schedules: VaccinationSchedule[] }>(
+export function listVaccinationSchedules(
+  page = 1,
+): Promise<Paginated<VaccinationSchedule>> {
+  return fetchPage<'schedules', VaccinationSchedule>(
     '/admin/vaccination-schedules-list',
+    'schedules',
+    { page },
   );
-  return schedules;
 }
 
-export async function listAdminMedicalReports(): Promise<MedicalReport[]> {
-  const { medical_reports } = await api.get<{ medical_reports: MedicalReport[] }>(
-    '/admin/medical-reports-list',
+/** Esquemas activos de toda la clínica (todas las páginas; base de sus avisos). */
+export function listActiveVaccinationSchedules(): Promise<VaccinationSchedule[]> {
+  return fetchAllPages<'schedules', VaccinationSchedule>(
+    '/admin/vaccination-schedules-list',
+    'schedules',
+    { active: 'true' },
   );
-  return medical_reports;
+}
+
+/** Reportes médicos; `petSearch` filtra por nombre de mascota en el servidor. */
+export function listAdminMedicalReports(
+  filters: { petSearch?: string } = {},
+  page = 1,
+): Promise<Paginated<MedicalReport>> {
+  return fetchPage<'medical_reports', MedicalReport>(
+    '/admin/medical-reports-list',
+    'medical_reports',
+    { page, pet_search: filters.petSearch || undefined },
+  );
 }
 
 export async function getAdminMedicalReport(id: number): Promise<MedicalReport> {
@@ -91,42 +110,108 @@ export async function listAdminPetsByOwner(ownerId: number): Promise<Pet[]> {
   });
 }
 
-export async function listAdminAppointments(): Promise<Appointment[]> {
-  // El backend filtra por `scope` (default "upcoming" = solo futuras). La agenda
-  // del admin filtra por estado en el cliente, así que pedimos TODAS las citas
-  // (cualquier fecha). `per_page` alto para que los filtros locales sean completos.
-  const res = await api.get<{ appointments: Appointment[] }>('/admin/appointments-list', {
-    params: { scope: 'all', per_page: 100 },
-  });
-  // La zona de las citas sirve también al veterinario sin acceso a Configuración General.
-  return learnFromAppointments(res.appointments);
+/** Pestañas de la agenda del personal: el backend filtra por fecha de la clínica. */
+export type AdminAgendaScope = 'upcoming' | 'past';
+
+export interface AdminAppointmentFilters {
+  scope: AdminAgendaScope;
+  status?: AppointmentStatus;
 }
 
-export async function listAdminPayments(): Promise<Payment[]> {
-  const res = await api.get<{ payments: Payment[] }>('/admin/payments-list');
-  return res.payments;
-}
-
-export async function listAdminConsultations(): Promise<Consultation[]> {
-  const res = await api.get<{ consultations: Consultation[] }>(
-    '/admin/consultations-list',
+/**
+ * Agenda del personal, página a página. «Próximas» (desde hoy, la más cercana
+ * primero) o «Pasadas» (la más reciente primero); el estado lo filtra el
+ * servidor. Antes se pedían 100 citas de cualquier fecha en orden ascendente:
+ * con más de 100 citas en la historia, la agenda solo mostraba las más viejas.
+ */
+export async function listAdminAppointments(
+  filters: AdminAppointmentFilters,
+  page = 1,
+  perPage?: number,
+): Promise<Paginated<Appointment>> {
+  const res = await fetchPage<'appointments', Appointment>(
+    '/admin/appointments-list',
+    'appointments',
+    {
+      page,
+      scope: filters.scope,
+      status: filters.status,
+      sort_by: 'scheduled_at',
+      sort_direction: filters.scope === 'past' ? 'desc' : 'asc',
+    },
+    perPage,
   );
-  return res.consultations;
+  // La zona de las citas sirve también al veterinario sin acceso a Configuración General.
+  learnFromAppointments(res.items);
+  return res;
 }
 
-export async function listAdminVaccinations(): Promise<Vaccination[]> {
-  const res = await api.get<{ vaccinations: Vaccination[] }>('/admin/vaccinations-list');
-  return res.vaccinations;
+/**
+ * Citas de la clínica desde hoy hasta `untilIso` (incluido), todas las páginas
+ * necesarias y ninguna más: «Próximas» viene en orden ascendente, así que se
+ * para en cuanto una página pasa del límite. Es la base del aviso de la agenda
+ * de mañana, que no puede depender de lo que el usuario haya scrolleado.
+ */
+export async function listAdminAppointmentsUntil(
+  untilIso: string,
+): Promise<Appointment[]> {
+  const until = Date.parse(untilIso);
+  const out: Appointment[] = [];
+  for (let page = 1; ; page += 1) {
+    const res = await listAdminAppointments({ scope: 'upcoming' }, page, MAX_PER_PAGE);
+    for (const a of res.items) {
+      if (Date.parse(a.scheduled_at) <= until) out.push(a);
+    }
+    const last = res.items[res.items.length - 1];
+    if (page >= res.totalPages || !last || Date.parse(last.scheduled_at) > until) {
+      return out;
+    }
+  }
 }
 
-export async function listAdminDewormings(): Promise<Deworming[]> {
-  const res = await api.get<{ dewormings: Deworming[] }>('/admin/dewormings-list');
-  return res.dewormings;
+export interface AdminPaymentFilters {
+  status?: PaymentStatus;
+  /** Vencidos: `overdue` o pendientes con la fecha de vencimiento pasada. */
+  overdue?: boolean;
 }
 
-export async function listAdminAdoptions(): Promise<AdoptionRecord[]> {
-  const res = await api.get<{ adoptions: AdoptionRecord[] }>('/admin/adoptions-list');
-  return res.adoptions;
+export function listAdminPayments(
+  filters: AdminPaymentFilters = {},
+  page = 1,
+): Promise<Paginated<Payment>> {
+  return fetchPage<'payments', Payment>('/admin/payments-list', 'payments', {
+    page,
+    status: filters.status,
+    overdue: filters.overdue ? 'true' : undefined,
+  });
+}
+
+export function listAdminConsultations(page = 1): Promise<Paginated<Consultation>> {
+  return fetchPage<'consultations', Consultation>(
+    '/admin/consultations-list',
+    'consultations',
+    { page },
+  );
+}
+
+export function listAdminVaccinations(page = 1): Promise<Paginated<Vaccination>> {
+  return fetchPage<'vaccinations', Vaccination>(
+    '/admin/vaccinations-list',
+    'vaccinations',
+    { page },
+  );
+}
+
+export function listAdminDewormings(page = 1): Promise<Paginated<Deworming>> {
+  return fetchPage<'dewormings', Deworming>('/admin/dewormings-list', 'dewormings', {
+    page,
+  });
+}
+
+export function listAdminAdoptions(page = 1): Promise<Paginated<AdoptionRecord>> {
+  return fetchPage<'adoptions', AdoptionRecord>('/admin/adoptions-list', 'adoptions', {
+    page,
+  });
 }
 
 export async function getAdminAdoption(id: number): Promise<AdoptionRecord> {
@@ -217,7 +302,11 @@ export async function updateAdminPet(
   id: number,
   input: Partial<AdminPetInput>,
 ): Promise<Pet> {
-  const { pet } = await api.patch<{ pet: Pet }>(`/admin/pets/${id}`, { pet: input });
+  // Con un dueño nuevo, el tipo va explícito: el backend admite Owner y User y
+  // conservaría el tipo anterior (p. ej. una mascota de un miembro del personal).
+  const pet_params =
+    input.proprietary_id !== undefined ? { ...input, proprietary_type: 'Owner' } : input;
+  const { pet } = await api.patch<{ pet: Pet }>(`/admin/pets/${id}`, { pet: pet_params });
   return pet;
 }
 

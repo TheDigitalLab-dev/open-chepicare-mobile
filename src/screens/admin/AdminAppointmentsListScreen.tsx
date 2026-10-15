@@ -1,18 +1,24 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary, Fab, FilterChips, type BadgeVariant } from '@/components/ui';
+import {
+  AsyncBoundary,
+  Fab,
+  FilterChips,
+  ListFooter,
+  type BadgeVariant,
+} from '@/components/ui';
 import { AppointmentCard } from '@/components/domain';
 import type { AdminAgendaStackParamList } from '@/navigation/types';
-import { useAsync } from '@/hooks/useAsync';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { useChangeAlerts } from '@/hooks/useChangeAlerts';
 import { adminAppointmentAlerts } from '@/services/changeAlertConfigs';
-import { syncReminders } from '@/services/reminderAlarms';
-import { clinicAgendaReminders } from '@/utils/reminders';
-import { listAdminAppointments } from '@/services/admin';
+import { syncClinicAgendaReminder } from '@/services/reminderAlarms';
+import { listAdminAppointments, type AdminAgendaScope } from '@/services/admin';
 import { formatDateTime } from '@/utils/format';
 import {
   APPOINTMENT_STATUS_LABEL,
@@ -31,6 +37,11 @@ const STATUS_VARIANT: Record<AppointmentStatus, BadgeVariant> = {
   rescheduled: 'warning',
 };
 
+const SCOPES: { id: AdminAgendaScope; label: string }[] = [
+  { id: 'upcoming', label: 'Próximas' },
+  { id: 'past', label: 'Pasadas' },
+];
+
 const FILTERS: { id: string; label: string }[] = [
   { id: 'all', label: 'Todas' },
   { id: 'pending', label: 'Pendientes' },
@@ -41,27 +52,36 @@ const FILTERS: { id: string; label: string }[] = [
 
 export function AdminAppointmentsListScreen() {
   const navigation = useNavigation<Nav>();
+  const [scope, setScope] = useState<AdminAgendaScope>('upcoming');
   const [filter, setFilter] = useState('all');
-  const { data, loading, error, reload } = useAsync(() => listAdminAppointments());
+  // Estado y fecha los filtra el servidor, página a página (antes: las 100
+  // citas más antiguas de la historia, filtradas en el cliente).
+  const { items, loading, loadingMore, error, moreError, reload, loadMore } =
+    usePaginatedList(
+      (page) =>
+        listAdminAppointments(
+          {
+            scope,
+            status: filter === 'all' ? undefined : (filter as AppointmentStatus),
+          },
+          page,
+        ),
+      `${scope}:${filter}`,
+    );
 
   // A1/A2 del plan: citas nuevas y cancelaciones al centro de notificaciones.
-  useChangeAlerts(data, adminAppointmentAlerts);
-  // A3/V2: resumen local de la agenda de mañana a las 7:30.
-  useEffect(() => {
-    if (!data) return;
-    void syncReminders('agenda-', clinicAgendaReminders(data, new Date().toISOString()));
-  }, [data]);
+  useChangeAlerts(loading ? null : items, adminAppointmentAlerts);
 
+  // Al volver a la agenda se recarga (el montaje ya cargó la página 1).
+  useReloadOnFocus(reload);
+  // A3/V2: resumen local de la agenda de mañana a las 7:30 (consulta propia).
   useFocusEffect(
     useCallback(() => {
-      void reload();
-    }, [reload]),
+      syncClinicAgendaReminder().catch(() => {
+        // Sin red: se reintenta en la próxima visita a la agenda.
+      });
+    }, []),
   );
-
-  const appointments = useMemo(() => {
-    const list = data ?? [];
-    return filter === 'all' ? list : list.filter((a) => a.status === filter);
-  }, [data, filter]);
 
   const fab = useMemo(
     () => (
@@ -97,21 +117,31 @@ export function AdminAppointmentsListScreen() {
       contentStyle={styles.content}
       fab={fab}
     >
+      <FilterChips
+        options={SCOPES}
+        selectedId={scope}
+        onSelect={(id) => setScope(id as AdminAgendaScope)}
+      />
       <FilterChips options={FILTERS} selectedId={filter} onSelect={setFilter} />
 
       <AsyncBoundary
-        loading={loading && data === null}
+        loading={loading && items.length === 0}
         error={error}
         onRetry={reload}
-        empty={appointments.length === 0}
+        empty={items.length === 0}
         emptyIcon="calendar"
         emptyTitle="Sin citas"
         emptyDescription="No hay citas para este filtro."
       >
         <FlatList
-          data={appointments}
+          data={items}
           keyExtractor={(a) => String(a.id)}
           renderItem={renderItem}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            <ListFooter loading={loadingMore} error={moreError} onRetry={loadMore} />
+          }
           style={styles.list}
           contentContainerStyle={styles.listContent}
         />

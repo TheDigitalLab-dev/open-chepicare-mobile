@@ -1,16 +1,22 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, type ListRenderItemInfo } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary, FilterChips, type BadgeVariant } from '@/components/ui';
+import {
+  AsyncBoundary,
+  FilterChips,
+  ListFooter,
+  type BadgeVariant,
+} from '@/components/ui';
 import { PaymentCard } from '@/components/domain';
 import type { AdminMoreStackParamList } from '@/navigation/types';
-import { useAsync } from '@/hooks/useAsync';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useChangeAlerts } from '@/hooks/useChangeAlerts';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { adminPaymentAlerts } from '@/services/changeAlertConfigs';
-import { listAdminPayments } from '@/services/admin';
+import { listAdminPayments, type AdminPaymentFilters } from '@/services/admin';
 import { formatDate, formatMoney } from '@/utils/format';
 import { PAYMENT_STATUS_LABEL, type Payment, type PaymentStatus } from '@/types/models';
 
@@ -24,6 +30,16 @@ const STATUS_VARIANT: Record<PaymentStatus, BadgeVariant> = {
   cancelled: 'outline',
 };
 
+// Los filtros los aplica el servidor (antes se filtraban en el cliente solo
+// los 25 pagos de la primera página).
+const FILTER_PARAMS: Record<string, AdminPaymentFilters> = {
+  all: {},
+  pending: { status: 'pending' },
+  completed: { status: 'completed' },
+  overdue: { overdue: true },
+  cancelled: { status: 'cancelled' },
+};
+
 const FILTERS: { id: string; label: string }[] = [
   { id: 'all', label: 'Todos' },
   { id: 'pending', label: 'Pendientes' },
@@ -35,27 +51,23 @@ const FILTERS: { id: string; label: string }[] = [
 export function AdminPaymentsListScreen() {
   const navigation = useNavigation<Nav>();
   const [filter, setFilter] = useState('all');
-  const { data, loading, error, reload } = useAsync(() => listAdminPayments());
+  const { items, loading, loadingMore, error, moreError, reload, loadMore } =
+    usePaginatedList(
+      (page) => listAdminPayments(FILTER_PARAMS[filter] ?? {}, page),
+      filter,
+    );
 
   // A4 del plan: pagos nuevos por verificar al centro de notificaciones.
-  useChangeAlerts(data, adminPaymentAlerts);
+  useChangeAlerts(loading ? null : items, adminPaymentAlerts);
 
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
-
-  const payments = useMemo(() => {
-    const list = data ?? [];
-    return filter === 'all' ? list : list.filter((p) => p.status === filter);
-  }, [data, filter]);
+  useReloadOnFocus(reload);
 
   const renderItem = useCallback(
     ({ item: p }: ListRenderItemInfo<Payment>) => (
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver pago ${p.pet_name ?? ''}`}
+        testID={`admin-payment-${p.id}`}
         onPress={() => navigation.navigate('AdminPaymentDetail', { id: p.id })}
       >
         <PaymentCard
@@ -88,18 +100,24 @@ export function AdminPaymentsListScreen() {
       <FilterChips options={FILTERS} selectedId={filter} onSelect={setFilter} />
 
       <AsyncBoundary
-        loading={loading && data === null}
+        loading={loading && items.length === 0}
         error={error}
         onRetry={reload}
-        empty={payments.length === 0}
+        empty={items.length === 0}
         emptyIcon="card"
         emptyTitle="Sin pagos"
         emptyDescription="No hay pagos para este filtro."
       >
         <FlatList
-          data={payments}
+          testID="admin-payments-list"
+          data={items}
           keyExtractor={(p) => String(p.id)}
           renderItem={renderItem}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            <ListFooter loading={loadingMore} error={moreError} onRetry={loadMore} />
+          }
           style={styles.list}
           contentContainerStyle={styles.listContent}
         />

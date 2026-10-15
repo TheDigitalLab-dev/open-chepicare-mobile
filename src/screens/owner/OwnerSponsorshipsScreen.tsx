@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -8,6 +8,7 @@ import { AsyncBoundary, Badge } from '@/components/ui';
 import { ListRow } from '@/components/domain';
 import type { OwnerHomeStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { syncReminders } from '@/services/reminderAlarms';
 import { sponsorshipReminders } from '@/utils/reminders';
 import { listSponsorships } from '@/services/sponsorships';
@@ -26,11 +27,7 @@ export function OwnerSponsorshipsScreen() {
   const { data, loading, error, reload } = useAsync(() => listSponsorships());
 
   // Al volver del detalle (p. ej. tras cancelar) se muestra el estado actual.
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
 
   // O10 del plan: aviso 5 días antes del vencimiento del apadrinamiento.
   useEffect(() => {

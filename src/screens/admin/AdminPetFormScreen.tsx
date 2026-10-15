@@ -23,6 +23,8 @@ import {
   type AdminOwner,
 } from '@/services/admin';
 import { ApiError } from '@/types/api';
+import { isValidDayKey } from '@/utils/formInput';
+import { clinicToday } from '@/utils/clinicTime';
 import {
   PET_SEX_LABEL,
   SPECIES_LABEL,
@@ -57,7 +59,8 @@ function PetForm({ existing }: { existing?: Pet }) {
     name: existing?.name ?? '',
     species: (existing?.species ?? 'dog') as Species,
     breed: existing?.breed ?? '',
-    sex: (existing?.sex ?? 'male') as PetSex,
+    // Al editar una mascota sin sexo registrado no se inventa «Macho».
+    sex: (existing ? (existing.sex ?? null) : 'male') as PetSex | null,
     birth_date: existing?.birth_date ?? '',
     distinctive_features: existing?.distinctive_features ?? '',
     proprietary_id: existing?.proprietary_id,
@@ -81,12 +84,21 @@ function PetForm({ existing }: { existing?: Pet }) {
 
   const onSubmit = async () => {
     if (form.proprietary_id === undefined) return;
+    const birthDate = form.birth_date.trim();
+    if (birthDate && !isValidDayKey(birthDate)) {
+      setError('La fecha de nacimiento debe tener el formato AAAA-MM-DD.');
+      return;
+    }
+    if (birthDate && birthDate > clinicToday()) {
+      setError('La fecha de nacimiento no puede ser futura.');
+      return;
+    }
     setSubmitting(true);
     setError(undefined);
     const input = {
       name: form.name.trim(),
       species: form.species,
-      sex: form.sex,
+      sex: form.sex ?? undefined,
       breed: form.breed.trim() || undefined,
       birth_date: form.birth_date.trim() || undefined,
       distinctive_features: form.distinctive_features.trim() || undefined,
@@ -152,7 +164,7 @@ function PetForm({ existing }: { existing?: Pet }) {
         <Text style={labelStyle}>Sexo</Text>
         <FilterChips
           options={SEX_OPTIONS}
-          selectedId={form.sex}
+          selectedId={form.sex ?? ''}
           onSelect={(id) => set('sex', id as PetSex)}
         />
       </View>

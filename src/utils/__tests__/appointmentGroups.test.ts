@@ -1,4 +1,4 @@
-import { splitAppointments } from '@/utils/appointmentGroups';
+import { canReschedule, splitAppointments } from '@/utils/appointmentGroups';
 import type { Appointment, AppointmentStatus } from '@/types/models';
 
 const NOW = '2026-10-13T12:00:00.000Z';
@@ -51,5 +51,17 @@ describe('splitAppointments', () => {
     );
     expect(upcoming).toEqual([]);
     expect(past.map((a) => a.id)).toEqual([1]);
+  });
+});
+
+describe('canReschedule', () => {
+  it('solo citas pendientes o confirmadas que aún no empiezan', () => {
+    expect(canReschedule(appt(1, '2026-10-14T12:00:00Z', 'pending'), NOW)).toBe(true);
+    expect(canReschedule(appt(2, '2026-10-14T12:00:00Z', 'confirmed'), NOW)).toBe(true);
+    // Pendiente pero ya pasó (no se presentó): el backend la rechaza.
+    expect(canReschedule(appt(3, '2026-10-12T12:00:00Z', 'pending'), NOW)).toBe(false);
+    expect(canReschedule(appt(4, NOW, 'confirmed'), NOW)).toBe(false);
+    expect(canReschedule(appt(5, '2026-10-14T12:00:00Z', 'cancelled'), NOW)).toBe(false);
+    expect(canReschedule(appt(6, '2026-10-14T12:00:00Z', 'completed'), NOW)).toBe(false);
   });
 });

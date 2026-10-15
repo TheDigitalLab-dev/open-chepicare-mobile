@@ -6,6 +6,7 @@
 import type { Appointment, LabExam, MedicalReport, Payment } from '@/types/models';
 import type { AdoptionRecord } from '@/services/admin';
 import { formatClinicDateTime } from '@/utils/clinicTime';
+import { formatMoney } from '@/utils/format';
 
 import type { ChangeAlertConfig } from './changeAlerts';
 
@@ -66,7 +67,7 @@ export const ownerPaymentAlerts: ChangeAlertConfig<Payment> = {
   idOf: (p) => String(p.id),
   stateOf: (p) => p.status,
   describe(event, payment) {
-    const amount = `${payment.currency} ${payment.amount}`;
+    const amount = formatMoney(payment.amount, payment.currency);
     if (event.kind === 'created') {
       return payment.status === 'pending' || payment.status === 'overdue'
         ? { title: '💳 Nuevo cobro registrado', body: `${amount} — pendiente de pago.` }
@@ -110,7 +111,7 @@ export const adminPaymentAlerts: ChangeAlertConfig<Payment> = {
     if (event.kind === 'created' && payment.status === 'pending') {
       return {
         title: '🧾 Pago por verificar',
-        body: `${payment.currency} ${payment.amount} reportado.`,
+        body: `${formatMoney(payment.amount, payment.currency)} reportado.`,
       };
     }
     return null;
@@ -133,7 +134,7 @@ export const adminAdoptionAlerts: ChangeAlertConfig<AdoptionRecord> = {
 };
 
 /** O5 — informes médicos nuevos de la mascota. */
-export const ownerMedicalReportAlerts: ChangeAlertConfig<MedicalReport> = {
+const ownerMedicalReportAlerts: ChangeAlertConfig<MedicalReport> = {
   entity: 'owner-medical-reports',
   category: 'informes',
   idOf: (r) => String(r.id),
@@ -143,6 +144,25 @@ export const ownerMedicalReportAlerts: ChangeAlertConfig<MedicalReport> = {
     return { title: '📄 Nuevo informe médico disponible', body: report.title };
   },
 };
+
+const reportAlertsByPet = new Map<number, ChangeAlertConfig<MedicalReport>>();
+
+/**
+ * Informes de UNA mascota: el snapshot es por mascota. Con uno compartido, la
+ * primera mascota visitada lo sembraba y al abrir otra todos sus informes
+ * viejos llegaban como «nuevos». Misma instancia por mascota (es dependencia
+ * de `useChangeAlerts`).
+ */
+export function ownerMedicalReportAlertsFor(
+  petId: number,
+): ChangeAlertConfig<MedicalReport> {
+  let config = reportAlertsByPet.get(petId);
+  if (!config) {
+    config = { ...ownerMedicalReportAlerts, entity: `owner-medical-reports:${petId}` };
+    reportAlertsByPet.set(petId, config);
+  }
+  return config;
+}
 
 /** V3/O5 — resultados de exámenes de laboratorio listos. */
 export const labExamAlerts: ChangeAlertConfig<LabExam> = {

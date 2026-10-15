@@ -21,7 +21,11 @@ type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 // --- Hooks que registra la capa de sesión (F4) ----------------------------
 
 let getToken: () => Promise<string | null> = async () => null;
-/** Devuelve true si el refresh tuvo éxito y conviene reintentar. */
+/**
+ * Devuelve true si el refresh tuvo éxito y conviene reintentar; false si el
+ * servidor rechazó la sesión. Un fallo transitorio (sin red, 5xx) LANZA ese
+ * error: la petición falla por la red, no como «sesión expirada».
+ */
 let refreshSession: () => Promise<boolean> = async () => false;
 
 export function registerTokenProvider(fn: () => Promise<string | null>): void {
@@ -124,6 +128,15 @@ const RAILS_MESSAGE_TRANSLATIONS: [RegExp, string][] = [
   ],
   [/^Appointment could not be completed$/i, 'No se pudo completar la cita vinculada.'],
   [/^Appointment not found$/i, 'No se encontró la cita.'],
+  [
+    /^Birth date cannot be in the future$/i,
+    'La fecha de nacimiento no puede ser futura.',
+  ],
+  [/cannot be in the future/i, 'no puede ser futura'],
+  [
+    /^Payment cannot be registered \(status: \w+\)$/i,
+    'Este pago ya no se puede registrar (ya fue cobrado o anulado).',
+  ],
   // full_messages de Appointment: el backend antepone el atributo en inglés
   // ("Scheduled at se cruza con…", "Status no puede pasar de…").
   [/^Scheduled at /, 'La fecha y hora '],

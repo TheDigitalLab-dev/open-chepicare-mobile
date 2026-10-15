@@ -146,4 +146,25 @@ describe('useAiChat', () => {
     unmount();
     await assistant.deleteConversation(conversation.id);
   });
+
+  it('si el envío falla lo informa (la pantalla devuelve el texto al campo)', async () => {
+    const conversation = await assistant.createConversation({});
+    const { result, unmount } = renderHook(() => useAiChat(conversation.id));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await assistant.deleteConversation(conversation.id); // ya no existe: 404 real
+    let sent = true;
+    await act(async () => {
+      sent = await result.current.sendText('Hola');
+    });
+    expect(sent).toBe(false);
+    expect(result.current.actionError).not.toBeNull();
+
+    let empty = true;
+    await act(async () => {
+      empty = await result.current.sendText('  ');
+    });
+    expect(empty).toBe(false);
+    unmount();
+  });
 });

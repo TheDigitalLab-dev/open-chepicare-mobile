@@ -57,4 +57,29 @@ describe('useRemoteSearch', () => {
     expect(result.current.error).toBeNull();
     expect(result.current.data?.length).toBeGreaterThan(0);
   });
+
+  it('una búsqueda vieja que llega tarde no deja el indicador de carga encendido', async () => {
+    let releaseFirst!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    let calls = 0;
+    const search = async (q: string) => {
+      calls += 1;
+      if (calls === 1) await gate; // la carga inicial tarda más
+      return searchOwners(q);
+    };
+    const { result } = renderHook(() => useRemoteSearch(search, 10));
+    await waitFor(() => expect(calls).toBe(1));
+    act(() => result.current.setQuery('owner1@example.com'));
+    await waitFor(() =>
+      expect(result.current.data?.map((o) => o.email)).toEqual(['owner1@example.com']),
+    );
+    expect(result.current.loading).toBe(false);
+
+    releaseFirst();
+    await act(() => new Promise((resolve) => setTimeout(resolve, 500)));
+    expect(result.current.loading).toBe(false);
+    expect(result.current.data?.map((o) => o.email)).toEqual(['owner1@example.com']);
+  });
 });

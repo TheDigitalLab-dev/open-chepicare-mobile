@@ -8,6 +8,7 @@ import { useRemoteSearch } from '@/hooks/useRemoteSearch';
 import { RemoteSearchPicker } from '@/components/domain';
 import { createAdminVaccination, listAdminPets } from '@/services/admin';
 import { ApiError } from '@/types/api';
+import { isValidDayKey } from '@/utils/formInput';
 import type { Pet } from '@/types/models';
 import { clinicToday } from '@/utils/clinicTime';
 import { canRegisterVaccinations } from '@/utils/permissions';
@@ -50,6 +51,14 @@ function VaccinationForm() {
 
   const onSubmit = async () => {
     if (form.petId === undefined) return;
+    const nextDue = form.next_due_date.trim();
+    if (
+      !isValidDayKey(form.application_date.trim()) ||
+      (nextDue && !isValidDayKey(nextDue))
+    ) {
+      setError('Las fechas deben tener el formato AAAA-MM-DD.');
+      return;
+    }
     setSubmitting(true);
     setError(undefined);
     try {

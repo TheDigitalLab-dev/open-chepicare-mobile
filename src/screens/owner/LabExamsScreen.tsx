@@ -1,10 +1,5 @@
 import { useCallback } from 'react';
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-  type RouteProp,
-} from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 
@@ -14,6 +9,7 @@ import { LabExamStatusBadge, ListRow } from '@/components/domain';
 import type { OwnerPetsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
 import { useChangeAlerts } from '@/hooks/useChangeAlerts';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { labExamAlerts } from '@/services/changeAlertConfigs';
 import { listConsultations } from '@/services/medical';
 import type { LabExam } from '@/types/models';
@@ -29,11 +25,7 @@ export function LabExamsScreen() {
 
   const { data, loading, error, reload } = useAsync(() => listConsultations(petId));
   // Al volver del detalle, la lista muestra los resultados recién guardados.
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
   const consultation = (data ?? []).find((c) => c.id === consultationId);
   const exams = consultation?.lab_exams ?? [];
 

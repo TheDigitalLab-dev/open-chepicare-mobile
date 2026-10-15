@@ -1,10 +1,5 @@
 import { useCallback } from 'react';
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-  type RouteProp,
-} from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { Alert, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -15,6 +10,7 @@ import type { ActionTile } from '@/components/domain';
 import type { OwnerPetsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
 import { usePetPhoto } from '@/hooks/usePetPhoto';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { getPet } from '@/services/pets';
 import { PET_SEX_LABEL, SPECIES_EMOJI, SPECIES_LABEL, type Pet } from '@/types/models';
 
@@ -75,11 +71,7 @@ export function PetDetailScreen() {
 
   const { data: pet, loading, error, reload } = useAsync(() => getPet(petId));
   // Al volver de editar, y tras subir o quitar la foto, se muestra lo del servidor.
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
   const onPhotoChange = useCallback(() => void reload(), [reload]);
 
   const tiles: ActionTile[] = [

@@ -1,12 +1,15 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary, PetAvatar } from '@/components/ui';
+import { AsyncBoundary, Fab, ListFooter, PetAvatar } from '@/components/ui';
+import type { AdminPatientsStackParamList } from '@/navigation/types';
 import { ListRow } from '@/components/domain';
-import { useAsync } from '@/hooks/useAsync';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useChangeAlerts } from '@/hooks/useChangeAlerts';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { adminAdoptionAlerts } from '@/services/changeAlertConfigs';
 import { listAdminAdoptions, type AdoptionRecord } from '@/services/admin';
 import { formatDate } from '@/utils/format';
@@ -14,19 +17,17 @@ import { formatDate } from '@/utils/format';
 // Avatar estático compartido por todas las filas (evita recrear JSX por render).
 const PAW_AVATAR = <PetAvatar fallback="🐾" size="md" />;
 
+type Nav = NativeStackNavigationProp<AdminPatientsStackParamList>;
+
 export function AdminAdoptionsListScreen() {
-  const navigation = useNavigation();
-  const { data, loading, error, reload } = useAsync(() => listAdminAdoptions());
+  const navigation = useNavigation<Nav>();
+  const { items, loading, loadingMore, error, moreError, reload, loadMore } =
+    usePaginatedList((page) => listAdminAdoptions(page));
 
   // A5 del plan: registros de adopción nuevos al centro de notificaciones.
-  useChangeAlerts(data, adminAdoptionAlerts);
-  const items = data ?? [];
+  useChangeAlerts(loading ? null : items, adminAdoptionAlerts);
 
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
 
   const renderItem = useCallback(
     ({ item: record }: ListRenderItemInfo<AdoptionRecord>) => (
@@ -39,10 +40,20 @@ export function AdminAdoptionsListScreen() {
           .filter(Boolean)
           .join(' · ')}
         leading={PAW_AVATAR}
-        showChevron={false}
+        onPress={() => navigation.navigate('AdminAdoptionDetail', { id: record.id })}
       />
     ),
-    [],
+    [navigation],
+  );
+
+  const fab = useMemo(
+    () => (
+      <Fab
+        accessibilityLabel="Registrar adopción"
+        onPress={() => navigation.navigate('AdminAdoptionForm')}
+      />
+    ),
+    [navigation],
   );
 
   return (
@@ -54,9 +65,10 @@ export function AdminAdoptionsListScreen() {
         />
       }
       contentStyle={styles.content}
+      fab={fab}
     >
       <AsyncBoundary
-        loading={loading && data === null}
+        loading={loading && items.length === 0}
         error={error}
         onRetry={reload}
         empty={items.length === 0}
@@ -66,6 +78,11 @@ export function AdminAdoptionsListScreen() {
       >
         <FlatList
           data={items}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            <ListFooter loading={loadingMore} error={moreError} onRetry={loadMore} />
+          }
           keyExtractor={(record) => String(record.id)}
           renderItem={renderItem}
           style={styles.list}
@@ -79,5 +96,5 @@ export function AdminAdoptionsListScreen() {
 const styles = StyleSheet.create({
   content: { gap: 12 },
   list: { flex: 1 },
-  listContent: { gap: 12, paddingBottom: 32 },
+  listContent: { gap: 12, paddingBottom: 96 },
 });

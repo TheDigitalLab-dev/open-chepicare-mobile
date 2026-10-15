@@ -1,10 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-  type RouteProp,
-} from '@react-navigation/native';
+import { useState } from 'react';
+import { canReschedule } from '@/utils/appointmentGroups';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { Alert, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -24,6 +20,7 @@ import type {
   OwnerTabParamList,
 } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import {
   cancelAppointment,
   confirmAppointment,
@@ -210,15 +207,17 @@ function Details({
               onPress={() => void run(() => confirmAppointment(appointment.id))}
             />
           ) : null}
-          <Button
-            label="Reprogramar"
-            variant="outline"
-            fullWidth
-            disabled={busy}
-            onPress={() =>
-              navigation.navigate('AppointmentWizard', { id: appointment.id })
-            }
-          />
+          {canReschedule(appointment, new Date().toISOString()) ? (
+            <Button
+              label="Reprogramar"
+              variant="outline"
+              fullWidth
+              disabled={busy}
+              onPress={() =>
+                navigation.navigate('AppointmentWizard', { id: appointment.id })
+              }
+            />
+          ) : null}
           <Button
             label="Cancelar cita"
             variant="destructive"
@@ -243,13 +242,7 @@ export function AppointmentDetailScreen() {
 
   // Al volver de reprogramar o de registrar el pago, se muestra lo actual.
   // (La primera vez ya carga useAsync.)
-  const firstFocus = useRef(true);
-  useFocusEffect(
-    useCallback(() => {
-      if (firstFocus.current) firstFocus.current = false;
-      else void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
 
   return (
     <MobileShell

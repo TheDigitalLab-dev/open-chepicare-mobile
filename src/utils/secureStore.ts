@@ -29,7 +29,20 @@ export async function getRefreshToken(): Promise<string | null> {
   return getSecureItem(REFRESH_KEY);
 }
 
+/**
+ * Época de la sesión: cambia cada vez que se guardan o borran los tokens. Una
+ * renovación en vuelo la anota al empezar y solo guarda su par si sigue igual
+ * (si entretanto se cerró sesión, se cambió de servidor o se emparejó otra
+ * cuenta, el par renovado ya no corresponde).
+ */
+let tokenEpoch = 0;
+
+export function getTokenEpoch(): number {
+  return tokenEpoch;
+}
+
 export async function setTokens({ access, refresh }: TokenPair): Promise<void> {
+  tokenEpoch += 1;
   await Promise.all([
     SecureStore.setItemAsync(ACCESS_KEY, access),
     SecureStore.setItemAsync(REFRESH_KEY, refresh),
@@ -37,6 +50,7 @@ export async function setTokens({ access, refresh }: TokenPair): Promise<void> {
 }
 
 export async function clearTokens(): Promise<void> {
+  tokenEpoch += 1;
   await Promise.all([deleteSecureItem(ACCESS_KEY), deleteSecureItem(REFRESH_KEY)]);
 }
 

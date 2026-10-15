@@ -49,12 +49,16 @@ export function getExecutor(): SqlExecutor {
   return executor;
 }
 
-/** Tablas de datos del usuario (todas menos el registro de migraciones). */
+/**
+ * Tablas de datos del usuario (todas menos el registro de migraciones). Las
+ * hijas antes que sus padres: con `foreign_keys = ON`, borrar `treatments`
+ * antes que `treatment_doses` falla.
+ */
 const USER_DATA_TABLES = [
   'weighings',
   'sync_outbox',
-  'treatments',
   'treatment_doses',
+  'treatments',
   'notifications',
   'entity_snapshots',
   'notification_prefs',
@@ -62,8 +66,16 @@ const USER_DATA_TABLES = [
 
 /** Vacía las tablas de datos del usuario (lógica pura, testeable). */
 export function purgeAllTables(exec: SqlExecutor): void {
-  for (const table of USER_DATA_TABLES) {
-    exec.run(`DELETE FROM ${table}`);
+  // Todo o nada: una purga a medias dejaría datos del usuario anterior.
+  exec.exec('BEGIN');
+  try {
+    for (const table of USER_DATA_TABLES) {
+      exec.run(`DELETE FROM ${table}`);
+    }
+    exec.exec('COMMIT');
+  } catch (e) {
+    exec.exec('ROLLBACK');
+    throw e;
   }
 }
 

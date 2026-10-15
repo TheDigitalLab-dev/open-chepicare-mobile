@@ -17,6 +17,8 @@ import type { OwnerPetsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
 import { createPet, getPet, updatePet, type PetInput } from '@/services/pets';
 import { ApiError } from '@/types/api';
+import { isValidDayKey } from '@/utils/formInput';
+import { clinicToday } from '@/utils/clinicTime';
 import {
   PET_SEX_LABEL,
   SPECIES_LABEL,
@@ -53,7 +55,8 @@ function PetFormBody({ initial }: { initial?: Pet }) {
     name: initial?.name ?? '',
     species: (initial?.species ?? 'dog') as Species,
     breed: initial?.breed ?? '',
-    sex: (initial?.sex ?? 'male') as PetSex,
+    // Al editar una mascota sin sexo registrado no se inventa «Macho».
+    sex: (initial ? (initial.sex ?? null) : 'male') as PetSex | null,
     birth_date: initial?.birth_date ?? '',
     distinctive_features: initial?.distinctive_features ?? '',
   });
@@ -76,6 +79,15 @@ function PetFormBody({ initial }: { initial?: Pet }) {
   };
 
   const onSubmit = async () => {
+    const birthDate = form.birth_date.trim();
+    if (birthDate && !isValidDayKey(birthDate)) {
+      setFieldErrors({ birth_date: 'Usa el formato AAAA-MM-DD.' });
+      return;
+    }
+    if (birthDate && birthDate > clinicToday()) {
+      setFieldErrors({ birth_date: 'La fecha de nacimiento no puede ser futura.' });
+      return;
+    }
     setSubmitting(true);
     setFieldErrors({});
     setGeneralError(undefined);
@@ -83,7 +95,7 @@ function PetFormBody({ initial }: { initial?: Pet }) {
     const input: PetInput = {
       name: form.name.trim(),
       species: form.species,
-      sex: form.sex,
+      sex: form.sex ?? undefined,
       // Vacío → null: al editar, borra el valor anterior en el servidor.
       breed: form.breed.trim() || null,
       birth_date: form.birth_date.trim() || null,
@@ -150,7 +162,7 @@ function PetFormBody({ initial }: { initial?: Pet }) {
         <Text style={labelStyle}>Sexo</Text>
         <FilterChips
           options={SEX_OPTIONS}
-          selectedId={form.sex}
+          selectedId={form.sex ?? ''}
           onSelect={(id) => set('sex', id as PetSex)}
         />
       </View>

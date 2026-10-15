@@ -266,3 +266,31 @@ describe('días de calendario (fechas solo-día)', () => {
     expect(formatDayLong('no-es-fecha')).toBe('no-es-fecha');
   });
 });
+
+describe('rendimiento: formateadores reutilizados', () => {
+  it('formatear 10 000 fechas no crea un Intl.DateTimeFormat por fecha', () => {
+    // Crear un Intl.DateTimeFormat es caro (sobre todo en Hermes) y las listas
+    // y recordatorios formatean cada elemento: antes 1–2 por llamada.
+    setClinicTimeZone('America/Caracas');
+    const base = Date.parse('2026-07-01T00:00:00Z');
+    const isos = Array.from({ length: 10000 }, (_, i) =>
+      new Date(base + i * 3_600_000).toISOString(),
+    );
+    // Calentamiento: un formateador por zona/opciones.
+    clinicDayKey(isos[0]!);
+    formatDateTime(isos[0]!, 'America/Caracas');
+
+    const spy = jest.spyOn(Intl, 'DateTimeFormat');
+    try {
+      for (const iso of isos) {
+        clinicDayKey(iso);
+        formatDateTime(iso, 'America/Caracas');
+      }
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
+    // Siguen dando el mismo resultado.
+    expect(clinicDayKey('2026-07-15T02:00:00Z')).toBe('2026-07-14');
+  });
+});

@@ -1,11 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import { Alert, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { AppHeader, MobileShell } from '@/components/layout';
 import { Avatar, Button, SectionTitle } from '@/components/ui';
 import { AdminModuleGrid, ListRow, ThemeToggle } from '@/components/domain';
-import type { AdminMoreStackParamList } from '@/navigation/types';
+import type { AdminMoreStackParamList, AdminTabParamList } from '@/navigation/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useAssistant } from '@/session/AssistantProvider';
 
@@ -16,6 +17,7 @@ const SERVER_ICON = <Avatar fallback="🌐" />;
 
 export function AdminModulesScreen() {
   const navigation = useNavigation<Nav>();
+  const tabs = navigation.getParent<BottomTabNavigationProp<AdminTabParamList>>();
   const { signOut } = useAuth();
   const { availability } = useAssistant();
 
@@ -52,6 +54,20 @@ export function AdminModulesScreen() {
             label: 'Desparasitaciones',
             icon: 'flask',
             onPress: () => navigation.navigate('AdminDewormingsList'),
+          },
+          {
+            id: 'schedules',
+            label: 'Esquemas de vacunación',
+            icon: 'calendar-number',
+            onPress: () => navigation.navigate('AdminVaccinationSchedules'),
+          },
+          {
+            // Las adopciones viven en la pestaña Pacientes (junto a las mascotas).
+            id: 'adoptions',
+            label: 'Adopciones',
+            icon: 'heart',
+            onPress: () =>
+              tabs?.navigate('PatientsTab', { screen: 'AdminAdoptionsList' }),
           },
           {
             id: 'payments',

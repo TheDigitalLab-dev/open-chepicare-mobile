@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -8,6 +8,7 @@ import { AsyncBoundary, Fab, FilterChips, type BadgeVariant } from '@/components
 import { AppointmentCard } from '@/components/domain';
 import type { OwnerAppointmentsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
+import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { listAppointments } from '@/services/appointments';
 import { splitAppointments } from '@/utils/appointmentGroups';
 import { formatDateTime } from '@/utils/format';
@@ -44,11 +45,7 @@ export function AppointmentsListScreen() {
   const [filter, setFilter] = useState<Filter>('upcoming');
   const { data, loading, error, reload } = useAsync(() => listAppointments());
 
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useReloadOnFocus(reload);
 
   // Próximas: la más cercana primero. Pasadas: la más reciente primero.
   const appointments = useMemo(() => {

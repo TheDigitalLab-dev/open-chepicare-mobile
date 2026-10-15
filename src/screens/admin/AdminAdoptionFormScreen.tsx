@@ -19,6 +19,7 @@ import { RemoteSearchPicker } from '@/components/domain';
 import { createAdminAdoption, listAdminOwners, type AdminOwner } from '@/services/admin';
 import { listAdoptionPets } from '@/services/public';
 import { ApiError } from '@/types/api';
+import { isValidDayKey } from '@/utils/formInput';
 import type { AdoptionPet } from '@/types/models';
 import { clinicToday } from '@/utils/clinicTime';
 
@@ -67,6 +68,10 @@ function AdoptionForm({ pets }: { pets: AdoptionPet[] }) {
 
   const onSubmit = async () => {
     if (petId === undefined || adopterId === undefined) return;
+    if (!isValidDayKey(date.trim())) {
+      setError('La fecha debe tener el formato AAAA-MM-DD.');
+      return;
+    }
     setSubmitting(true);
     setError(undefined);
     try {

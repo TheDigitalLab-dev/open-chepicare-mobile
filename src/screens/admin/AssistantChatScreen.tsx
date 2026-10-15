@@ -122,7 +122,10 @@ function Conversation({ id, onBack }: { id: number; onBack: () => void }) {
   const onSend = useCallback(async () => {
     const text = draft;
     setDraft('');
-    await chat.sendText(text);
+    // Sin red (o con error) el texto vuelve al campo en vez de perderse, salvo
+    // que el usuario ya haya empezado a escribir otro.
+    const sent = await chat.sendText(text);
+    if (!sent && text.trim()) setDraft((current) => (current === '' ? text : current));
   }, [draft, chat]);
 
   const onStopRecording = useCallback(async () => {

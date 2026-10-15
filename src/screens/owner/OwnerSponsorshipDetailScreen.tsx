@@ -11,6 +11,7 @@ import { cancelSponsorship, getSponsorship } from '@/services/sponsorships';
 import { ApiError } from '@/types/api';
 import { formatDate, formatMoney } from '@/utils/format';
 import {
+  APPOINTMENT_PAYMENT_STATUS_LABEL,
   APPOINTMENT_STATUS_LABEL,
   SPONSORSHIP_RECURRENCE_LABEL,
   SPONSORSHIP_STATUS_LABEL,
@@ -59,7 +60,7 @@ function ExpenseRow({ expense }: { expense: SponsorshipExpense }) {
       </View>
       <Text style={{ fontSize: 13, color: colors.mutedForeground }}>
         {`${formatDate(expense.date)} · ${APPOINTMENT_STATUS_LABEL[expense.status]} · ${
-          expense.payment_status === 'paid' ? 'Pagado' : 'Sin pagar'
+          APPOINTMENT_PAYMENT_STATUS_LABEL[expense.payment_status] ?? 'Sin pagar'
         }`}
       </Text>
     </Card>

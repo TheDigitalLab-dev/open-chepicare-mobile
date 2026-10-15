@@ -144,7 +144,7 @@ describe('citas: hora de la clínica, solapes y eliminación', () => {
     await authService.login('vet@chepicare.com', 'password123');
     try {
       setClinicTimeZone(null);
-      const list = await adminService.listAdminAppointments();
+      const { items: list } = await adminService.listAdminAppointments({ scope: 'past' });
       expect(list.length).toBeGreaterThan(0);
       expect(list[0]!.time_zone).toEqual(expect.any(String));
       expect(getClinicTimeZone()).toBe(list[0]!.time_zone);
