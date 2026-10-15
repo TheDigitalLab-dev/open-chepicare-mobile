@@ -26,6 +26,8 @@ export function useAsync<T>(fn: () => Promise<T>): AsyncState<T> {
 
   const mounted = useRef(true);
   const fnRef = useRef(fn);
+  const requestId = useRef(0);
+  const settled = useRef(0);
 
   // Se actualiza en un efecto (no en render) para no reejecutar la carga.
   useEffect(() => {
@@ -33,15 +35,22 @@ export function useAsync<T>(fn: () => Promise<T>): AsyncState<T> {
   });
 
   const load = useCallback(async () => {
+    // Solo la última carga toca el estado: las pantallas recargan al montar y
+    // al enfocar, y una respuesta lenta anterior pisaba la más nueva.
+    const id = ++requestId.current;
+    const isLatest = () => mounted.current && id === requestId.current;
     setLoading(true);
     setError(null);
     try {
       const result = await fnRef.current();
-      if (mounted.current) setData(result);
+      if (isLatest()) setData(result);
     } catch (e) {
-      if (mounted.current) setError(toApiError(e));
+      if (isLatest()) setError(toApiError(e));
     } finally {
-      if (mounted.current) setLoading(false);
+      // Sigue cargando solo si la carga más nueva aún no terminó (una vieja que
+      // llega tarde no reenciende ni apaga el indicador de la nueva).
+      if (id === requestId.current) settled.current = id;
+      if (mounted.current) setLoading(settled.current !== requestId.current);
     }
   }, []);
 

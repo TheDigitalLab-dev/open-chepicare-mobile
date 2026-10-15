@@ -48,6 +48,8 @@ export function usePaginatedList<T extends IdLike>(
 
   const fetchRef = useRef(fetchPage);
   const generation = useRef(0);
+  /** Última carga de la página 1 ya resuelta (para el indicador de carga). */
+  const settled = useRef(0);
   const pageRef = useRef(0);
   const busyMore = useRef(false);
   const hasMoreRef = useRef(false);
@@ -69,24 +71,27 @@ export function usePaginatedList<T extends IdLike>(
       setPage(0);
       setTotalPages(0);
     }
+    // `loadingMore` lo apaga el `finally` del loadMore en vuelo (ya obsoleto).
     setLoading(true);
-    setLoadingMore(false);
     setError(null);
     setMoreError(null);
     try {
       const res = await fetchRef.current(1);
-      if (!isLatest()) return;
-      pageRef.current = res.page;
-      hasMoreRef.current = res.page < res.totalPages;
-      setItems(res.items);
-      setTotal(res.total);
-      setPage(res.page);
-      setTotalPages(res.totalPages);
+      if (isLatest()) {
+        pageRef.current = res.page;
+        hasMoreRef.current = res.page < res.totalPages;
+        setItems(res.items);
+        setTotal(res.total);
+        setPage(res.page);
+        setTotalPages(res.totalPages);
+      }
     } catch (e) {
       if (isLatest()) setError(toApiError(e));
     } finally {
-      // Si otra carga tomó el relevo, el indicador sigue hasta que esa termine.
-      if (mounted.current) setLoading(gen !== generation.current);
+      // Sigue cargando solo si la carga más nueva aún no terminó (una vieja que
+      // llega tarde no reenciende ni apaga el indicador de la nueva).
+      if (gen === generation.current) settled.current = gen;
+      if (mounted.current) setLoading(settled.current !== generation.current);
     }
   }, []);
 
@@ -101,18 +106,19 @@ export function usePaginatedList<T extends IdLike>(
     setMoreError(null);
     try {
       const res = await fetchRef.current(pageRef.current + 1);
-      if (!isLatest()) return;
-      pageRef.current = res.page;
-      hasMoreRef.current = res.page < res.totalPages;
-      // Paginación por offset: si entró un registro nuevo entre páginas, el
-      // último de la anterior se repite. Se descarta por id (O(k) con un Set).
-      setItems((prev) => {
-        const seen = new Set(prev.map((it) => it.id));
-        return [...prev, ...res.items.filter((it) => !seen.has(it.id))];
-      });
-      setTotal(res.total);
-      setPage(res.page);
-      setTotalPages(res.totalPages);
+      if (isLatest()) {
+        pageRef.current = res.page;
+        hasMoreRef.current = res.page < res.totalPages;
+        // Paginación por offset: si entró un registro nuevo entre páginas, el
+        // último de la anterior se repite. Se descarta por id (O(k) con un Set).
+        setItems((prev) => {
+          const seen = new Set(prev.map((it) => it.id));
+          return [...prev, ...res.items.filter((it) => !seen.has(it.id))];
+        });
+        setTotal(res.total);
+        setPage(res.page);
+        setTotalPages(res.totalPages);
+      }
     } catch (e) {
       if (isLatest()) setMoreError(toApiError(e));
     } finally {

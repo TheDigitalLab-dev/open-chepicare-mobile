@@ -21,7 +21,11 @@ type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 // --- Hooks que registra la capa de sesión (F4) ----------------------------
 
 let getToken: () => Promise<string | null> = async () => null;
-/** Devuelve true si el refresh tuvo éxito y conviene reintentar. */
+/**
+ * Devuelve true si el refresh tuvo éxito y conviene reintentar; false si el
+ * servidor rechazó la sesión. Un fallo transitorio (sin red, 5xx) LANZA ese
+ * error: la petición falla por la red, no como «sesión expirada».
+ */
 let refreshSession: () => Promise<boolean> = async () => false;
 
 export function registerTokenProvider(fn: () => Promise<string | null>): void {

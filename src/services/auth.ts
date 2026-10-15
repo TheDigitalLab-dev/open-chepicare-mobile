@@ -146,8 +146,11 @@ export async function storeTokenPair(pair: AuthTokenPair): Promise<void> {
  * - Si el servidor rechaza el refresh (revocado por cambio/restablecimiento de
  *   contraseña, cuenta desactivada o eliminada, vencido) se borran los tokens y
  *   se avisa una sola vez a la capa de sesión.
- * - Un fallo transitorio (sin red, timeout, 5xx, 429) NO cierra la sesión: la
- *   petición falla y el usuario puede reintentar.
+ * - Un fallo transitorio (sin red, timeout, 5xx, 429) NO cierra la sesión: se
+ *   relanza ese error (no el 401 original, que la capa de sesión tomaría por
+ *   un rechazo y borraría tokens y datos locales) y el usuario puede reintentar.
+ * - Si mientras viajaba la renovación se cerró la sesión (o cambió de servidor
+ *   o de cuenta), el par nuevo se descarta.
  */
 let refreshInFlight: Promise<boolean> | null = null;
 
@@ -159,14 +162,16 @@ function refreshSession(): Promise<boolean> {
 }
 
 async function renewTokens(): Promise<boolean> {
+  const epoch = secureStore.getTokenEpoch();
   const refresh = await secureStore.getRefreshToken();
-  if (!refresh) return false;
+  if (!refresh || secureStore.getTokenEpoch() !== epoch) return false;
   try {
     const env = await api.post<AuthEnvelope>(
       `${BASE}/refresh`,
       { refresh_token: refresh },
       { auth: false, skipRefresh: true },
     );
+    if (secureStore.getTokenEpoch() !== epoch) return false;
     await storeTokenPair(env.auth);
     await applyClinicConfig(env.clinic);
     return true;
@@ -177,10 +182,14 @@ async function renewTokens(): Promise<boolean> {
         err.kind === 'forbidden' ||
         err.kind === 'validation');
     if (rejected) {
-      await secureStore.clearTokens();
-      onSessionExpired();
+      // Solo si nadie cambió la sesión mientras tanto (si no, ya no es la suya).
+      if (secureStore.getTokenEpoch() === epoch) {
+        await secureStore.clearTokens();
+        onSessionExpired();
+      }
+      return false;
     }
-    return false;
+    throw err;
   }
 }
 

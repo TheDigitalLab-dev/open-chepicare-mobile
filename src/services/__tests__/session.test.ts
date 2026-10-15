@@ -147,6 +147,62 @@ describe('profileService.changePassword', () => {
   }, 30000);
 });
 
+describe('fallos al renovar que NO son un rechazo', () => {
+  it('si el refresh no llega al servidor (sin red) la sesión se conserva', async () => {
+    // Arranque en frío típico: el access guardado venció (401) y justo al
+    // renovar se cae la red. Antes la petición devolvía el 401 original, la
+    // capa de sesión lo tomaba como «sesión rechazada» y borraba tokens y
+    // datos locales (incluida la cola sin sincronizar).
+    await authService.login('owner1@example.com', PASSWORD);
+    const { refresh } = await snapshotTokens();
+    await secureStore.setTokens({ access: 'token-vencido', refresh });
+    const realGet = secureStore.getRefreshToken;
+    const spy = jest
+      .spyOn(secureStore, 'getRefreshToken')
+      .mockImplementation(async () => {
+        const value = await realGet();
+        await setServerUrl('http://127.0.0.1:9'); // se cae la red justo ahora
+        return value;
+      });
+    try {
+      const err = await authService.fetchCurrentUser().catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(ApiError);
+      expect((err as ApiError).kind).toBe('network');
+    } finally {
+      spy.mockRestore();
+      await resetServerUrl();
+    }
+    expect(await secureStore.getRefreshToken()).toBe(refresh);
+    expect(expired).not.toHaveBeenCalled();
+    // Con red, la misma sesión se restaura.
+    await expect(authService.fetchCurrentUser()).resolves.toMatchObject({
+      email: 'owner1@example.com',
+    });
+  }, 30000);
+
+  it('una renovación en vuelo no resucita la sesión si entretanto se cerró', async () => {
+    await authService.login('owner1@example.com', PASSWORD);
+    const { refresh } = await snapshotTokens();
+    await secureStore.setTokens({ access: 'token-vencido', refresh });
+    const realGet = secureStore.getRefreshToken;
+    const spy = jest
+      .spyOn(secureStore, 'getRefreshToken')
+      .mockImplementation(async () => {
+        const value = await realGet();
+        // El usuario cierra sesión (o cambia de servidor) mientras se renueva.
+        await secureStore.clearTokens();
+        return value;
+      });
+    try {
+      await authService.fetchCurrentUser().catch(() => undefined);
+    } finally {
+      spy.mockRestore();
+    }
+    expect(await secureStore.getAccessToken()).toBeNull();
+    expect(await secureStore.getRefreshToken()).toBeNull();
+  }, 30000);
+});
+
 describe('authService.logout', () => {
   const BASE = () => process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
 

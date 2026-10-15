@@ -30,6 +30,17 @@ describe('parsePairingUri', () => {
     },
   );
 
+  it('acepta puerto, IP y ruta base (instalaciones detrás de un proxy)', () => {
+    for (const server of [
+      'http://192.168.1.20:3000',
+      'https://clinica.example.com/chepicare',
+      'http://[::1]:3000',
+    ]) {
+      const uri = `chepicare://pair?v=1&server=${encodeURIComponent(server)}&code=x`;
+      expect(pairing.parsePairingUri(uri).server).toBe(server);
+    }
+  });
+
   it('acepta el esquema sin distinguir mayúsculas (lectores de QR que lo cambian)', () => {
     const uri = 'ChepiCare://pair?v=1&server=https%3A%2F%2Fa.com&code=x';
     expect(pairing.parsePairingUri(uri)).toEqual({ server: 'https://a.com', code: 'x' });
@@ -66,6 +77,28 @@ describe('parsePairingUri', () => {
     ['chepicare://pair?v=1&code=x', 'servidor'],
     ['pawcare://pair?v=1&server=ftp%3A%2F%2Fa.com&code=x', 'servidor'],
     ['pawcare://pair?v=1&server=https%3A%2F%2Fa.com', 'código'],
+    // Credenciales en la URL: «https://clinica.com@evil.com» es evil.com.
+    [
+      `chepicare://pair?v=1&server=${encodeURIComponent('https://clinica.com@evil.com')}&code=x`,
+      'servidor',
+    ],
+    [
+      `chepicare://pair?v=1&server=${encodeURIComponent('https://user:pw@a.com')}&code=x`,
+      'servidor',
+    ],
+    // Query o fragmento: rompen la URL de cada petición (`https://a.com?x/auth/…`).
+    [
+      `chepicare://pair?v=1&server=${encodeURIComponent('https://a.com?x=1')}&code=x`,
+      'servidor',
+    ],
+    [
+      `chepicare://pair?v=1&server=${encodeURIComponent('https://a.com#frag')}&code=x`,
+      'servidor',
+    ],
+    [
+      `chepicare://pair?v=1&server=${encodeURIComponent('https://a .com')}&code=x`,
+      'servidor',
+    ],
   ])('rechaza %s', (uri, fragment) => {
     expect(() => pairing.parsePairingUri(uri)).toThrow(pairing.PairingUriError);
     expect(() => pairing.parsePairingUri(uri)).toThrow(new RegExp(fragment, 'i'));

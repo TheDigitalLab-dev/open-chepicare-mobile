@@ -67,6 +67,14 @@ function parseQuery(query: string): Record<string, string> {
 }
 
 /**
+ * Servidor del QR: http(s), host (nombre, IPv4 o IPv6 entre corchetes), puerto
+ * y ruta base opcionales. Sin credenciales (`https://clinica.com@evil.com` es
+ * evil.com), sin query ni fragmento (romperían la URL de cada petición).
+ */
+const SERVER_URL =
+  /^https?:\/\/(?:[a-z\d](?:[a-z\d-]*[a-z\d])?(?:\.[a-z\d](?:[a-z\d-]*[a-z\d])?)*|\[[\da-f:.]+\])(?::\d{1,5})?(?:\/[\w\-.~%!$&'()*+,;=:]*)*\/?$/i;
+
+/**
  * Valida el texto de un QR y devuelve servidor, código y (si lo trae) el tipo
  * de cuenta. Un `account` ausente o desconocido no invalida el QR: es
  * informativo y la sesión la decide el canje. Lanza
@@ -90,7 +98,7 @@ export function parsePairingUri(raw: string): PairingPayload {
     );
   }
   const server = query.server ?? '';
-  if (!/^https?:\/\/[^\s/]+/i.test(server)) {
+  if (!SERVER_URL.test(server)) {
     throw new PairingUriError('El QR no trae un servidor válido.');
   }
   const code = query.code ?? '';

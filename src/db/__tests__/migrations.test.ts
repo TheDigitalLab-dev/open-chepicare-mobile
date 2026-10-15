@@ -94,6 +94,35 @@ describe('applyMigrations', () => {
     db.close();
   });
 
+  it('purgeAllTables funciona con claves foráneas activas (como en la app)', () => {
+    // La app abre la base con `PRAGMA foreign_keys = ON`: borrar `treatments`
+    // antes que sus dosis fallaba y el cierre de sesión dejaba tratamientos,
+    // dosis, avisos y snapshots del usuario anterior en el teléfono.
+    const { db, exec } = freshDb();
+    exec.exec('PRAGMA foreign_keys = ON;');
+    applyMigrations(exec);
+    exec.run(
+      `INSERT INTO treatments (id, pet_id, medication_name, frequency_hours, duration_days,
+         started_at, updated_at)
+       VALUES ('t1', 1, 'Amoxicilina', 8, 7, '2026-07-15T10:00:00Z', '2026-07-15T10:00:00Z')`,
+    );
+    exec.run(
+      `INSERT INTO treatment_doses (id, treatment_id, dose_index, scheduled_at, updated_at)
+       VALUES ('d1', 't1', 0, '2026-07-15T10:00:00Z', '2026-07-15T10:00:00Z')`,
+    );
+    exec.run(
+      `INSERT INTO entity_snapshots (entity, entity_id, state, updated_at)
+       VALUES ('owner-payments', '1', 'pending', '2026-07-15T10:00:00Z')`,
+    );
+
+    purgeAllTables(exec);
+
+    expect(exec.all('SELECT * FROM treatment_doses')).toEqual([]);
+    expect(exec.all('SELECT * FROM treatments')).toEqual([]);
+    expect(exec.all('SELECT * FROM entity_snapshots')).toEqual([]);
+    db.close();
+  });
+
   it('rechaza un op inválido en la bitácora (constraint real)', () => {
     const { db, exec } = freshDb();
     applyMigrations(exec);

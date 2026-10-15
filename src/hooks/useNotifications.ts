@@ -19,24 +19,41 @@ export interface UseNotifications {
   refresh(): void;
 }
 
+/**
+ * Ejecuta una operación de la base local; si la base no abre o falla (corrupta,
+ * sin espacio) devuelve el valor por defecto: la campana de TODAS las
+ * cabeceras depende de esto y no puede tumbar la pantalla.
+ */
+function safely<T>(op: () => T, fallback: T): T {
+  try {
+    return op();
+  } catch {
+    return fallback;
+  }
+}
+
 export function useNotifications(executor?: SqlExecutor): UseNotifications {
   const center = useMemo(
-    () => createNotificationCenter(executor ?? initDatabase()),
+    () => safely(() => createNotificationCenter(executor ?? initDatabase()), null),
     [executor],
   );
 
   // Lectura inicial perezosa (la base es local y síncrona); las mutaciones y la
   // navegación refrescan vía `refresh`.
-  const [items, setItems] = useState<AppNotification[]>(() => center.list());
-  const [unreadCount, setUnreadCount] = useState<number>(() => center.unreadCount());
+  const [items, setItems] = useState<AppNotification[]>(() =>
+    safely(() => center?.list() ?? [], []),
+  );
+  const [unreadCount, setUnreadCount] = useState<number>(() =>
+    safely(() => center?.unreadCount() ?? 0, 0),
+  );
 
   const refresh = useCallback(() => {
-    setItems(center.list());
-    setUnreadCount(center.unreadCount());
+    setItems(safely(() => center?.list() ?? [], []));
+    setUnreadCount(safely(() => center?.unreadCount() ?? 0, 0));
   }, [center]);
 
   const markAllRead = useCallback(() => {
-    center.markAllRead();
+    safely(() => center?.markAllRead(), undefined);
     refresh();
   }, [center, refresh]);
 

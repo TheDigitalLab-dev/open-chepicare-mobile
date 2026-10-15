@@ -29,6 +29,7 @@ export function useRemoteSearch<T>(
   const searchRef = useRef(search);
   const queryRef = useRef('');
   const requestId = useRef(0);
+  const settled = useRef(0);
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -48,8 +49,10 @@ export function useRemoteSearch<T>(
       if (isLatest()) setError(toApiError(e));
     } finally {
       // Se resuelve en el finally (también si la búsqueda falla). Si otra más
-      // nueva tomó el relevo, el indicador sigue activo hasta que esa termine.
-      if (mounted.current) setLoading(id !== requestId.current);
+      // nueva tomó el relevo, el indicador sigue activo hasta que esa termine;
+      // una vieja que llega DESPUÉS de la nueva no lo vuelve a encender.
+      if (id === requestId.current) settled.current = id;
+      if (mounted.current) setLoading(settled.current !== requestId.current);
     }
   }, []);
 
