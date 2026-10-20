@@ -7,6 +7,7 @@ import {
   CALENDAR_EVENT_TYPE_LABEL,
   type CalendarEvent,
   type CalendarEventType,
+  type ClinicEventCalendarStatus,
   type ClinicalEventStatus,
   type PrescriptionEventStatus,
 } from '@/types/calendar';
@@ -42,8 +43,15 @@ const CLINICAL_STATUS_LABEL: Record<ClinicalEventStatus, string> = {
   overdue: 'Vencida',
 };
 
+const CLINIC_EVENT_STATUS_LABEL: Record<ClinicEventCalendarStatus, string> = {
+  published: 'Inscrito',
+  cancelled: 'Evento cancelado',
+};
+
 export function eventStatusLabel(event: CalendarEvent): string {
   switch (event.type) {
+    case 'clinic_event':
+      return CLINIC_EVENT_STATUS_LABEL[event.status] ?? event.status;
     case 'appointment':
       return APPOINTMENT_STATUS_LABEL[event.status] ?? event.status;
     case 'prescription':
@@ -80,6 +88,8 @@ export function eventSubtitle(event: CalendarEvent, audience: CalendarAudience):
       ]);
     case 'prescription':
       return compact([time, event.details.dose, event.details.frequency]);
+    case 'clinic_event':
+      return compact([time, event.details.location]);
     default:
       return time;
   }

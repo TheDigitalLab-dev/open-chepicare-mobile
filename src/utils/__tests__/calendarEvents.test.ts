@@ -84,7 +84,30 @@ beforeAll(() => {
 
 afterAll(() => setClinicConfig(null));
 
+const clinicEvent: CalendarEvent = {
+  id: 'clinic_event-1',
+  type: 'clinic_event',
+  record_id: 1,
+  title: 'Jornada de vacunación',
+  all_day: false,
+  start_date: '2026-10-27',
+  end_date: '2026-10-27',
+  starts_at: '2026-10-27T09:00:00-04:00',
+  ends_at: '2026-10-27T13:00:00-04:00',
+  status: 'published',
+  pet: null,
+  details: {
+    location: 'Sede principal',
+    slug: 'jornada-de-vacunacion-demo',
+    registration_id: 3,
+  },
+};
+
 it('eventStatusLabel por tipo', () => {
+  expect(eventStatusLabel(clinicEvent)).toBe('Inscrito');
+  expect(eventStatusLabel({ ...clinicEvent, status: 'cancelled' })).toBe(
+    'Evento cancelado',
+  );
   expect(eventStatusLabel(appointment)).toBe('Confirmada');
   expect(eventStatusLabel(prescription)).toBe('En curso');
   expect(eventStatusLabel({ ...prescription, status: 'finished' })).toBe('Terminado');
@@ -107,6 +130,8 @@ it('eventSubtitle: el personal ve el dueño; el propietario, el veterinario', ()
   expect(eventSubtitle(prescription, 'owner')).toBe(
     '18/10/2026 – 24/10/2026 · 250mg · Cada 12 horas',
   );
+  // Evento de la clínica: hora y lugar.
+  expect(eventSubtitle(clinicEvent, 'owner')).toBe('09:00 – 13:00 · Sede principal');
 });
 
 it('monthTitle y selectedDayTitle', () => {

@@ -50,6 +50,7 @@ const colors = {
     eventPrescription: 'hsl(271, 65%, 52%)',
     eventVaccination: 'hsl(152, 70%, 33%)',
     eventDeworming: 'hsl(28, 90%, 45%)',
+    eventClinic: 'hsl(330, 75%, 47%)',
   },
 
   dark: {
@@ -100,6 +101,7 @@ const colors = {
     eventPrescription: 'hsl(270, 80%, 74%)',
     eventVaccination: 'hsl(150, 60%, 52%)',
     eventDeworming: 'hsl(32, 92%, 60%)',
+    eventClinic: 'hsl(330, 85%, 70%)',
   },
 } as const;
 

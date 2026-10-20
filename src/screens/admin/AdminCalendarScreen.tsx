@@ -49,6 +49,9 @@ export function AdminCalendarScreen() {
       navigation.navigate('AdminAppointmentDetail', { id: event.record_id });
       return;
     }
+    // Los eventos de la clínica solo llegan al calendario del propietario; la
+    // app del personal no abre eventos (se gestionan en la web).
+    if (event.type === 'clinic_event') return;
     navigation
       .getParent<BottomTabNavigationProp<AdminTabParamList>>()
       ?.navigate('PatientsTab', {

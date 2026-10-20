@@ -30,3 +30,13 @@ export { CalendarBoard, type CalendarBoardProps } from './CalendarBoard';
 export { CalendarEventRow, type CalendarEventRowProps } from './CalendarEventRow';
 export { CalendarLegend, type CalendarLegendProps } from './CalendarLegend';
 export { CalendarMonthGrid, type CalendarMonthGridProps } from './CalendarMonthGrid';
+export { ClinicEventCard, type ClinicEventCardProps } from './ClinicEventCard';
+export {
+  EventRegistrationRow,
+  type EventRegistrationRowProps,
+} from './EventRegistrationRow';
+export {
+  StaffEventsSummaryCard,
+  type StaffEventsSummaryCardProps,
+  type StaffEventsSummaryItem,
+} from './StaffEventsSummaryCard';

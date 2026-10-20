@@ -12,5 +12,7 @@ export function eventTypeColor(colors: Colors, type: CalendarEventType): string 
       return colors.eventVaccination;
     case 'deworming':
       return colors.eventDeworming;
+    case 'clinic_event':
+      return colors.eventClinic;
   }
 }

@@ -33,3 +33,6 @@ export { ProfileScreen } from './ProfileScreen';
 export { EditProfileScreen } from './EditProfileScreen';
 export { ChangePasswordScreen } from './ChangePasswordScreen';
 export { OwnerCalendarScreen } from './OwnerCalendarScreen';
+export { OwnerEventsScreen } from './OwnerEventsScreen';
+export { OwnerEventDetailScreen } from './OwnerEventDetailScreen';
+export { OwnerEventRegistrationsScreen } from './OwnerEventRegistrationsScreen';

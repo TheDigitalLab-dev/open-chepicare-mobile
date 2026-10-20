@@ -6,6 +6,7 @@
 import * as appointmentsService from '@/services/appointments';
 import * as authService from '@/services/auth';
 import * as calendarService from '@/services/calendar';
+import * as eventsService from '@/services/events';
 import * as petsService from '@/services/pets';
 import { bookFreshAppointment } from '@/testing/ownerData';
 import { ApiError } from '@/types/api';
@@ -52,9 +53,41 @@ describe('calendarService (propietario)', () => {
       expect(event.end_date >= event.start_date).toBe(true);
       // Un evento del rango toca al menos un día del rango.
       expect(event.end_date >= range.start && event.start_date <= range.end).toBe(true);
-      expect(myPetIds.has(event.pet.id)).toBe(true);
       expect(event.status).not.toBe('cancelled');
+      // Los eventos de la clínica no son de una mascota.
+      if (event.type === 'clinic_event') expect(event.pet).toBeNull();
+      else expect(myPetIds.has(event.pet.id)).toBe(true);
     }
+  });
+
+  it('incluye los eventos de la clínica en los que está inscrito (sin mascota)', async () => {
+    const { events: upcoming } = await eventsService.listOwnerEvents();
+    const registered = upcoming.find((e) => e.my_registration)!;
+    expect(registered).toBeDefined();
+    const day = clinicDayKey(registered.starts_at);
+    const res = await calendarService.getOwnerCalendarEvents({
+      start: day,
+      end: day,
+      types: ['clinic_event'],
+    });
+    const item = res.events.find((e) => e.id === `clinic_event-${registered.id}`);
+    expect(item).toEqual(
+      expect.objectContaining({
+        type: 'clinic_event',
+        record_id: registered.id,
+        title: registered.title,
+        pet: null,
+        status: 'published',
+        starts_at: registered.starts_at,
+        ends_at: registered.ends_at,
+      }),
+    );
+    if (item?.type !== 'clinic_event') throw new Error('Se esperaba un clinic_event');
+    expect(item.details.registration_id).toBe(registered.my_registration!.id);
+    expect(item.details.slug).toBe(registered.slug);
+    // Los que no tienen inscripción activa no salen.
+    const notMine = upcoming.filter((e) => !e.my_registration).map((e) => e.id);
+    expect(res.events.some((e) => notMine.includes(e.record_id))).toBe(false);
   });
 
   it('filtra por tipos', async () => {

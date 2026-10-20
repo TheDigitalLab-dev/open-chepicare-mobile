@@ -68,6 +68,10 @@ export type OwnerHomeStackParamList = {
   OwnerSponsorships: undefined;
   OwnerSponsorshipDetail: { id: number };
   Notifications: undefined;
+  /** Eventos de la clínica: solo existen en el árbol del propietario. */
+  OwnerEvents: undefined;
+  OwnerEventDetail: { id: number };
+  OwnerEventRegistrations: undefined;
 };
 
 export type OwnerPetsStackParamList = {
