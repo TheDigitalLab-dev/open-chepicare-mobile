@@ -45,11 +45,14 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json}\"",
-    "doctor": "npx react-doctor@latest --no-score",
+    "doctor": "pnpm dlx react-doctor@latest --no-score",
     "prepare": "husky"
   },
   "private": true,
-  "packageManager": "yarn@4.18.0+sha512.fcb8716fe7cd0eece141ffc18b92193a9df9204c1ba83189c288835223fc0bbe64af473bab0d5e9927a7daeb5caf2bb07eb2787cc9338ca040ea125f2a1f2f7e",
+  "packageManager": "pnpm@10.34.7+sha256.c729f6538e005d234889910466fd1c4c44affb0b28ea86d93fcf88aa1aefa694",
+  "engines": {
+    "node": ">=20.19.4"
+  },
   "devDependencies": {
     "@react-native/jest-preset": "0.85.3",
     "@testing-library/jest-native": "^5.4.3",
@@ -57,6 +60,7 @@
     "@types/jest": "^30.0.0",
     "@types/react": "^19.2.15",
     "@types/react-test-renderer": "^19",
+    "babel-preset-expo": "~56.0.12",
     "eslint": "^9.7.0",
     "eslint-config-expo": "^56.0.4",
     "eslint-config-prettier": "^10.1.8",
@@ -65,5 +69,53 @@
     "react-test-renderer": "19.2.3",
     "typescript": "7.0.2",
     "undici": "^8.4.1"
+  },
+  "pnpm": {
+    "packageExtensions": {
+      "eslint-config-expo": {
+        "dependencies": {
+          "typescript": "~6.0.3"
+        }
+      },
+      "@typescript-eslint/eslint-plugin": {
+        "dependencies": {
+          "typescript": "~6.0.3"
+        }
+      },
+      "@typescript-eslint/parser": {
+        "dependencies": {
+          "typescript": "~6.0.3"
+        }
+      },
+      "@typescript-eslint/project-service": {
+        "dependencies": {
+          "typescript": "~6.0.3"
+        }
+      },
+      "@typescript-eslint/type-utils": {
+        "dependencies": {
+          "typescript": "~6.0.3"
+        }
+      },
+      "@typescript-eslint/types": {
+        "dependencies": {
+          "typescript": "~6.0.3"
+        }
+      },
+      "@typescript-eslint/typescript-estree": {
+        "dependencies": {
+          "typescript": "~6.0.3"
+        }
+      },
+      "ts-api-utils": {
+        "dependencies": {
+          "typescript": "~6.0.3"
+        }
+      }
+    },
+    "ignoredBuiltDependencies": [
+      "msgpackr-extract",
+      "unrs-resolver"
+    ]
   }
 }

@@ -3,8 +3,7 @@ node_modules
 dist
 build
 coverage
-.yarn
-yarn.lock
+pnpm-lock.yaml
 docs
 *.md
 android

@@ -34,7 +34,8 @@ testing.
 
 ## 🧰 Requisitos
 
-- **Node ≥ 20** y **Yarn 4** (vía Corepack).
+- **Node ≥ 20.19.4** y **pnpm 10** (vía Corepack: la versión exacta está en
+  `packageManager` de `package.json`).
 - **Android**: un emulador (AVD) o un dispositivo con **Expo Go**.
 - El backend [`open-chepicare-web`](https://github.com/TheDigitalLab-dev/open-chepicare-web) (clon hermano en `../open-chepicare-web`) corriendo (por defecto en
   `http://localhost:3000`).
@@ -51,14 +52,14 @@ git clone https://github.com/TheDigitalLab-dev/open-chepicare-web.git ../open-ch
 
 ```bash
 corepack enable
-yarn install
+pnpm install
 
 # 1) Levanta el backend (repo ../open-chepicare-web) en el puerto 3000.
 #    El emulador Android alcanza el localhost del host en 10.0.2.2,
 #    por eso el valor de desarrollo por defecto es http://10.0.2.2:3000.
 
 # 2) Arranca Metro / Expo
-yarn start        # abre el proyecto en Expo Go o en el dev client
+pnpm start        # abre el proyecto en Expo Go o en el dev client
 ```
 
 Para cambiar de servidor sin recompilar: en la app, pantalla de bienvenida →
@@ -144,15 +145,32 @@ añaden, deben mantenerse estables desde la primera publicación.
 
 | Comando           | Qué hace                                                         |
 | ----------------- | --------------------------------------------------------------- |
-| `yarn start`      | Inicia Metro / Expo.                                            |
-| `yarn test`       | Tests de **integración reales** contra `http://localhost:3000`. |
-| `yarn typecheck`  | TypeScript 7 (compilador nativo) estricto (`tsc --noEmit`).     |
-| `yarn lint`       | ESLint.                                                          |
-| `yarn format`     | Prettier (escritura).                                           |
+| `pnpm start`      | Inicia Metro / Expo.                                            |
+| `pnpm test`       | Tests de **integración reales** contra `http://localhost:3000`. |
+| `pnpm typecheck`  | TypeScript 7 (compilador nativo) estricto (`tsc --noEmit`).     |
+| `pnpm lint`       | ESLint.                                                          |
+| `pnpm format`     | Prettier (escritura).                                           |
+| `pnpm run doctor` | `pnpm dlx react-doctor@latest --no-score` (`pnpm doctor` a secas es el diagnóstico propio de pnpm). |
 
-> TypeScript 7 no expone el API JS que usa typescript-eslint: `.yarnrc.yml`
-> (`packageExtensions`) le da a ESLint una copia anidada de TypeScript 6; `tsc`
-> usa el 7 de la raíz. Retirarlo cuando typescript-eslint soporte TS ≥ 7.
+> TypeScript 7 no expone el API JS que usa typescript-eslint:
+> `pnpm.packageExtensions` (en `package.json`) le da a `eslint-config-expo` y a
+> los paquetes de typescript-eslint una dependencia `typescript@~6.0.3`, así que
+> ESLint usa TypeScript 6; `tsc` usa el 7 de la raíz. Retirarlo cuando
+> typescript-eslint soporte TS ≥ 7.
+
+### 📦 pnpm (antes Yarn 4)
+
+- `.npmrc` fija `node-linker=hoisted`: `node_modules` plano, como esperan
+  Expo/Metro. Los archivos son hardlinks al store global de pnpm, así que varios
+  clones o worktrees comparten el espacio en disco.
+- `pnpm.ignoredBuiltDependencies`: `msgpackr-extract` y `unrs-resolver` traen el
+  binario precompilado; sus scripts de instalación no hacen falta (con Yarn
+  tampoco corrían). Si se añade una dependencia que sí necesite build, va en
+  `pnpm.onlyBuiltDependencies`.
+- **Clon que venía de Yarn:** borra el `node_modules` anterior antes de instalar
+  para no mezclar layouts: `rm -rf node_modules .yarn && corepack enable && pnpm install`.
+- Paquetes nuevos: `pnpm exec expo install <paquete>` (fija versiones compatibles
+  con el SDK).
 
 > Correr **toda** la suite de golpe puede disparar el _rate-limit_ del backend en
 > `/auth` por exceso de logins; conviene correr por dominios.

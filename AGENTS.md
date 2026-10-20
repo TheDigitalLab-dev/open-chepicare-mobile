@@ -21,8 +21,8 @@ escribir cualquier código.
 - Escribe el **test antes** de la implementación (red → green → refactor).
 - Aplica a: hooks (`src/hooks`), servicios (`src/services`), repositorios y
   utilidades de negocio.
-- Los tests son de **integración REAL** contra el backend en ejecución. `yarn test`
-  apunta a `http://localhost:3000` (otro backend: `EXPO_PUBLIC_API_BASE_URL=http://localhost:3001 yarn test`).
+- Los tests son de **integración REAL** contra el backend en ejecución. `pnpm test`
+  apunta a `http://localhost:3000` (otro backend: `EXPO_PUBLIC_API_BASE_URL=http://localhost:3001 pnpm test`).
   **Cero respuestas de API mockeadas.**
 - Lo único que se permite sustituir son los **shims de plataforma nativa** que no
   existen en el entorno Node de Jest (`expo-secure-store`, `AsyncStorage`, el
@@ -50,11 +50,11 @@ escribir cualquier código.
 
 ## Compuertas de calidad — antes de CADA commit
 
-1. `yarn test` en verde (incluye el/los test nuevos del archivo terminado).
-2. `yarn typecheck` en verde.
-3. `yarn lint` sin errores.
-4. `npx react-doctor@latest --no-score` sin hallazgos en los archivos tocados.
-5. `yarn format`.
+1. `pnpm test` en verde (incluye el/los test nuevos del archivo terminado).
+2. `pnpm typecheck` en verde.
+3. `pnpm lint` sin errores.
+4. `pnpm dlx react-doctor@latest --no-score` sin hallazgos en los archivos tocados.
+5. `pnpm format`.
 
 El hook **pre-push** (Husky) re-ejecuta `lint:fix` + `format` + `lint` + `typecheck`
 y **bloquea el push** si algo cambió o falla: en ese caso, corrige y haz un nuevo

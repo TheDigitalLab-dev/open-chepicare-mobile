@@ -54,25 +54,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Habilitar corepack (Yarn 4)
-        run: corepack enable
+      # Sin `version:`: toma la de `packageManager` en package.json.
+      - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: yarn
+          cache: pnpm
 
       - name: Instalar dependencias
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck
-        run: yarn typecheck
+        run: pnpm typecheck
 
       - name: Lint
-        run: yarn lint
+        run: pnpm lint
 
       - name: Formato
-        run: yarn format:check
+        run: pnpm format:check
 
   build:
     name: Prebuild + Gradle (Android)
@@ -81,17 +81,17 @@ jobs:
     permissions:
       contents: write # para crear el GitHub Release con el APK
     # Los secrets de firma NO van a nivel de job: solo los ven los pasos de
-    # firma, nunca `yarn install`, `expo prebuild` ni Gradle (código de terceros).
+    # firma, nunca `pnpm install`, `expo prebuild` ni Gradle (código de terceros).
     steps:
       - uses: actions/checkout@v4
 
-      - name: Habilitar corepack (Yarn 4)
-        run: corepack enable
+      # Sin `version:`: toma la de `packageManager` en package.json.
+      - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: yarn
+          cache: pnpm
 
       - uses: actions/setup-java@v4
         with:
@@ -101,10 +101,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Instalar dependencias
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Generar proyecto nativo (expo prebuild)
-        run: npx expo prebuild --platform android --no-install
+        run: pnpm exec expo prebuild --platform android --no-install
 
       - name: Compilar APK de release
         env:

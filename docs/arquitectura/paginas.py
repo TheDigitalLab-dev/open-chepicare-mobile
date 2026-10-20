@@ -90,18 +90,18 @@ INDEX = (
             """
             # 1) Dependencias
             corepack enable
-            yarn install
+            pnpm install
 
             # 2) Backend en marcha (repo ../open-chepicare-web) en el puerto 3000
             #    El emulador Android lo alcanza vía http://10.0.2.2:3000 (default de dev).
 
             # 3) Arrancar Metro / Expo
-            yarn start           # luego abre en Expo Go o el dev client
+            pnpm start           # luego abre en Expo Go o el dev client
 
             # 4) Compuertas de calidad
-            yarn typecheck
-            yarn lint
-            yarn test            # tests de INTEGRACIÓN reales contra localhost:3000
+            pnpm typecheck
+            pnpm lint
+            pnpm test            # tests de INTEGRACIÓN reales contra localhost:3000
             """
         ),
         "<p>La URL del backend se puede cambiar <b>en tiempo de ejecución</b> desde la "
@@ -841,7 +841,7 @@ TESTING = (
         table(
             ["Pieza", "Detalle"],
             [
-                ["<code>yarn test</code>", "Apunta a <code>localhost:3000</code> vía <code>EXPO_PUBLIC_API_BASE_URL</code>."],
+                ["<code>pnpm test</code>", "Apunta a <code>localhost:3000</code> vía <code>EXPO_PUBLIC_API_BASE_URL</code>."],
                 ["<code>undici</code>", "Provee <code>fetch</code> real en el entorno Node de Jest."],
                 ["<code>node:sqlite</code>", "SQLite real para los tests de la capa local."],
                 ["RNTL", "Tests de componentes cuando aplica."],
@@ -859,8 +859,8 @@ TESTING = (
         mermaid(
             """
             flowchart LR
-              A["yarn test"] --> B["yarn typecheck"] --> C["yarn lint"]
-              C --> D["react-doctor --no-score"] --> E["yarn format"] --> OK["commit"]
+              A["pnpm test"] --> B["pnpm typecheck"] --> C["pnpm lint"]
+              C --> D["react-doctor --no-score"] --> E["pnpm format"] --> OK["commit"]
             """
         ),
         "<p>Además, un hook <b>pre-push</b> (Husky) reejecuta lint+format+typecheck y "
