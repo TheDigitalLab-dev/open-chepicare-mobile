@@ -64,3 +64,40 @@ it('al cambiar de día rápido se queda con los veterinarios del ÚLTIMO día', 
   expect(result.current.vets.day).toBe(dayB);
   expect(result.current.vets.loading).toBe(false);
 });
+
+it('precarga el día que viene del calendario: su mes y sus veterinarios', async () => {
+  const next = shiftMonth(clinicMonth(), 1);
+  const days = await adminService.getAdminAvailableDays(next.month, next.year);
+  const day = days[0]!;
+  const onInitialDay = jest.fn();
+  const { result } = renderHook(() =>
+    useAdminSchedule({ initialDay: day, onInitialDay }),
+  );
+  await waitFor(() => {
+    expect(result.current.days.loading).toBe(false);
+    expect(result.current.vets.day).toBe(day);
+    expect(result.current.vets.loading).toBe(false);
+  });
+  expect(result.current.month).toEqual(next);
+  expect(onInitialDay).toHaveBeenCalledWith(day);
+  expect(result.current.initialDayUnavailable).toBe(false);
+  expect(result.current.vets.data.length).toBeGreaterThan(0);
+});
+
+it('un día del calendario sin agenda no se preselecciona', async () => {
+  const next = shiftMonth(clinicMonth(), 1);
+  const days = await adminService.getAdminAvailableDays(next.month, next.year);
+  const prefix = `${next.year}-${String(next.month).padStart(2, '0')}-`;
+  const closed = Array.from(
+    { length: 28 },
+    (_, i) => `${prefix}${String(i + 1).padStart(2, '0')}`,
+  ).find((d) => !days.includes(d))!;
+  const onInitialDay = jest.fn();
+  const { result } = renderHook(() =>
+    useAdminSchedule({ initialDay: closed, onInitialDay }),
+  );
+  await waitFor(() => expect(result.current.initialDayUnavailable).toBe(true));
+  expect(result.current.month).toEqual(next);
+  expect(onInitialDay).not.toHaveBeenCalled();
+  expect(result.current.vets.day).toBeNull();
+});

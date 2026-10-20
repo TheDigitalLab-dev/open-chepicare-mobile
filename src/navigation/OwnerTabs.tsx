@@ -17,6 +17,7 @@ import {
   MedicalProfileScreen,
   MedicalReportDetailScreen,
   MedicalReportsScreen,
+  OwnerCalendarScreen,
   OwnerDashboardScreen,
   OwnerMedicalHistoryScreen,
   OwnerPaymentRegisterScreen,
@@ -100,6 +101,7 @@ function OwnerAppointmentsStack() {
       <ApptStack.Screen name="AppointmentsList" component={AppointmentsListScreen} />
       <ApptStack.Screen name="AppointmentDetail" component={AppointmentDetailScreen} />
       <ApptStack.Screen name="AppointmentWizard" component={AppointmentWizardScreen} />
+      <ApptStack.Screen name="OwnerCalendar" component={OwnerCalendarScreen} />
     </ApptStack.Navigator>
   );
 }

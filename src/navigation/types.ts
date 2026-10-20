@@ -99,7 +99,9 @@ export type OwnerPetsStackParamList = {
 export type OwnerAppointmentsStackParamList = {
   AppointmentsList: undefined;
   AppointmentDetail: { id: number };
-  AppointmentWizard: { id?: number };
+  /** `date` ("YYYY-MM-DD"): día precargado al agendar desde el calendario. */
+  AppointmentWizard: { id?: number; date?: string };
+  OwnerCalendar: undefined;
 };
 
 export type OwnerProfileStackParamList = {
@@ -115,7 +117,7 @@ export type OwnerProfileStackParamList = {
 export type AdminTabParamList = {
   AdminHomeTab: undefined;
   PatientsTab: NavigatorScreenParams<AdminPatientsStackParamList> | undefined;
-  AgendaTab: undefined;
+  AgendaTab: NavigatorScreenParams<AdminAgendaStackParamList> | undefined;
   MoreTab: undefined;
 };
 
@@ -138,7 +140,9 @@ export type AdminPatientsStackParamList = {
 export type AdminAgendaStackParamList = {
   AdminAppointmentsList: undefined;
   AdminAppointmentDetail: { id: number };
-  AdminAppointmentWizard: { id?: number };
+  /** `date` ("YYYY-MM-DD"): día precargado al agendar desde el calendario. */
+  AdminAppointmentWizard: { id?: number; date?: string };
+  AdminCalendar: undefined;
 };
 
 export type AdminMoreStackParamList = {

@@ -38,6 +38,14 @@ export function AdminModulesScreen() {
       <AdminModuleGrid
         modules={[
           {
+            // El calendario vive en la pestaña Agenda (junto a la lista de citas).
+            id: 'calendar',
+            label: 'Calendario',
+            icon: 'calendar-number',
+            onPress: () =>
+              tabs?.navigate('AgendaTab', { screen: 'AdminCalendar', initial: false }),
+          },
+          {
             id: 'consultations',
             label: 'Consultas',
             icon: 'medkit',

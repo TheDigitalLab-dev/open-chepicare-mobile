@@ -4,6 +4,10 @@
  * veterinarios de un día y horarios de un veterinario. Cada carga descarta las
  * respuestas viejas: al tocar otro día (u otro veterinario) antes de que
  * llegue la respuesta anterior, solo cuenta la última.
+ *
+ * Con `initialDay` (agendar desde el calendario) abre en el mes de ese día y,
+ * si el servidor lo ofrece, carga sus veterinarios y avisa con `onInitialDay`
+ * para que el asistente lo deje elegido; si no, `initialDayUnavailable`.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -25,8 +29,17 @@ export interface Loadable<T> {
   error: ApiError | null;
 }
 
+export interface AdminScheduleOptions {
+  /** Día precargado ("YYYY-MM-DD"). */
+  initialDay?: string;
+  /** Se llama una vez si el día precargado tiene agenda. */
+  onInitialDay?: (day: string) => void;
+}
+
 export interface AdminScheduleState {
   month: MonthRef;
+  /** El día precargado no tiene agenda (no se preseleccionó). */
+  initialDayUnavailable: boolean;
   canGoPrevMonth: boolean;
   canGoNextMonth: boolean;
   prevMonth: () => Promise<void>;
@@ -55,10 +68,28 @@ function useLatest() {
   }, []);
 }
 
-export function useAdminSchedule(): AdminScheduleState {
+/** Mes del día precargado si cae en la ventana navegable; si no, el actual. */
+function startMonthFor(minMonth: MonthRef, initialDay?: string): MonthRef {
+  if (!initialDay) return minMonth;
+  const target = {
+    year: Number(initialDay.slice(0, 4)),
+    month: Number(initialDay.slice(5, 7)),
+  };
+  const offset = monthIndex(target) - monthIndex(minMonth);
+  return offset >= 0 && offset <= MAX_MONTHS_AHEAD ? target : minMonth;
+}
+
+export function useAdminSchedule({
+  initialDay,
+  onInitialDay,
+}: AdminScheduleOptions = {}): AdminScheduleState {
   // Mes de la clínica (no del teléfono): el backend calcula "hoy" en su zona.
   const [minMonth] = useState(() => clinicMonth());
-  const [month, setMonth] = useState<MonthRef>(minMonth);
+  const [startMonth] = useState(() => startMonthFor(minMonth, initialDay));
+  const [month, setMonth] = useState<MonthRef>(startMonth);
+  const [initialDayUnavailable, setInitialDayUnavailable] = useState(false);
+  const initialDayRef = useRef(initialDay);
+  const onInitialDayRef = useRef(onInitialDay);
 
   const [days, setDays] = useState<Loadable<string[]>>({
     data: [],
@@ -88,26 +119,25 @@ export function useAdminSchedule(): AdminScheduleState {
   const nextVets = useLatest();
   const nextSlots = useLatest();
 
+  /** Días del mes; `null` si la respuesta quedó obsoleta o falló. */
   const loadDays = useCallback(
-    async (m: MonthRef) => {
+    async (m: MonthRef): Promise<string[] | null> => {
       const isLatest = nextDays();
       setDays((prev) => ({ ...prev, loading: true, error: null }));
       try {
         const data = await getAdminAvailableDays(m.month, m.year);
-        if (mounted.current && isLatest()) setDays({ data, loading: false, error: null });
+        if (!mounted.current || !isLatest()) return null;
+        setDays({ data, loading: false, error: null });
+        return data;
       } catch (e) {
         if (mounted.current && isLatest()) {
           setDays({ data: [], loading: false, error: toApiError(e) });
         }
+        return null;
       }
     },
     [nextDays],
   );
-
-  useEffect(() => {
-    const timer = setTimeout(() => void loadDays(minMonth), 0);
-    return () => clearTimeout(timer);
-  }, [loadDays, minMonth]);
 
   const changeMonth = useCallback(
     async (delta: number) => {
@@ -115,6 +145,7 @@ export function useAdminSchedule(): AdminScheduleState {
       const offset = monthIndex(target) - monthIndex(minMonth);
       if (offset < 0 || offset > MAX_MONTHS_AHEAD) return;
       setMonth(target);
+      setInitialDayUnavailable(false);
       await loadDays(target);
     },
     [month, minMonth, loadDays],
@@ -123,6 +154,7 @@ export function useAdminSchedule(): AdminScheduleState {
   const loadVets = useCallback(
     async (day: string) => {
       const isLatest = nextVets();
+      setInitialDayUnavailable(false);
       // Otro día: los horarios del veterinario anterior ya no aplican.
       nextSlots();
       setSlots({ data: [], loading: false, error: null });
@@ -139,6 +171,22 @@ export function useAdminSchedule(): AdminScheduleState {
     },
     [nextVets, nextSlots],
   );
+
+  useEffect(() => {
+    const init = async () => {
+      const available = await loadDays(startMonth);
+      const day = initialDayRef.current;
+      if (!day || available === null || !mounted.current) return;
+      if (!available.includes(day)) {
+        setInitialDayUnavailable(true);
+        return;
+      }
+      onInitialDayRef.current?.(day);
+      await loadVets(day);
+    };
+    const timer = setTimeout(() => void init(), 0);
+    return () => clearTimeout(timer);
+  }, [loadDays, loadVets, startMonth]);
 
   const loadSlots = useCallback(
     async (day: string, vetId: number, serviceId: number) => {
@@ -166,11 +214,17 @@ export function useAdminSchedule(): AdminScheduleState {
   const offset = monthIndex(month) - monthIndex(minMonth);
   return {
     month,
+    initialDayUnavailable,
     canGoPrevMonth: offset > 0,
     canGoNextMonth: offset < MAX_MONTHS_AHEAD,
     prevMonth: () => changeMonth(-1),
     nextMonth: () => changeMonth(1),
-    days: { ...days, reload: () => loadDays(month) },
+    days: {
+      ...days,
+      reload: async () => {
+        await loadDays(month);
+      },
+    },
     vets,
     loadVets,
     slots,

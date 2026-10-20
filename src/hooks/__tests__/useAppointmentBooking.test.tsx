@@ -170,4 +170,38 @@ describe('useAppointmentBooking', () => {
     await waitFor(() => expect(result.current.initializing).toBe(false), WAIT);
     expect(result.current.initError?.message).toBe('Esta cita ya no se puede modificar.');
   }, 30000);
+
+  it('precarga el día que viene del calendario (mes, día y veterinarios)', async () => {
+    const next = shiftMonth(clinicMonth(), 1);
+    const days = await appointmentsService.getAvailableDays(next.month, next.year);
+    const day = days[1] ?? days[0]!;
+    const { result } = renderHook(() => useAppointmentBooking(undefined, day));
+    await waitFor(() => {
+      expect(result.current.days.loading).toBe(false);
+      expect(result.current.vets.loading).toBe(false);
+      expect(result.current.selection.day).toBe(day);
+    }, WAIT);
+    expect(result.current.month).toEqual(next);
+    expect(result.current.initialDayUnavailable).toBe(false);
+    const expected = await appointmentsService.getAvailableVets(day);
+    expect(result.current.vets.data.map((v) => v.id).sort()).toEqual(
+      [...new Set(expected.map((v) => v.id))].sort(),
+    );
+  }, 30000);
+
+  it('un día del calendario sin agenda no se preselecciona y se avisa', async () => {
+    const next = shiftMonth(clinicMonth(), 1);
+    const days = await appointmentsService.getAvailableDays(next.month, next.year);
+    const prefix = `${next.year}-${String(next.month).padStart(2, '0')}-`;
+    const closed = Array.from(
+      { length: 28 },
+      (_, i) => `${prefix}${String(i + 1).padStart(2, '0')}`,
+    ).find((d) => !days.includes(d))!;
+    expect(closed).toBeDefined();
+    const { result } = renderHook(() => useAppointmentBooking(undefined, closed));
+    await waitFor(() => expect(result.current.initialDayUnavailable).toBe(true), WAIT);
+    expect(result.current.month).toEqual(next);
+    expect(result.current.selection.day).toBeUndefined();
+    expect(result.current.days.data).toEqual(days);
+  }, 30000);
 });

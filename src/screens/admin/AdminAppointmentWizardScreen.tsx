@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -396,17 +396,24 @@ export function AdminAppointmentWizardScreen() {
   const { colors } = useTheme();
   const navigation = useNavigation<Nav>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
+  const route =
+    useRoute<RouteProp<AdminAgendaStackParamList, 'AdminAppointmentWizard'>>();
 
   // Dueños y servicios se buscan en el servidor: las listas son paginadas y la
   // primera página (25) no basta para elegir entre todos.
   const owners = useRemoteSearch(searchOwners);
   const services = useRemoteSearch(searchServices);
-  // Días (por mes), veterinarios y horarios; solo cuenta la última respuesta.
-  const schedule = useAdminSchedule();
-
   const [step, setStep] = useState(0);
   const [sel, setSel] = useState<Selection>({});
   const patch = (p: Partial<Selection>) => setSel((prev) => ({ ...prev, ...p }));
+
+  // Días (por mes), veterinarios y horarios; solo cuenta la última respuesta.
+  // Desde el calendario llega el día: si tiene agenda queda elegido.
+  const schedule = useAdminSchedule({
+    initialDay: route.params?.date,
+    onInitialDay: (day) =>
+      setSel((prev) => (prev.day === undefined ? { ...prev, day } : prev)),
+  });
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
@@ -462,6 +469,13 @@ export function AdminAppointmentWizardScreen() {
       contentStyle={{ gap: 16, paddingBottom: 32 }}
     >
       <StepIndicator steps={STEP_LABELS.length} current={step} labels={STEP_LABELS} />
+
+      {schedule.initialDayUnavailable ? (
+        <InfoBanner
+          tone="info"
+          message="El día elegido en el calendario no tiene horarios disponibles. Elige otro día."
+        />
+      ) : null}
 
       {submitError ? <InfoBanner tone="destructive" message={submitError} /> : null}
 

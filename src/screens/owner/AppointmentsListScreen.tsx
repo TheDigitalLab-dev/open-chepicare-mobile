@@ -4,7 +4,13 @@ import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
-import { AsyncBoundary, Fab, FilterChips, type BadgeVariant } from '@/components/ui';
+import {
+  AsyncBoundary,
+  Fab,
+  FilterChips,
+  IconButton,
+  type BadgeVariant,
+} from '@/components/ui';
 import { AppointmentCard } from '@/components/domain';
 import type { OwnerAppointmentsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
@@ -64,6 +70,17 @@ export function AppointmentsListScreen() {
     [navigation],
   );
 
+  const calendarAction = useMemo(
+    () => (
+      <IconButton
+        icon="calendar-number-outline"
+        accessibilityLabel="Calendario"
+        onPress={() => navigation.navigate('OwnerCalendar')}
+      />
+    ),
+    [navigation],
+  );
+
   const renderItem = useCallback(
     ({ item: a }: ListRenderItemInfo<Appointment>) => (
       <AppointmentCard
@@ -80,7 +97,7 @@ export function AppointmentsListScreen() {
 
   return (
     <MobileShell
-      header={<AppHeader title="Citas" />}
+      header={<AppHeader title="Citas" rightAction={calendarAction} />}
       contentStyle={styles.content}
       fab={fab}
     >

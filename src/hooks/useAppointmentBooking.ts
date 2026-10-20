@@ -12,6 +12,10 @@
  * horarios sin contar la propia cita (`exclude_appointment_id`) y envía un
  * PATCH con los campos que cambiaron. Cada carga ignora las respuestas de
  * peticiones anteriores (tocar días rápido no mezcla veterinarios).
+ *
+ * Con `initialDay` (al agendar desde el calendario) abre en el mes de ese día
+ * y lo deja elegido si el servidor lo ofrece; si no, avisa
+ * (`initialDayUnavailable`) y el propietario elige otro.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -67,6 +71,8 @@ const IDLE = { data: [], loading: false, error: null };
 
 export interface AppointmentBooking {
   isEditing: boolean;
+  /** El día que vino del calendario no tiene agenda (no se preseleccionó). */
+  initialDayUnavailable: boolean;
   /** Cargando la cita a editar. */
   initializing: boolean;
   initError: ApiError | null;
@@ -126,13 +132,26 @@ function isComplete(sel: BookingSelection): sel is Required<BookingSelection> {
   );
 }
 
-export function useAppointmentBooking(appointmentId?: number): AppointmentBooking {
+/** Mes inicial: el del día precargado si cae en la ventana navegable. */
+function initialMonth(minMonth: MonthRef, initialDay?: string): MonthRef {
+  if (!initialDay) return minMonth;
+  const target = monthOfDay(initialDay);
+  const offset = monthIndex(target) - monthIndex(minMonth);
+  return offset >= 0 && offset <= MAX_MONTHS_AHEAD ? target : minMonth;
+}
+
+export function useAppointmentBooking(
+  appointmentId?: number,
+  initialDay?: string,
+): AppointmentBooking {
   const isEditing = appointmentId !== undefined;
   const pets = useAsync(() => listPets());
   const services = useAsync(() => listServices());
 
   const [minMonth] = useState(() => clinicMonth());
-  const [month, setMonth] = useState<MonthRef>(minMonth);
+  const [startMonth] = useState(() => initialMonth(minMonth, initialDay));
+  const [month, setMonth] = useState<MonthRef>(startMonth);
+  const [initialDayUnavailable, setInitialDayUnavailable] = useState(false);
   const [days, setDays] = useState<RemoteList<string>>({ ...IDLE, loading: true });
   const [vets, setVets] = useState<RemoteList<VetWithShifts>>(IDLE);
   const [slots, setSlots] = useState<RemoteList<string>>(IDLE);
@@ -150,15 +169,19 @@ export function useAppointmentBooking(appointmentId?: number): AppointmentBookin
   const vetsReq = useRef(0);
   const slotsReq = useRef(0);
 
-  const loadDays = useCallback(async (m: MonthRef) => {
+  /** Carga los días del mes; devuelve los días o `null` si quedó obsoleta o falló. */
+  const loadDays = useCallback(async (m: MonthRef): Promise<string[] | null> => {
     const req = ++daysReq.current;
     setDays((prev) => ({ ...prev, loading: true, error: null }));
     try {
       const data = await getAvailableDays(m.month, m.year);
-      if (req === daysReq.current) setDays({ data, loading: false, error: null });
+      if (req !== daysReq.current) return null;
+      setDays({ data, loading: false, error: null });
+      return data;
     } catch (e) {
       if (req === daysReq.current)
         setDays({ data: [], loading: false, error: toApiError(e) });
+      return null;
     }
   }, []);
 
@@ -198,11 +221,20 @@ export function useAppointmentBooking(appointmentId?: number): AppointmentBookin
   );
 
   const appointmentIdRef = useRef(appointmentId);
+  const initialDayRef = useRef(initialDay);
   useEffect(() => {
     const init = async () => {
       const id = appointmentIdRef.current;
       if (id === undefined) {
-        await loadDays(minMonth);
+        const day = initialDayRef.current;
+        const available = await loadDays(startMonth);
+        if (!day || available === null) return;
+        if (!available.includes(day)) {
+          setInitialDayUnavailable(true);
+          return;
+        }
+        setSelection((prev) => ({ ...prev, day }));
+        await loadVets(day);
         return;
       }
       try {
@@ -248,13 +280,14 @@ export function useAppointmentBooking(appointmentId?: number): AppointmentBookin
     // Diferido para no encadenar setState dentro del efecto (como useAsync).
     const timer = setTimeout(() => void init(), 0);
     return () => clearTimeout(timer);
-  }, [loadDays, loadVets, loadSlots, minMonth]);
+  }, [loadDays, loadVets, loadSlots, startMonth]);
 
   const changeMonth = async (delta: number) => {
     const target = shiftMonth(month, delta);
     const offset = monthIndex(target) - monthIndex(minMonth);
     if (offset < 0 || offset > MAX_MONTHS_AHEAD) return;
     setMonth(target);
+    setInitialDayUnavailable(false);
     // Otro mes: el día, el veterinario y la hora elegidos ya no aplican.
     setSelection((prev) => ({ petId: prev.petId, serviceId: prev.serviceId }));
     setVets(IDLE);
@@ -272,6 +305,7 @@ export function useAppointmentBooking(appointmentId?: number): AppointmentBookin
   };
 
   const selectDay = async (day: string) => {
+    setInitialDayUnavailable(false);
     setSelection((prev) => ({ ...prev, day, vetId: undefined, time: undefined }));
     setSlots(IDLE);
     await loadVets(day);
@@ -328,7 +362,13 @@ export function useAppointmentBooking(appointmentId?: number): AppointmentBookin
     canGoNextMonth: offset < MAX_MONTHS_AHEAD,
     prevMonth: () => changeMonth(-1),
     nextMonth: () => changeMonth(1),
-    days: { ...days, reload: () => loadDays(month) },
+    initialDayUnavailable,
+    days: {
+      ...days,
+      reload: async () => {
+        await loadDays(month);
+      },
+    },
     vets: {
       ...vets,
       reload: async () => {

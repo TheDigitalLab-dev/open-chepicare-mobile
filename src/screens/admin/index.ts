@@ -34,3 +34,4 @@ export { AdminPaymentRegisterScreen } from './AdminPaymentRegisterScreen';
 export { AdminMedicalReportsListScreen } from './AdminMedicalReportsListScreen';
 export { AdminMedicalReportDetailScreen } from './AdminMedicalReportDetailScreen';
 export { AssistantChatScreen } from './AssistantChatScreen';
+export { AdminCalendarScreen } from './AdminCalendarScreen';
