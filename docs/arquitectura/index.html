@@ -147,18 +147,18 @@ flowchart TB
 <div class="callout info"><span class="ic">ℹ️</span><div>Requisitos: <b>Node ≥ 20</b>, <b>Yarn 4</b> (Corepack), y para Android un <b>emulador</b> o dispositivo con <b>Expo Go</b>. El backend <code>open-chepicare-web</code> debe estar corriendo (por defecto en <code>http://localhost:3000</code>).</div></div>
 <pre class="code"># 1) Dependencias
 corepack enable
-yarn install
+pnpm install
 
 # 2) Backend en marcha (repo ../open-chepicare-web) en el puerto 3000
 #    El emulador Android lo alcanza vía http://10.0.2.2:3000 (default de dev).
 
 # 3) Arrancar Metro / Expo
-yarn start           # luego abre en Expo Go o el dev client
+pnpm start           # luego abre en Expo Go o el dev client
 
 # 4) Compuertas de calidad
-yarn typecheck
-yarn lint
-yarn test            # tests de INTEGRACIÓN reales contra localhost:3000</pre>
+pnpm typecheck
+pnpm lint
+pnpm test            # tests de INTEGRACIÓN reales contra localhost:3000</pre>
 <p>La URL del backend se puede cambiar <b>en tiempo de ejecución</b> desde la pantalla <em>Configurar servidor</em> (ver <a href="configuracion-servidor.html">Configuración de servidor</a>), sin recompilar.</p>
 </section><section id="dependencias"><h2>Dependencias principales</h2>
 <table><thead><tr><th>Paquete</th><th>Rol</th></tr></thead><tbody><tr><td><code>expo</code> ~56</td><td>Runtime, módulos nativos y config plugins.</td></tr><tr><td><code>react-native</code> 0.85</td><td>Framework de UI nativa.</td></tr><tr><td><code>@react-navigation/*</code></td><td>Navegación por stacks y tabs.</td></tr><tr><td><code>expo-secure-store</code></td><td>Tokens de sesión cifrados.</td></tr><tr><td><code>@react-native-async-storage/async-storage</code></td><td>Preferencias (tema, URL de servidor).</td></tr><tr><td><code>expo-sqlite</code></td><td>Base de datos local (local-first).</td></tr><tr><td><code>expo-image-picker</code></td><td>Comprobante de pago en checkout.</td></tr><tr><td><code>undici</code> (dev)</td><td>Fetch real en los tests de Node.</td></tr><tr><td><code>jest-expo</code> + RNTL (dev)</td><td>Tests de integración y de componentes.</td></tr></tbody></table>

@@ -23,16 +23,10 @@ expo-env.d.ts
 
 # debug
 npm-debug.*
-yarn-debug.*
-yarn-error.*
+pnpm-debug.log*
 
-# Yarn Berry
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
+# Restos de Yarn en checkouts anteriores a la migración a pnpm
+.yarn/
 
 # macOS
 .DS_Store

@@ -4,8 +4,8 @@ echo "▶ pre-push: ESLint --fix + Prettier + lint + typecheck"
 
 # 1) Autocorrige lo que se pueda (no abortar aún: los errores no-corregibles
 #    los detecta el lint estricto más abajo).
-yarn lint:fix || true
-yarn format
+pnpm lint:fix || true
+pnpm format
 
 # 2) Si lint --fix / prettier modificaron archivos rastreados, bloquear el push:
 #    el dev debe revisar y commitear esos cambios antes de volver a empujar.
@@ -19,7 +19,7 @@ if ! git diff --quiet; then
 fi
 
 # 3) Compuertas duras: lint sin errores y tipos correctos (set -e aborta el push).
-yarn lint
-yarn typecheck
+pnpm lint
+pnpm typecheck
 
 echo "✓ pre-push OK"

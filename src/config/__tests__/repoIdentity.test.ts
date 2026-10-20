@@ -22,9 +22,8 @@ async function expoConfig() {
 }
 
 describe('identidad del repo open-chepicare-mobile', () => {
-  it('usa el nombre nuevo en package.json y en el workspace de yarn.lock', async () => {
+  it('usa el nombre nuevo en package.json', async () => {
     expect(JSON.parse(await read('package.json')).name).toBe('open-chepicare-mobile');
-    expect(await read('yarn.lock')).toContain('"open-chepicare-mobile@workspace:."');
   });
 
   it('muestra la marca ChepiCare como nombre de la app', async () => {
@@ -95,7 +94,7 @@ describe('workflow de release Android', () => {
       .join('\n');
     const firstSecret = code.indexOf('secrets.');
     expect(firstSecret).toBeGreaterThan(code.indexOf('./gradlew assembleRelease'));
-    expect(firstSecret).toBeGreaterThan(code.lastIndexOf('yarn install'));
+    expect(firstSecret).toBeGreaterThan(code.lastIndexOf('pnpm install'));
     expect(code).not.toMatch(/if: env\.KEYSTORE_BASE64/);
   });
 });
