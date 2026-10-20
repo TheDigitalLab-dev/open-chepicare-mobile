@@ -7,3 +7,4 @@ export {
   type ThemeContextValue,
 } from './ThemeProvider';
 export { nextThemePreference } from './nextThemePreference';
+export { eventTypeColor } from './eventColors';

@@ -44,6 +44,12 @@ const colors = {
     chart3: 'hsl(38, 92%, 50%)',
     chart4: 'hsl(199, 89%, 48%)',
     chart5: 'hsl(0, 84%, 60%)',
+
+    // Tipos del calendario (mismos tonos que `--event-*` de la web).
+    eventAppointment: 'hsl(217, 85%, 50%)',
+    eventPrescription: 'hsl(271, 65%, 52%)',
+    eventVaccination: 'hsl(152, 70%, 33%)',
+    eventDeworming: 'hsl(28, 90%, 45%)',
   },
 
   dark: {
@@ -89,6 +95,11 @@ const colors = {
     chart3: 'hsl(38, 90%, 55%)',
     chart4: 'hsl(199, 85%, 55%)',
     chart5: 'hsl(0, 63%, 50%)',
+
+    eventAppointment: 'hsl(213, 90%, 66%)',
+    eventPrescription: 'hsl(270, 80%, 74%)',
+    eventVaccination: 'hsl(150, 60%, 52%)',
+    eventDeworming: 'hsl(32, 92%, 60%)',
   },
 } as const;
 

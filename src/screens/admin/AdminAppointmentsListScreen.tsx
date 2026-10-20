@@ -8,6 +8,7 @@ import {
   AsyncBoundary,
   Fab,
   FilterChips,
+  IconButton,
   ListFooter,
   type BadgeVariant,
 } from '@/components/ui';
@@ -93,6 +94,17 @@ export function AdminAppointmentsListScreen() {
     [navigation],
   );
 
+  const calendarAction = useMemo(
+    () => (
+      <IconButton
+        icon="calendar-number-outline"
+        accessibilityLabel="Calendario"
+        onPress={() => navigation.navigate('AdminCalendar')}
+      />
+    ),
+    [navigation],
+  );
+
   const renderItem = useCallback(
     ({ item: a }: ListRenderItemInfo<Appointment>) => (
       <AppointmentCard
@@ -113,7 +125,7 @@ export function AdminAppointmentsListScreen() {
 
   return (
     <MobileShell
-      header={<AppHeader title="Agenda" />}
+      header={<AppHeader title="Agenda" rightAction={calendarAction} />}
       contentStyle={styles.content}
       fab={fab}
     >

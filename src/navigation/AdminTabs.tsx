@@ -10,6 +10,7 @@ import {
   AdminAppointmentDetailScreen,
   AdminAppointmentsListScreen,
   AdminAppointmentWizardScreen,
+  AdminCalendarScreen,
   AdminConsultationDetailScreen,
   AdminConsultationFormScreen,
   AdminConsultationsListScreen,
@@ -99,6 +100,7 @@ function AdminAgendaStack() {
         name="AdminAppointmentWizard"
         component={AdminAppointmentWizardScreen}
       />
+      <AgendaStack.Screen name="AdminCalendar" component={AdminCalendarScreen} />
     </AgendaStack.Navigator>
   );
 }

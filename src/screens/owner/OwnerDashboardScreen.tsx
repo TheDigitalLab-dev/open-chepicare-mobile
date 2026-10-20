@@ -117,6 +117,16 @@ function QuickActions() {
             onPress: () => goToTab('AppointmentsTab'),
           },
           {
+            id: 'calendar',
+            label: 'Calendario',
+            icon: 'calendar-number',
+            onPress: () =>
+              navigation.getParent<TabNav>()?.navigate('AppointmentsTab', {
+                screen: 'OwnerCalendar',
+                initial: false,
+              }),
+          },
+          {
             id: 'history',
             label: 'Historial',
             icon: 'document-text',

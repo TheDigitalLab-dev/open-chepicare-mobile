@@ -243,7 +243,7 @@ export function AppointmentWizardScreen() {
   const route =
     useRoute<RouteProp<OwnerAppointmentsStackParamList, 'AppointmentWizard'>>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
-  const booking = useAppointmentBooking(route.params?.id);
+  const booking = useAppointmentBooking(route.params?.id, route.params?.date);
   const [step, setStep] = useState(0);
 
   const isLast = step === LAST_STEP;
@@ -267,6 +267,13 @@ export function AppointmentWizardScreen() {
     >
       <AsyncBoundary loading={booking.initializing} error={booking.initError}>
         <StepIndicator steps={STEP_LABELS.length} current={step} labels={STEP_LABELS} />
+
+        {booking.initialDayUnavailable ? (
+          <InfoBanner
+            tone="info"
+            message="El día elegido en el calendario no tiene horarios disponibles. Elige otro día."
+          />
+        ) : null}
 
         {booking.submitError ? (
           <InfoBanner tone="destructive" message={booking.submitError} />

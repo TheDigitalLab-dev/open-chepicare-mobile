@@ -26,3 +26,7 @@ export { ChatMessageBubble, type ChatMessageBubbleProps } from './ChatMessageBub
 export { ChatComposer, type ChatComposerProps } from './ChatComposer';
 export { ServerChangeDialog, type ServerChangeDialogProps } from './ServerChangeDialog';
 export { LabExamStatusBadge, type LabExamStatusBadgeProps } from './LabExamStatusBadge';
+export { CalendarBoard, type CalendarBoardProps } from './CalendarBoard';
+export { CalendarEventRow, type CalendarEventRowProps } from './CalendarEventRow';
+export { CalendarLegend, type CalendarLegendProps } from './CalendarLegend';
+export { CalendarMonthGrid, type CalendarMonthGridProps } from './CalendarMonthGrid';
