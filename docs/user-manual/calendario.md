@@ -54,6 +54,7 @@ servidor de tu clínica: es el mismo calendario que la web.
 | 🟣 Morado | Tratamientos (solo propietarios) |
 | 🟢 Verde | Vacunas |
 | 🟠 Naranja | Desparasitaciones |
+| 🩷 Rosa | Eventos de la clínica en los que estás inscrito (solo propietarios; al tocarlo se abre el evento, ver [Eventos de la clínica](eventos.md)) |
 
 Los colores se ajustan al **modo oscuro**. Debajo del mes está la **leyenda**:
 toca un tipo para ocultarlo (queda tachado) y vuelve a tocarlo para mostrarlo.

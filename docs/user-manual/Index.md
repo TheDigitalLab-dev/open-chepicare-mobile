@@ -10,5 +10,8 @@ Guías para usar la app móvil de ChepiCare (antes PawCare) con el servidor de t
 ### Citas y agenda
 - [Calendario / agenda (propietarios y personal)](calendario.md)
 
+### Eventos de la clínica
+- [Eventos de la clínica: inscribirse (propietarios) y resumen de inscritos (personal)](eventos.md)
+
 ### Asistente IA
 - [Asistente IA: dictado de consultas, chat y emparejamiento por QR](asistente-ia.md)
