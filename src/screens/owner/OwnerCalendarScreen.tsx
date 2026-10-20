@@ -16,7 +16,8 @@ type Nav = NativeStackNavigationProp<OwnerAppointmentsStackParamList>;
 
 /**
  * Calendario del propietario: citas, tratamientos, próximas vacunas y
- * desparasitaciones de sus mascotas.
+ * desparasitaciones de sus mascotas, y los eventos de la clínica en los que
+ * está inscrito (tocarlos abre el detalle del evento).
  */
 export function OwnerCalendarScreen() {
   const navigation = useNavigation<Nav>();
@@ -30,13 +31,20 @@ export function OwnerCalendarScreen() {
       navigation.navigate('AppointmentDetail', { id: event.record_id });
       return;
     }
-    navigation
-      .getParent<BottomTabNavigationProp<OwnerTabParamList>>()
-      ?.navigate('PetsTab', {
-        screen: 'PetDetail',
-        params: { id: event.pet.id },
+    const tabs = navigation.getParent<BottomTabNavigationProp<OwnerTabParamList>>();
+    if (event.type === 'clinic_event') {
+      tabs?.navigate('HomeTab', {
+        screen: 'OwnerEventDetail',
+        params: { id: event.record_id },
         initial: false,
       });
+      return;
+    }
+    tabs?.navigate('PetsTab', {
+      screen: 'PetDetail',
+      params: { id: event.pet.id },
+      initial: false,
+    });
   };
 
   return (

@@ -63,6 +63,14 @@ function event(
       };
     case 'deworming':
       return { ...base, type, status: 'upcoming', details: { product_name: 'Milbemax' } };
+    case 'clinic_event':
+      return {
+        ...base,
+        type,
+        pet: null,
+        status: 'published',
+        details: { location: 'Sede principal', slug: 'charla', registration_id: 1 },
+      };
   }
 }
 
@@ -125,12 +133,13 @@ describe('eventsByDay', () => {
   it('dayEventTypes: tipos únicos en el orden de la leyenda', () => {
     expect(
       dayEventTypes([
+        event('c', 'clinic_event', '2026-10-01'),
         event('d', 'deworming', '2026-10-01'),
         event('a', 'appointment', '2026-10-01'),
         event('a2', 'appointment', '2026-10-01'),
         event('v', 'vaccination', '2026-10-01'),
       ]),
-    ).toEqual(['appointment', 'vaccination', 'deworming']);
+    ).toEqual(['appointment', 'vaccination', 'deworming', 'clinic_event']);
     expect(dayEventTypes(undefined)).toEqual([]);
   });
 });

@@ -9,12 +9,47 @@ import {
   AdminModuleGrid,
   HeroCard,
   NotificationsBell,
+  StaffEventsSummaryCard,
   StatCard,
 } from '@/components/domain';
 import type { AdminHomeStackParamList, AdminTabParamList } from '@/navigation/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useAsync } from '@/hooks/useAsync';
+import { useStaffEventsSummary } from '@/hooks/useStaffEventsSummary';
 import { getAdminMetrics } from '@/services/admin';
+import { eventScheduleLabel, registeredCountLabel } from '@/utils/clinicEvents';
+
+/**
+ * "Eventos próximos": SOLO el resumen "N inscritos de M". En la app del
+ * personal los eventos no se abren ni se gestionan (eso es la web): sin
+ * navegación ni elementos tocables. Oculto si el rol no tiene `events:read`.
+ */
+function UpcomingEvents() {
+  const { events, available, loading, error, reload } = useStaffEventsSummary();
+  if (!available) return null;
+  return (
+    <View style={{ gap: 8 }}>
+      <SectionTitle>Eventos próximos</SectionTitle>
+      <AsyncBoundary
+        loading={loading}
+        error={error}
+        onRetry={reload}
+        empty={events.length === 0}
+        emptyIcon="calendar-clear-outline"
+        emptyTitle="Sin eventos próximos"
+      >
+        <StaffEventsSummaryCard
+          items={events.map((e) => ({
+            id: e.id,
+            title: e.title,
+            scheduleLabel: eventScheduleLabel(e.starts_at, e.ends_at),
+            countLabel: registeredCountLabel(e.registered_count, e.capacity),
+          }))}
+        />
+      </AsyncBoundary>
+    </View>
+  );
+}
 
 export function AdminDashboardScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<AdminHomeStackParamList>>();
@@ -49,6 +84,8 @@ export function AdminDashboardScreen() {
           <StatCard value={data?.completed_appointments ?? 0} label="Citas hechas" />
         </View>
       </AsyncBoundary>
+
+      <UpcomingEvents />
 
       <View style={{ gap: 8 }}>
         <SectionTitle>Módulos</SectionTitle>

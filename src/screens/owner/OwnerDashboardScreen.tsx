@@ -127,6 +127,12 @@ function QuickActions() {
               }),
           },
           {
+            id: 'events',
+            label: 'Eventos',
+            icon: 'megaphone',
+            onPress: () => navigation.navigate('OwnerEvents'),
+          },
+          {
             id: 'history',
             label: 'Historial',
             icon: 'document-text',

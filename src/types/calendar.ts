@@ -1,6 +1,7 @@
 /**
  * Calendario / agenda — espejo del contrato de `Calendar::*` en
- * `../open-chepicare-web` (plan `docs/plans/034-calendar.md`):
+ * `../open-chepicare-web` (planes `docs/plans/034-calendar.md` y
+ * `035-clinic-events.md`, que añade `clinic_event` solo al del propietario):
  *  - `GET /owner-calendar-events` (propietario)
  *  - `GET /admin/calendar-events` (personal con `appointments:read`)
  *
@@ -13,7 +14,8 @@ export type CalendarEventType =
   | 'appointment'
   | 'prescription'
   | 'vaccination'
-  | 'deworming';
+  | 'deworming'
+  | 'clinic_event';
 
 /** Orden fijo de la leyenda y de los puntos de cada día. */
 export const CALENDAR_EVENT_TYPES: readonly CalendarEventType[] = [
@@ -21,6 +23,7 @@ export const CALENDAR_EVENT_TYPES: readonly CalendarEventType[] = [
   'prescription',
   'vaccination',
   'deworming',
+  'clinic_event',
 ];
 
 export const CALENDAR_EVENT_TYPE_LABEL: Record<CalendarEventType, string> = {
@@ -28,6 +31,7 @@ export const CALENDAR_EVENT_TYPE_LABEL: Record<CalendarEventType, string> = {
   prescription: 'Tratamientos',
   vaccination: 'Vacunas',
   deworming: 'Desparasitaciones',
+  clinic_event: 'Eventos de la clínica',
 };
 
 export interface CalendarPet {
@@ -46,10 +50,14 @@ interface CalendarEventBase {
   end_date: string;
   starts_at: string | null;
   ends_at: string | null;
+}
+
+/** Eventos clínicos de una mascota (todos menos los eventos de la clínica). */
+interface PetCalendarEventBase extends CalendarEventBase {
   pet: CalendarPet;
 }
 
-export interface AppointmentCalendarEvent extends CalendarEventBase {
+export interface AppointmentCalendarEvent extends PetCalendarEventBase {
   type: 'appointment';
   status: AppointmentStatus;
   details: {
@@ -64,7 +72,7 @@ export interface AppointmentCalendarEvent extends CalendarEventBase {
 
 export type PrescriptionEventStatus = 'active' | 'finished' | 'completed';
 
-export interface PrescriptionCalendarEvent extends CalendarEventBase {
+export interface PrescriptionCalendarEvent extends PetCalendarEventBase {
   type: 'prescription';
   status: PrescriptionEventStatus;
   details: {
@@ -81,7 +89,7 @@ export interface PrescriptionCalendarEvent extends CalendarEventBase {
 
 export type ClinicalEventStatus = 'upcoming' | 'overdue';
 
-export interface VaccinationCalendarEvent extends CalendarEventBase {
+export interface VaccinationCalendarEvent extends PetCalendarEventBase {
   type: 'vaccination';
   status: ClinicalEventStatus;
   details: {
@@ -93,7 +101,7 @@ export interface VaccinationCalendarEvent extends CalendarEventBase {
   };
 }
 
-export interface DewormingCalendarEvent extends CalendarEventBase {
+export interface DewormingCalendarEvent extends PetCalendarEventBase {
   type: 'deworming';
   status: ClinicalEventStatus;
   details: {
@@ -103,11 +111,27 @@ export interface DewormingCalendarEvent extends CalendarEventBase {
   };
 }
 
+/** Estado del evento de la clínica (solo salen los que tienen inscripción activa). */
+export type ClinicEventCalendarStatus = 'published' | 'cancelled';
+
+/** Evento de la clínica en el que el propietario está inscrito (sin mascota). */
+export interface ClinicEventCalendarEvent extends CalendarEventBase {
+  type: 'clinic_event';
+  status: ClinicEventCalendarStatus;
+  pet: null;
+  details: {
+    location: string | null;
+    slug: string;
+    registration_id: number;
+  };
+}
+
 export type CalendarEvent =
   | AppointmentCalendarEvent
   | PrescriptionCalendarEvent
   | VaccinationCalendarEvent
-  | DewormingCalendarEvent;
+  | DewormingCalendarEvent
+  | ClinicEventCalendarEvent;
 
 export interface CalendarRange {
   start: string;

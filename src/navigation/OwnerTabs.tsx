@@ -19,6 +19,9 @@ import {
   MedicalReportsScreen,
   OwnerCalendarScreen,
   OwnerDashboardScreen,
+  OwnerEventDetailScreen,
+  OwnerEventRegistrationsScreen,
+  OwnerEventsScreen,
   OwnerMedicalHistoryScreen,
   OwnerPaymentRegisterScreen,
   OwnerPaymentsScreen,
@@ -63,6 +66,13 @@ function OwnerHomeStack() {
       <HomeStack.Screen
         name="OwnerSponsorshipDetail"
         component={OwnerSponsorshipDetailScreen}
+      />
+      {/* Eventos de la clínica: solo en el árbol del propietario. */}
+      <HomeStack.Screen name="OwnerEvents" component={OwnerEventsScreen} />
+      <HomeStack.Screen name="OwnerEventDetail" component={OwnerEventDetailScreen} />
+      <HomeStack.Screen
+        name="OwnerEventRegistrations"
+        component={OwnerEventRegistrationsScreen}
       />
     </HomeStack.Navigator>
   );
