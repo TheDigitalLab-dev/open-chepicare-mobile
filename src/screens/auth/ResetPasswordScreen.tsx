@@ -8,7 +8,7 @@ import { Button, TextField } from '@/components/ui';
 const MIN_PASSWORD = 8;
 
 export interface ResetPasswordScreenProps {
-  /** Token recibido por deep link (chepicare://reset_password/:token; también pawcare://). */
+  /** Token recibido por deep link (chepicare://reset_password/:token). */
   token?: string;
   onBack?: () => void;
   onSubmit?: (data: { password: string; passwordConfirmation: string }) => void;

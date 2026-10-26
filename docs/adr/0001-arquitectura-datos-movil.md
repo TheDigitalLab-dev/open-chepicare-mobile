@@ -2,7 +2,7 @@
 
 - **Estado:** Aceptado
 - **Fecha:** 2026-05-31
-- **Contexto del producto:** Pawcare — App móvil para atención veterinaria a domicilio (Expo SDK 56 · React Native · TypeScript), cliente de un API Rails REST.
+- **Contexto del producto:** Chepicare — App móvil para atención veterinaria a domicilio (Expo SDK 56 · React Native · TypeScript), cliente de un API Rails REST.
 
 ## Contexto
 

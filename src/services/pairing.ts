@@ -2,9 +2,8 @@
  * Emparejamiento de la app con un servidor ChepiCare por código QR.
  *
  * La web genera (Perfil del personal o «Mi Perfil» del propietario) un QR
- * `pawcare://pair?v=1&server=<URL>&code=<token>&account=<staff|owner>` (o
- * `chepicare://pair?...`: se aceptan los dos esquemas, ver `deepLinks`) con un
- * token de un solo uso y 10 min de vida, nunca credenciales permanentes. La
+ * `chepicare://pair?v=1&server=<URL>&code=<token>&account=<staff|owner>` (ver
+ * `deepLinks`) con un token de un solo uso y 10 min de vida, nunca credenciales permanentes. La
  * app:
  *   1. valida el contenido (`parsePairingUri`),
  *   2. apunta al servidor del QR (`setServerUrl`, persistido en almacenamiento

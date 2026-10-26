@@ -10,11 +10,9 @@ import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
 import { applyMigrations } from './migrations';
 import type { SqlExecutor } from './sqlExecutor';
 
-// Identificador técnico heredado de PawCare: se CONSERVA tras el cambio de nombre
-// a ChepiCare. Es el archivo con los datos locales (pesajes, tratamientos, cola
-// de sincronización pendiente…); con WAL son tres archivos (.db, -wal, -shm) que
-// no se pueden renombrar de forma atómica, y otro nombre abriría una base vacía.
-export const DATABASE_NAME = 'pawcare.db';
+// Archivo con los datos locales (pesajes, tratamientos, cola de sincronización
+// pendiente…). Con WAL son tres archivos (.db, -wal, -shm).
+export const DATABASE_NAME = 'chepicare.db';
 
 /** Envuelve una `SQLiteDatabase` de expo-sqlite como `SqlExecutor`. */
 export function createExpoExecutor(db: SQLiteDatabase): SqlExecutor {

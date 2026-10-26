@@ -1,11 +1,6 @@
 /**
  * Claves de almacenamiento local de la app (una sola fuente de verdad).
  *
- * Hasta la versión PawCare se guardaban como `pawcare.*`; desde el cambio de
- * nombre a ChepiCare son `chepicare.*`. `@/utils/legacyStorage` migra los valores
- * viejos al leerlos y al arrancar la app, así nadie pierde la sesión, el servidor
- * emparejado ni sus preferencias al actualizar.
- *
  * Las claves de SecureStore deben ser alfanuméricas + ".", "-", "_".
  */
 
@@ -25,5 +20,3 @@ export const ASYNC_STORAGE_KEYS = {
 } as const;
 
 export const STORAGE_KEY_PREFIX = 'chepicare.';
-/** Prefijo de las versiones publicadas como PawCare (solo para migrar). */
-export const LEGACY_STORAGE_KEY_PREFIX = 'pawcare.';

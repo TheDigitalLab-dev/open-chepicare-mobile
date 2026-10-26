@@ -1,4 +1,4 @@
-# PawCare Mobile — Inventario de pantallas
+# ChepiCare Mobile — Inventario de pantallas
 
 > Basado en [mobile-routes.md](./mobile-routes.md) · 157 rutas API · App movil (React Native / Expo)
 

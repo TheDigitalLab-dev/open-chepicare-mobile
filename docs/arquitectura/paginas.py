@@ -462,8 +462,7 @@ CONFIG_SERVIDOR = (
         "runtime",
         "serverConfig: URL en runtime",
         "<p>La URL activa vive en memoria (acceso síncrono para el cliente HTTP) y se "
-        "persiste en almacenamiento seguro (<code>SecureStore</code>) bajo <code>chepicare.server_url</code> "
-        "(migra la <code>pawcare.server_url</code> de versiones PawCare). "
+        "persiste en almacenamiento seguro (<code>SecureStore</code>) bajo <code>chepicare.server_url</code>. "
         "Se restaura al arrancar la app, <b>antes</b> del primer fetch de sesión.</p>",
         table(
             ["Función", "Rol"],
@@ -488,7 +487,7 @@ CONFIG_SERVIDOR = (
               participant AS as SecureStore
               participant Sess as SessionProvider
               App->>Cfg: loadServerUrl()
-              Cfg->>AS: get('chepicare.server_url') (o la vieja pawcare.*)
+              Cfg->>AS: get('chepicare.server_url') (o la vieja chepicare.*)
               AS-->>Cfg: URL guardada | vacío
               Cfg-->>App: (URL en memoria lista)
               App->>Sess: monta el árbol
@@ -783,7 +782,7 @@ LOCAL_FIRST = (
               R["Repositorios de dominio<br/>(F3+)"] --> EX["SqlExecutor<br/>(interfaz)"]
               EX --> A["expo-sqlite<br/>(app)"]
               EX --> B["node:sqlite<br/>(tests)"]
-              A --> DB[("pawcare.db")]
+              A --> DB[("chepicare.db")]
               DB --> T1["weighings (piloto)"]
               DB --> T2["sync_outbox (bitácora)"]
               DB --> T3["schema_migrations"]

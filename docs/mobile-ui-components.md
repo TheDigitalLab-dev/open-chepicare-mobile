@@ -1,4 +1,4 @@
-# PawCare Mobile — Componentes UI
+# ChepiCare Mobile — Componentes UI
 
 > Spec para recrear en React Native (Expo). Tokens en [mobile-design-tokens.css](./mobile-design-tokens.css) y `src/theme/tokens.ts`.
 

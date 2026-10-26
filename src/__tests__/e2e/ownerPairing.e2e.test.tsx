@@ -1,7 +1,7 @@
 /**
  * E2E (app completa + backend real): emparejamiento por QR de un propietario.
  * El Perfil web emite el código; el teléfono recibe el deep link
- * `chepicare://pair?...` o `pawcare://pair?...` (lo que entrega el sistema al escanear el QR) y abre la
+ * `chepicare://pair?...` (lo que entrega el sistema al escanear el QR) y abre la
  * sesión del propietario con SUS datos.
  */
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
@@ -24,8 +24,8 @@ async function ownerQrParams(email: string) {
   const issued = await issuePairingCode((await secureStore.getAccessToken())!);
   await secureStore.clearTokens();
   expect(issued.account_type).toBe('owner');
-  // El servidor emite `pawcare://` (apps ya publicadas) o `chepicare://`.
-  const url = new URL(issued.qr_payload.replace(/^[a-z]+:\/\//i, 'https://qr.local/'));
+  expect(issued.qr_payload).toMatch(/^chepicare:\/\/pair\?/);
+  const url = new URL(issued.qr_payload.replace(/^chepicare:\/\//, 'https://qr.local/'));
   return Object.fromEntries(url.searchParams.entries()) as {
     v: string;
     server: string;
@@ -39,7 +39,7 @@ it('el QR de owner2 abre su sesión y muestra solo sus mascotas', async () => {
   renderApp();
   await waitFor(() => screen.getByRole('button', { name: 'Iniciar sesión' }), E2E_WAIT);
 
-  // chepicare://pair?v=…&server=…&code=…&account=owner (o pawcare://)
+  // chepicare://pair?v=…&server=…&code=…&account=owner
   await act(async () => {
     (navigationRef.navigate as unknown as (n: string, p: object) => void)('Auth', {
       screen: 'PairingScan',

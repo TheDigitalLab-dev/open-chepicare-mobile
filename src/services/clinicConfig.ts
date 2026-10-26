@@ -24,7 +24,6 @@ import { ASYNC_STORAGE_KEYS } from '@/config/storageKeys';
 import type { ServerCapabilities } from '@/types/assistant';
 import type { ClinicConfig } from '@/types/models';
 import { setClinicConfig } from '@/utils/clinicTime';
-import { getAsyncItem } from '@/utils/legacyStorage';
 import { api } from './api';
 
 export const CLINIC_CONFIG_STORAGE_KEY = ASYNC_STORAGE_KEYS.clinicConfig;
@@ -88,7 +87,7 @@ export function forgetClinicConfig(): void {
  */
 export async function restoreClinicConfig(): Promise<ClinicConfig | null> {
   try {
-    const raw = await getAsyncItem(CLINIC_CONFIG_STORAGE_KEY);
+    const raw = await AsyncStorage.getItem(CLINIC_CONFIG_STORAGE_KEY);
     if (!raw) return null;
     const cached = JSON.parse(raw) as Partial<CachedClinicConfig>;
     if (cached.server !== getApiBaseUrl() || !isClinicConfig(cached.config)) return null;

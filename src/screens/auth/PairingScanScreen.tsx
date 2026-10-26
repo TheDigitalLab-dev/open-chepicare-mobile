@@ -101,7 +101,7 @@ function PairingProgress({
  * (Perfil del personal o «Mi Perfil» del propietario > Conectar la app móvil).
  * Configura el servidor y abre la sesión de la cuenta que generó el código, en
  * su modo (propietario o personal); también acepta el deep link
- * `chepicare://pair` (o `pawcare://pair`). Si el QR es de otro servidor, primero lo explica y pide
+ * `chepicare://pair`. Si el QR es de otro servidor, primero lo explica y pide
  * confirmación: confirmar cierra la sesión actual antes del canje.
  */
 export function PairingScanScreen() {

@@ -1,6 +1,6 @@
 # Documento Visión del Proyecto
 
-El presente documento constituye el entregable del **Trabajo 1** del Proyecto Sociotecnológico y corresponde a la **identificación del proyecto**, desarrollada de acuerdo con las actividades prácticas de la sesión didáctica: la **elicitación** de necesidades y requisitos, la **identificación del proyecto** y su **planificación y ejecución ágil**. El proyecto identificado es **Pawcare: App móvil para atención veterinaria a domicilio**, desarrollado por participantes de la Universidad Nacional Experimental de las Telecomunicaciones e Informática (UNETI) en beneficio del Consultorio Veterinario Pawcare, ubicado en La Mora I, La Victoria, estado Aragua.
+El presente documento constituye el entregable del **Trabajo 1** del Proyecto Sociotecnológico y corresponde a la **identificación del proyecto**, desarrollada de acuerdo con las actividades prácticas de la sesión didáctica: la **elicitación** de necesidades y requisitos, la **identificación del proyecto** y su **planificación y ejecución ágil**. El proyecto identificado es **Chepicare: App móvil para atención veterinaria a domicilio**, desarrollado por participantes de la Universidad Nacional Experimental de las Telecomunicaciones e Informática (UNETI) en beneficio del Consultorio Veterinario Chepicare, ubicado en La Mora I, La Victoria, estado Aragua.
 
 **Equipo investigador:** Miguel Figuera (C.I. 23.558.789), Iromy León (C.I. V-30.243.131) y Alejandra Herde (C.I. V-23.711.974). **Docente guía (tutora):** Yuly Delgado.
 
@@ -8,11 +8,11 @@ El presente documento constituye el entregable del **Trabajo 1** del Proyecto So
 
 ## 1.1 Nombre del proyecto
 
-**Pawcare: App móvil para atención veterinaria a domicilio.** Pawcare es una plataforma de gestión de relaciones con los clientes (CRM) para el consultorio veterinario Pawcare, cuyo componente central es una aplicación móvil que habilita la atención veterinaria a domicilio. El sistema digitaliza la gestión de citas (en local o a domicilio), historias clínicas, control de vacunación, comunicación con los clientes y registro de pagos, sustituyendo los procesos manuales actuales por un canal digital accesible desde el teléfono del dueño y del personal de la clínica.
+**Chepicare: App móvil para atención veterinaria a domicilio.** Chepicare es una plataforma de gestión de relaciones con los clientes (CRM) para el consultorio veterinario Chepicare, cuyo componente central es una aplicación móvil que habilita la atención veterinaria a domicilio. El sistema digitaliza la gestión de citas (en local o a domicilio), historias clínicas, control de vacunación, comunicación con los clientes y registro de pagos, sustituyendo los procesos manuales actuales por un canal digital accesible desde el teléfono del dueño y del personal de la clínica.
 
 ## 1.2 Comunidad e institución beneficiaria
 
-- **Institución beneficiaria:** Consultorio Veterinario Pawcare, dirigido por la Dra. Génesis Conesa.
+- **Institución beneficiaria:** Consultorio Veterinario Chepicare, dirigido por la Dra. Génesis Conesa.
 - **Localización:** La Mora I, La Victoria, estado Aragua, Venezuela.
 - **Comunidad atendida:** dueños de mascotas de la ciudad de La Victoria y zonas aledañas, de distintos grupos socioeconómicos. El consultorio participa con regularidad en campañas comunitarias de vacunación y consultas veterinarias, por lo que su alcance social trasciende a sus clientes directos.
 
@@ -32,7 +32,7 @@ A ello se suma que buena parte de los pacientes se beneficiaría de la **atenci�
 
 ## 1.4 Objetivo general
 
-Desarrollar una aplicación móvil, integrada a un backend con API RESTful, que habilite la atención veterinaria a domicilio y digitalice la gestión de citas, historias clínicas, vacunación, pagos y comunicación del Consultorio Veterinario Pawcare.
+Desarrollar una aplicación móvil, integrada a un backend con API RESTful, que habilite la atención veterinaria a domicilio y digitalice la gestión de citas, historias clínicas, vacunación, pagos y comunicación del Consultorio Veterinario Chepicare.
 
 ## 1.5 Objetivos específicos
 
@@ -45,7 +45,7 @@ Desarrollar una aplicación móvil, integrada a un backend con API RESTful, que 
 
 ## 1.6 Justificación e importancia
 
-La atención a domicilio, soportada por una aplicación móvil, acerca el servicio veterinario al hogar del paciente, fomenta la atención constante de las mascotas y favorece la detección temprana de enfermedades, el control de al menos dos consultas al año y los recordatorios de vacunación. El consultorio Pawcare constituye un pilar comunitario en La Victoria por sus precios accesibles y su participación en jornadas comunitarias; dotarlo de una herramienta digital sostenible multiplica su capacidad de servicio. La participación activa de la Dra. Génesis Conesa y su asistente garantiza que la herramienta resultante sea verdaderamente útil y apropiada por la institución.
+La atención a domicilio, soportada por una aplicación móvil, acerca el servicio veterinario al hogar del paciente, fomenta la atención constante de las mascotas y favorece la detección temprana de enfermedades, el control de al menos dos consultas al año y los recordatorios de vacunación. El consultorio Chepicare constituye un pilar comunitario en La Victoria por sus precios accesibles y su participación en jornadas comunitarias; dotarlo de una herramienta digital sostenible multiplica su capacidad de servicio. La participación activa de la Dra. Génesis Conesa y su asistente garantiza que la herramienta resultante sea verdaderamente útil y apropiada por la institución.
 
 ## 1.7 Vinculación con los planes nacionales y el marco legal
 
@@ -61,7 +61,7 @@ En el plano técnico, la aplicación móvil se desarrolla para Android (Expo SDK
 
 ## 1.9 Beneficiarios
 
-- **Directos:** el Consultorio Veterinario Pawcare (veterinaria principal, asistente y personal) y los dueños de mascotas registrados como clientes.
+- **Directos:** el Consultorio Veterinario Chepicare (veterinaria principal, asistente y personal) y los dueños de mascotas registrados como clientes.
 - **Indirectos:** la comunidad de La Victoria beneficiada por las jornadas comunitarias y por una mayor cobertura sanitaria animal, y la comunidad académica de la UNETI, que dispone de un caso de estudio real documentado.
 
 # Parte II. Elicitación
@@ -107,7 +107,7 @@ Los requisitos se priorizaron en el taller participativo (alta, media, baja) y s
 
 ## 2.8 Declaración de visión del producto
 
-**Para** los dueños de mascotas de La Victoria y el personal del Consultorio Veterinario Pawcare, **que** necesitan coordinar atención veterinaria —incluida la atención a domicilio— sin depender de papel ni llamadas, **Pawcare** es una **aplicación móvil con backend en la nube** **que** permite agendar citas, consultar historias clínicas, controlar vacunas, registrar pagos y recibir recordatorios desde el teléfono, incluso sin conexión estable. **A diferencia de** la gestión manual actual y de los sistemas veterinarios genéricos de escritorio, **nuestro producto** es mobile-first, opera offline con sincronización bajo consentimiento y está construido participativamente con la institución beneficiaria.
+**Para** los dueños de mascotas de La Victoria y el personal del Consultorio Veterinario Chepicare, **que** necesitan coordinar atención veterinaria —incluida la atención a domicilio— sin depender de papel ni llamadas, **Chepicare** es una **aplicación móvil con backend en la nube** **que** permite agendar citas, consultar historias clínicas, controlar vacunas, registrar pagos y recibir recordatorios desde el teléfono, incluso sin conexión estable. **A diferencia de** la gestión manual actual y de los sistemas veterinarios genéricos de escritorio, **nuestro producto** es mobile-first, opera offline con sincronización bajo consentimiento y está construido participativamente con la institución beneficiaria.
 
 # Parte III. Planificación y Ejecución ágil
 

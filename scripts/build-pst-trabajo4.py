@@ -8,8 +8,8 @@ Soporta encabezados, listas, **negrita**, tablas markdown y bloques ```...```.
 
 Anexos (interlineado compacto):
   A. Requisitos funcionales y no funcionales (docs/mobile-requirements.md)
-  B. Demo de interfaz (docs/PawCare Mobile — Demo UI.pdf → imagenes, requiere pdftoppm)
-  C. Diagramas de arquitectura (docs/PawCare Mobile — Diagramas de Arquitectura.pdf → imagenes)
+  B. Demo de interfaz (docs/ChepiCare Mobile — Demo UI.pdf → imagenes, requiere pdftoppm)
+  C. Diagramas de arquitectura (docs/ChepiCare Mobile — Diagramas de Arquitectura.pdf → imagenes)
   D. Rutas del API Rails (docs/rails-routes.txt como tabla)
 """
 import re
@@ -28,8 +28,8 @@ OUT = ROOT / "docs" / "pst" / "presentacion" / "trabajo4-informe-final.docx"
 
 DOCS = ROOT / "docs"
 ANEXO_REQ_MD = DOCS / "mobile-requirements.md"
-ANEXO_DEMO_PDF = DOCS / "PawCare Mobile — Demo UI.pdf"
-ANEXO_DIAG_PDF = DOCS / "PawCare Mobile — Diagramas de Arquitectura.pdf"
+ANEXO_DEMO_PDF = DOCS / "ChepiCare Mobile — Demo UI.pdf"
+ANEXO_DIAG_PDF = DOCS / "ChepiCare Mobile — Diagramas de Arquitectura.pdf"
 ANEXO_ROUTES = DOCS / "rails-routes.txt"
 
 # ancho util de pagina A4 con margenes de 2.54 cm
@@ -45,7 +45,7 @@ PORTADA = {
         "UNIVERSIDAD NACIONAL EXPERIMENTAL",
         "DE LAS TELECOMUNICACIONES E INFORMÁTICA",
     ],
-    "titulo": "Informe Final: Pawcare — App Móvil para Atención Veterinaria a Domicilio",
+    "titulo": "Informe Final: Chepicare — App Móvil para Atención Veterinaria a Domicilio",
     "integrantes": [
         "Miguel Figuera C.I: 23.558.789",
         "Iromy León C.I: V-30.243.131",
@@ -379,13 +379,13 @@ def add_annexes(doc):
 
     add_annex_heading(
         doc, "B", "Demo de interfaz de usuario (Demo UI)",
-        fuente="docs/PawCare Mobile — Demo UI.pdf — sistema visual con temas claro y oscuro",
+        fuente="docs/ChepiCare Mobile — Demo UI.pdf — sistema visual con temas claro y oscuro",
     )
     add_pdf_pages_as_images(doc, ANEXO_DEMO_PDF)
 
     add_annex_heading(
         doc, "C", "Diagramas de arquitectura",
-        fuente="docs/PawCare Mobile — Diagramas de Arquitectura.pdf (v4.0, julio 2026)",
+        fuente="docs/ChepiCare Mobile — Diagramas de Arquitectura.pdf (v4.0, julio 2026)",
     )
     add_pdf_pages_as_images(doc, ANEXO_DIAG_PDF)
 

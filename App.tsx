@@ -9,7 +9,6 @@ import { AssistantProvider } from '@/session/AssistantProvider';
 import { RootNavigator } from '@/navigation/RootNavigator';
 import { loadServerUrl } from '@/config/serverConfig';
 import { ASYNC_STORAGE_KEYS } from '@/config/storageKeys';
-import { getAsyncItem, migrateLegacyStorage } from '@/utils/legacyStorage';
 
 const THEME_KEY = ASYNC_STORAGE_KEYS.themePreference;
 
@@ -29,16 +28,14 @@ export default function App() {
   const [preference, setPreference] = useState<ThemePreference | null>(null);
 
   useEffect(() => {
-    // Primero pasa las claves `pawcare.*` de las versiones PawCare a
-    // `chepicare.*` (sin perder sesión ni servidor); luego restaura el servidor
-    // elegido ANTES de que la sesión haga su primer fetch.
-    migrateLegacyStorage()
-      .then(() =>
-        Promise.all([getAsyncItem(THEME_KEY).catch(() => null), loadServerUrl()]),
-      )
-      .then(([stored]) => {
-        setPreference(isThemePreference(stored) ? stored : 'system');
-      });
+    // Restaura el tema y el servidor elegido ANTES de que la sesión haga su
+    // primer fetch.
+    Promise.all([
+      AsyncStorage.getItem(THEME_KEY).catch(() => null),
+      loadServerUrl(),
+    ]).then(([stored]) => {
+      setPreference(isThemePreference(stored) ? stored : 'system');
+    });
   }, []);
 
   if (preference === null) return null;

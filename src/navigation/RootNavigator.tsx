@@ -30,7 +30,6 @@ const SetupStack = createNativeStackNavigator<ServerSetupParamList>();
 //  - recuperación: chepicare://reset_password/:token
 //  - emparejamiento: chepicare://pair?v=1&server=…&code=…&account=… (los query params llegan
 //    como params de PairingScan, que canjea el código).
-// `pawcare://` sigue aceptado para los QR y enlaces ya emitidos (ver deepLinks).
 const linking: LinkingOptions<PublicStackParamList> = {
   prefixes: DEEP_LINK_PREFIXES,
   config: {

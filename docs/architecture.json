@@ -1,5 +1,5 @@
 {
-  "project": "PawCare",
+  "project": "ChepiCare",
   "description": "Sistema de gestión veterinaria - Rails 8 + React 19 + Inertia.js",
   "version": "1.0.0",
   "stack": {
@@ -131,7 +131,7 @@
     "frontend": {
       "pages": {
         "total_approximate": 110,
-        "public": ["Home", "About", "Contact", "Services", "Products", "Privacy", "Terms", "Adoption", "Auth", "Pawcare", "UserManual", "NotFound", "Unauthorized"],
+        "public": ["Home", "About", "Contact", "Services", "Products", "Privacy", "Terms", "Adoption", "Auth", "Chepicare", "UserManual", "NotFound", "Unauthorized"],
         "owner_portal": ["Dashboard", "PetsIndex", "MedicalHistoryIndex", "owner/appointments/AppointmentsIndex", "owner/medical-history/MedicalHistoryIndex", "owner/payments/PaymentsIndex", "sponsorships/SponsorshipsIndex", "profile/ProfileIndex"],
         "admin": {
           "layout": ["AdminLayout", "AdminSidebar", "AdminHeader"],

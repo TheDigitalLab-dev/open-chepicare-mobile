@@ -1,6 +1,6 @@
-# PawCare Mobile — Rutas API
+# ChepiCare Mobile — Rutas API
 
-> App: `pawcare-mobile` · Exportado: 2026-05-31T16:29:33.061Z · **157 rutas** seleccionadas para la app movil
+> App: `chepicare-mobile` · Exportado: 2026-05-31T16:29:33.061Z · **157 rutas** seleccionadas para la app movil
 
 ## Resumen
 

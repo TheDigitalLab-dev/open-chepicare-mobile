@@ -1,8 +1,8 @@
 # Nombre del proyecto
 
-**Pawcare: App móvil para atención veterinaria a domicilio.**
+**Chepicare: App móvil para atención veterinaria a domicilio.**
 
-Pawcare es una plataforma de gestión de relaciones con los clientes (CRM) para el consultorio veterinario Pawcare, cuyo componente central es una aplicación móvil que habilita la atención veterinaria a domicilio. El sistema digitaliza y optimiza la gestión de citas (en local o a domicilio), historias clínicas, control de vacunación, comunicación con los clientes y registro de pagos, sustituyendo los procesos manuales actuales por un canal digital accesible desde el teléfono del dueño y del personal de la clínica.
+Chepicare es una plataforma de gestión de relaciones con los clientes (CRM) para el consultorio veterinario Chepicare, cuyo componente central es una aplicación móvil que habilita la atención veterinaria a domicilio. El sistema digitaliza y optimiza la gestión de citas (en local o a domicilio), historias clínicas, control de vacunación, comunicación con los clientes y registro de pagos, sustituyendo los procesos manuales actuales por un canal digital accesible desde el teléfono del dueño y del personal de la clínica.
 
 # Alcance de la investigación
 
@@ -27,7 +27,7 @@ En el plano técnico, la aplicación móvil se desarrolla para Android (Expo SDK
 
 # Importancia de la investigación
 
-El consultorio Pawcare, liderado por la Dra. Génesis Conesa, ofrece servicios de consulta, hospedaje y peluquería canina a precios accesibles, y constituye un pilar comunitario al participar con regularidad en campañas de vacunación y consultas veterinarias en servicios comunitarios. Atiende a una cantidad considerable de pacientes de la ciudad de La Victoria, abarcando personas de distintos grupos socioeconómicos.
+El consultorio Chepicare, liderado por la Dra. Génesis Conesa, ofrece servicios de consulta, hospedaje y peluquería canina a precios accesibles, y constituye un pilar comunitario al participar con regularidad en campañas de vacunación y consultas veterinarias en servicios comunitarios. Atiende a una cantidad considerable de pacientes de la ciudad de La Victoria, abarcando personas de distintos grupos socioeconómicos.
 
 La importancia del proyecto radica en que la atención a domicilio, soportada por una aplicación móvil, acerca el servicio veterinario al hogar del paciente, fomenta la atención constante de las mascotas y favorece la detección temprana de enfermedades, el control de al menos dos consultas al año y los recordatorios de vacunación. Asimismo, resuelve problemas concretos del proceso manual actual:
 
@@ -45,7 +45,7 @@ La participación activa de la Dra. Génesis y su asistente es fundamental para 
 
 Los informantes clave que alimentaron el diseño mediante el diagnóstico participativo son:
 
-- **Dra. Génesis Conesa** — veterinaria principal y líder del consultorio Pawcare. Principal fuente sobre los procesos clínicos y administrativos, prioridades y expectativas.
+- **Dra. Génesis Conesa** — veterinaria principal y líder del consultorio Chepicare. Principal fuente sobre los procesos clínicos y administrativos, prioridades y expectativas.
 - **Asistente del consultorio** — informante sobre la operación diaria, la gestión de citas y el registro de información.
 - **Clientes / dueños de mascotas** — usuarios finales del canal móvil; aportan las necesidades de uso de la atención a domicilio.
 
@@ -208,7 +208,7 @@ En materia de protección de datos, el diseño adopta de forma voluntaria princi
 **Organizaciones:**
 
 - **Universidad Nacional Experimental de las Telecomunicaciones e Informática (UNETI)** — institución académica que enmarca el Proyecto Socio Tecnológico.
-- **Consultorio Veterinario Pawcare** — institución beneficiaria, dirigida por la Dra. Génesis Conesa (La Mora I, La Victoria, estado Aragua).
+- **Consultorio Veterinario Chepicare** — institución beneficiaria, dirigida por la Dra. Génesis Conesa (La Mora I, La Victoria, estado Aragua).
 - **Colegio de Médicos Veterinarios del estado Aragua** — ente gremial de referencia normativa.
 - **Comunidad de software libre de Ruby on Rails** — ecosistema técnico de soporte.
 
@@ -221,7 +221,7 @@ El presente documento se centra en el diseño del **backend (API)** y de la **ap
 - La validación final de requerimientos con el consultorio (Fase 4 del diagnóstico participativo) debe mantenerse viva en cada sprint para incorporar ajustes.
 - Existe una diferencia de versiones del backend entre fuentes (Rails 7 en modo API y Rails 8); debe unificarse al iniciar la implementación.
 - El escalamiento horizontal (CDN, balanceador, réplica de base de datos) se plantea como trabajo futuro, una vez superada la capacidad de la fase de escalamiento vertical.
-- La marca del proyecto es **Pawcare**; cualquier referencia heredada a nombres anteriores debe normalizarse.
+- La marca del proyecto es **Chepicare**; cualquier referencia heredada a nombres anteriores debe normalizarse.
 
 # Referencias
 

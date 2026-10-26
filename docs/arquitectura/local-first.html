@@ -104,7 +104,7 @@ flowchart TB
   R["Repositorios de dominio&lt;br/&gt;(F3+)"] --&gt; EX["SqlExecutor&lt;br/&gt;(interfaz)"]
   EX --&gt; A["expo-sqlite&lt;br/&gt;(app)"]
   EX --&gt; B["node:sqlite&lt;br/&gt;(tests)"]
-  A --&gt; DB[("pawcare.db")]
+  A --&gt; DB[("chepicare.db")]
   DB --&gt; T1["weighings (piloto)"]
   DB --&gt; T2["sync_outbox (bitácora)"]
   DB --&gt; T3["schema_migrations"]
