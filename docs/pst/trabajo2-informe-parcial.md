@@ -1,6 +1,6 @@
 # Informe Parcial de Ejecución por Sprints
 
-El presente documento constituye el **informe parcial de ejecución** del Proyecto Sociotecnológico **Pawcare: App móvil para atención veterinaria a domicilio**, y reúne los soportes de la gestión ágil del equipo: los entregables de cada sprint, el reporte de velocity, las retrospectivas, el calendario de reuniones de planificación y seguimiento, las acciones de mejora continua y las demostraciones realizadas. Cubre el período comprendido entre el **25 de mayo y el 14 de julio de 2026** (corte parcial durante el sprint 4). Toda la información aquí presentada es **verificable en el repositorio Git del proyecto**: cada entregable se referencia con el identificador del commit o pull request que lo evidencia.
+El presente documento constituye el **informe parcial de ejecución** del Proyecto Sociotecnológico **Chepicare: App móvil para atención veterinaria a domicilio**, y reúne los soportes de la gestión ágil del equipo: los entregables de cada sprint, el reporte de velocity, las retrospectivas, el calendario de reuniones de planificación y seguimiento, las acciones de mejora continua y las demostraciones realizadas. Cubre el período comprendido entre el **25 de mayo y el 14 de julio de 2026** (corte parcial durante el sprint 4). Toda la información aquí presentada es **verificable en el repositorio Git del proyecto**: cada entregable se referencia con el identificador del commit o pull request que lo evidencia.
 
 # Parte I. Marco de Trabajo del Equipo
 
@@ -19,7 +19,7 @@ El equipo trabaja con el marco ágil **Scrum**, adaptado al contexto académico 
 
 ## 1.2 Equipo y roles
 
-El equipo investigador está integrado por **Miguel Figuera, Iromy León y Alejandra Herde**, bajo la guía de la **tutora Yuly Delgado** y con la Dra. Génesis Conesa (consultorio Pawcare) como informante clave. Los roles Scrum se distribuyeron así durante todo el período reportado:
+El equipo investigador está integrado por **Miguel Figuera, Iromy León y Alejandra Herde**, bajo la guía de la **tutora Yuly Delgado** y con la Dra. Génesis Conesa (consultorio Chepicare) como informante clave. Los roles Scrum se distribuyeron así durante todo el período reportado:
 
 | Integrante | Rol | Responsabilidades |
 |---|---|---|
@@ -40,7 +40,7 @@ Los soportes de este informe provienen del historial del repositorio: los commit
 | Entregable | Evidencia (commit) | Puntos |
 |---|---|---|
 | Inicialización del proyecto móvil (Expo SDK 56, React Native, TypeScript estricto, tokens de diseño) | 9245aba | 3 |
-| Documento de diseño Pawcare (APA, con script generador) | 65499d1 | 5 |
+| Documento de diseño Chepicare (APA, con script generador) | 65499d1 | 5 |
 | ADR 0001 — Arquitectura de datos móvil (offline-first híbrido) | 706a7f9 | 3 |
 | Especificación de requisitos (26 RF, 17 RNF) en Markdown y HTML | a0b833f, b1e73d1 | 5 |
 | Diagramas de arquitectura imprimibles (tres capas, cliente-servidor) | b1e73d1 | 3 |

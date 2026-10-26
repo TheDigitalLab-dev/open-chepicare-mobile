@@ -1,4 +1,4 @@
-# PawCare Mobile — Arquitectura
+# ChepiCare Mobile — Arquitectura
 
 ## Stack Tecnológico
 

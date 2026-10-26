@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Genera docs/pst/presentacion/diapositivas-pawcare-mobile.pptx a partir del
-deck HTML (diapositivas-pawcare-mobile.html), para importarlo en Google Slides.
+"""Genera docs/pst/presentacion/diapositivas-chepicare-mobile.pptx a partir del
+deck HTML (diapositivas-chepicare-mobile.html), para importarlo en Google Slides.
 
 Pipeline: Chrome headless imprime el HTML (CSS @page 960x540 pt, 16:9) a un PDF
 temporal, pdftoppm rasteriza cada diapositiva a PNG (200 dpi) y python-pptx las
@@ -15,8 +15,8 @@ from pptx import Presentation
 from pptx.util import Pt
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "docs" / "pst" / "presentacion" / "diapositivas-pawcare-mobile.html"
-OUT = ROOT / "docs" / "pst" / "presentacion" / "diapositivas-pawcare-mobile.pptx"
+SRC = ROOT / "docs" / "pst" / "presentacion" / "diapositivas-chepicare-mobile.html"
+OUT = ROOT / "docs" / "pst" / "presentacion" / "diapositivas-chepicare-mobile.pptx"
 
 DPI = 200
 SLIDE_W = Pt(960)

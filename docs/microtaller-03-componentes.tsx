@@ -1,8 +1,8 @@
 /**
- * Pawcare — Diseño de componentes (Microtaller 03)
+ * Chepicare — Diseño de componentes (Microtaller 03)
  * Componentes de UI móviles en React Native (Expo SDK 56, TypeScript).
  * Cada componente parte de su DEFINICIÓN (contrato de props + estados) y se
- * implementa con los tokens compartidos del design system de Pawcare.
+ * implementa con los tokens compartidos del design system de Chepicare.
  */
 import React from 'react';
 import {

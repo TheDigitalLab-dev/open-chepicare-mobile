@@ -17,7 +17,7 @@
                                          contact GET    /contact(.:format)                                                                                pages#contact
                                            terms GET    /terms(.:format)                                                                                  pages#terms
                                          privacy GET    /privacy(.:format)                                                                                pages#privacy
-                                         pawcare GET    /pawcare(.:format)                                                                                pages#pawcare
+                                         chepicare GET    /chepicare(.:format)                                                                                pages#chepicare
                                         adoption GET    /adoption(.:format)                                                                               adoption#index
                                    adoption_pets GET    /adoption/pets(.:format)                                                                          adoption#pets
                                     adoption_pet GET    /adoption/pets/:id(.:format)                                                                      adoption#show

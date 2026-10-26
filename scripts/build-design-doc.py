@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Genera docs/diseno-proyecto-pawcare.docx a partir de docs/diseno-proyecto-pawcare.md
+"""Genera docs/diseno-proyecto-chepicare.docx a partir de docs/diseno-proyecto-chepicare.md
 Formato: APA 7 (estudiante) en Arial, interlineado doble, margenes 2.54cm,
 con la excepcion de que el cuerpo va JUSTIFICADO (no flush-left).
 """
@@ -13,8 +13,8 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "docs" / "diseno-proyecto-pawcare.md"
-OUT = ROOT / "docs" / "diseno-proyecto-pawcare.docx"
+SRC = ROOT / "docs" / "diseno-proyecto-chepicare.md"
+OUT = ROOT / "docs" / "diseno-proyecto-chepicare.docx"
 
 FONT = "Arial"
 
@@ -25,7 +25,7 @@ MEMBRETE = [
     "UNIVERSIDAD NACIONAL EXPERIMENTAL",
     "DE LAS TELECOMUNICACIONES E INFORMÁTICA",
 ]
-TITULO = "Pawcare: App móvil para atención veterinaria a domicilio"
+TITULO = "Chepicare: App móvil para atención veterinaria a domicilio"
 INTEGRANTES = [
     "Miguel Figuera C.I: 23.558.789",
     "Iromy León C.I: V-30.243.131",

@@ -1,6 +1,6 @@
 # Manual de Usuario - ChepiCare Mobile
 
-Guías para usar la app móvil de ChepiCare (antes PawCare) con el servidor de tu clínica.
+Guías para usar la app móvil de ChepiCare con el servidor de tu clínica.
 
 ## 📋 Tabla de Contenidos
 

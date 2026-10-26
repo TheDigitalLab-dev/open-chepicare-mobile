@@ -9,17 +9,10 @@
  * persiste en almacenamiento seguro (Keystore/Keychain): junto con los tokens
  * define A QUIÉN se le entregan las credenciales, así que no debe poder
  * alterarse desde un almacenamiento sin cifrar. `loadServerUrl()` la restaura
- * al arrancar la app y migra el valor de versiones anteriores (AsyncStorage y
- * claves `pawcare.*` de las versiones PawCare).
+ * al arrancar la app.
  */
 import * as SecureStore from 'expo-secure-store';
 
-import {
-  deleteSecureItem,
-  getAsyncItem,
-  getSecureItem,
-  removeAsyncItem,
-} from '@/utils/legacyStorage';
 import { config } from './env';
 import { SECURE_STORE_KEYS } from './storageKeys';
 
@@ -63,16 +56,7 @@ export function getDefaultApiBaseUrl(): string {
 /** Restaura la URL guardada al arrancar la app. Idempotente y a prueba de fallos. */
 export async function loadServerUrl(): Promise<void> {
   try {
-    let saved = await getSecureItem(STORAGE_KEY);
-    if (!saved) {
-      // Migración: versiones anteriores guardaban la URL en AsyncStorage.
-      const legacy = await getAsyncItem(STORAGE_KEY);
-      if (legacy && legacy.length > 0) {
-        await SecureStore.setItemAsync(STORAGE_KEY, legacy);
-        await removeAsyncItem(STORAGE_KEY);
-        saved = legacy;
-      }
-    }
+    const saved = await SecureStore.getItemAsync(STORAGE_KEY);
     if (saved && saved.length > 0) {
       currentBaseUrl = saved;
       emitChange();
@@ -95,7 +79,7 @@ export async function setServerUrl(raw: string): Promise<string> {
 export async function resetServerUrl(): Promise<void> {
   currentBaseUrl = config.apiBaseUrl;
   emitChange();
-  await Promise.all([deleteSecureItem(STORAGE_KEY), removeAsyncItem(STORAGE_KEY)]);
+  await SecureStore.deleteItemAsync(STORAGE_KEY);
 }
 
 export interface ServerHealth {

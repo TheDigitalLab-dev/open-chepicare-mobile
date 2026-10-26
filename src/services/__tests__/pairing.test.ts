@@ -19,16 +19,13 @@ afterEach(async () => {
 });
 
 describe('parsePairingUri', () => {
-  it.each(['chepicare', 'pawcare'])(
-    'extrae servidor y código de %s://pair?v=1',
-    (scheme) => {
-      const uri = `${scheme}://pair?v=1&server=${encodeURIComponent('https://clinica.example.com/')}&code=Zx3-_abc`;
-      expect(pairing.parsePairingUri(uri)).toEqual({
-        server: 'https://clinica.example.com',
-        code: 'Zx3-_abc',
-      });
-    },
-  );
+  it('extrae servidor y código de chepicare://pair?v=1', () => {
+    const uri = `chepicare://pair?v=1&server=${encodeURIComponent('https://clinica.example.com/')}&code=Zx3-_abc`;
+    expect(pairing.parsePairingUri(uri)).toEqual({
+      server: 'https://clinica.example.com',
+      code: 'Zx3-_abc',
+    });
+  });
 
   it('acepta puerto, IP y ruta base (instalaciones detrás de un proxy)', () => {
     for (const server of [
@@ -56,14 +53,13 @@ describe('parsePairingUri', () => {
   });
 
   it('sin account (QR de un servidor anterior) o con un valor desconocido no falla: decide el canje', () => {
-    const base = 'pawcare://pair?v=1&server=https%3A%2F%2Fa.com&code=x';
+    const base = 'chepicare://pair?v=1&server=https%3A%2F%2Fa.com&code=x';
     expect(pairing.parsePairingUri(base).account).toBeUndefined();
     expect(pairing.parsePairingUri(`${base}&account=root`).account).toBeUndefined();
   });
 
   it.each([
     ['https://clinica.example.com', 'no es un código de ChepiCare'],
-    ['pawcare://reset_password/abc', 'no es un código de ChepiCare'],
     ['chepicare://reset_password/abc', 'no es un código de ChepiCare'],
     [
       'otraapp://pair?v=1&server=https%3A%2F%2Fa.com&code=x',
@@ -73,10 +69,10 @@ describe('parsePairingUri', () => {
       'chepicare://pairing?v=1&server=https%3A%2F%2Fa.com&code=x',
       'no es un código de ChepiCare',
     ],
-    ['pawcare://pair?v=2&server=https%3A%2F%2Fa.com&code=x', 'versión'],
+    ['chepicare://pair?v=2&server=https%3A%2F%2Fa.com&code=x', 'versión'],
     ['chepicare://pair?v=1&code=x', 'servidor'],
-    ['pawcare://pair?v=1&server=ftp%3A%2F%2Fa.com&code=x', 'servidor'],
-    ['pawcare://pair?v=1&server=https%3A%2F%2Fa.com', 'código'],
+    ['chepicare://pair?v=1&server=ftp%3A%2F%2Fa.com&code=x', 'servidor'],
+    ['chepicare://pair?v=1&server=https%3A%2F%2Fa.com', 'código'],
     // Credenciales en la URL: «https://clinica.com@evil.com» es evil.com.
     [
       `chepicare://pair?v=1&server=${encodeURIComponent('https://clinica.com@evil.com')}&code=x`,

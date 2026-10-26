@@ -14,7 +14,7 @@ export type AuthStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { token?: string };
   ServerSettings: undefined;
-  /** Escáner de QR; con params viene de un deep link `chepicare://pair?...` o `pawcare://pair?...`. */
+  /** Escáner de QR; con params viene de un deep link `chepicare://pair?...`. */
   PairingScan:
     | { v?: string; server?: string; code?: string; account?: string }
     | undefined;

@@ -1,20 +1,20 @@
 # Introducción
 
-El presente documento desarrolla la **fase de diseño** del producto Pawcare — aplicación móvil para atención veterinaria a domicilio — en el marco del Proyecto Socio Tecnológico III (PSTIII) de la Universidad Nacional Experimental de las Telecomunicaciones e Informática (UNETI). El propósito es doble: por una parte, formalizar el proceso de software del proyecto mediante un **Plan de la Calidad**, siguiendo la propuesta de Álvarez y López (2005) para proyectos que emplean metodologías ágiles; por otra, documentar el proceso de diseño con el rigor del enfoque basado en procesos de la norma **ISO 9000:2000**, tomando como analogía la experiencia de documentación del proceso de desarrollo de software descrita por Romero Mosquera (2006).
+El presente documento desarrolla la **fase de diseño** del producto Chepicare — aplicación móvil para atención veterinaria a domicilio — en el marco del Proyecto Socio Tecnológico III (PSTIII) de la Universidad Nacional Experimental de las Telecomunicaciones e Informática (UNETI). El propósito es doble: por una parte, formalizar el proceso de software del proyecto mediante un **Plan de la Calidad**, siguiendo la propuesta de Álvarez y López (2005) para proyectos que emplean metodologías ágiles; por otra, documentar el proceso de diseño con el rigor del enfoque basado en procesos de la norma **ISO 9000:2000**, tomando como analogía la experiencia de documentación del proceso de desarrollo de software descrita por Romero Mosquera (2006).
 
 Como sostiene Humphrey, citado por Álvarez y López (2005), la calidad de un producto de software está determinada, en buena medida, por la calidad del proceso usado para desarrollarlo y mantenerlo. Por ello, antes de presentar los artefactos de diseño del producto, se define y documenta la forma de trabajo del equipo: qué actividades se realizan, qué productos consumen y generan, quién es responsable de cada una y contra qué criterios se verifica su calidad.
 
 # El producto y su contexto de desarrollo
 
-**Pawcare** es una plataforma de gestión de relaciones con los clientes (CRM) para el consultorio veterinario Pawcare (La Victoria, estado Aragua), cuyo componente central es una aplicación móvil Android (Expo SDK 56 / React Native / TypeScript) que habilita la atención veterinaria a domicilio. El sistema digitaliza la gestión de citas, historias clínicas, control de vacunación, comunicación con los clientes y registro de pagos, consumiendo un backend API REST (Ruby on Rails) con 157 rutas documentadas para el cliente móvil, distribuidas en los dominios Público (19), Dueño (54) y Administrador (84).
+**Chepicare** es una plataforma de gestión de relaciones con los clientes (CRM) para el consultorio veterinario Chepicare (La Victoria, estado Aragua), cuyo componente central es una aplicación móvil Android (Expo SDK 56 / React Native / TypeScript) que habilita la atención veterinaria a domicilio. El sistema digitaliza la gestión de citas, historias clínicas, control de vacunación, comunicación con los clientes y registro de pagos, consumiendo un backend API REST (Ruby on Rails) con 157 rutas documentadas para el cliente móvil, distribuidas en los dominios Público (19), Dueño (54) y Administrador (84).
 
 El proyecto es ejecutado por un equipo de tres estudiantes investigadores (Miguel Figuera, Iromy León y Alejandra Herde), bajo la tutoría de la profesora Yuly Delgado, con la Dra. Génesis Conesa (líder del consultorio) como informante clave y validadora principal. La metodología del proyecto combina un **diagnóstico participativo iterativo** para el levantamiento y validación de requerimientos con el marco ágil **Scrum** para la organización del desarrollo en sprints cortos con entregas incrementales.
 
 # Identificación del ambiente y características del proyecto
 
-Álvarez y López (2005) proponen cuatro actividades para elaborar el Plan de la Calidad de un proyecto: (1) identificar el ambiente del proyecto y sus características, (2) seleccionar el proceso y las actividades a realizar, (3) documentar el plan de la calidad y (4) mantenerlo actualizado. Aplicando la primera actividad al proyecto Pawcare se obtiene la siguiente caracterización:
+Álvarez y López (2005) proponen cuatro actividades para elaborar el Plan de la Calidad de un proyecto: (1) identificar el ambiente del proyecto y sus características, (2) seleccionar el proceso y las actividades a realizar, (3) documentar el plan de la calidad y (4) mantenerlo actualizado. Aplicando la primera actividad al proyecto Chepicare se obtiene la siguiente caracterización:
 
-| Factor | Situación en el proyecto Pawcare |
+| Factor | Situación en el proyecto Chepicare |
 |---|---|
 | Número de personas involucradas | Equipo pequeño: 3 estudiantes desarrolladores, 1 tutora académica, 1 clienta principal y su asistente. |
 | Forma de comunicación | Directa y frecuente dentro del equipo; contacto regular con la clienta mediante entrevistas, observación y talleres de validación. |
@@ -27,7 +27,7 @@ El proyecto es ejecutado por un equipo de tres estudiantes investigadores (Migue
 
 # Selección del proceso
 
-De acuerdo con Álvarez y López (2005), los procesos ágiles se centran en las personas, en su comunicación directa y sus habilidades, y resultan apropiados para proyectos de menor complejidad o riesgo con equipos que trabajan en un mismo lugar físico; los procesos tradicionales, en cambio, convienen a proyectos de gran dimensión, larga duración o equipos numerosos y distribuidos. Dado el ambiente identificado — equipo pequeño y colocalizado, clienta accesible, requisitos que evolucionan con la retroalimentación — el proyecto Pawcare adopta un **proceso ágil (Scrum)**, formalizado mediante el plan de la calidad para procesos ágiles propuesto por las autoras: declaración de valores del equipo y tabla de prácticas con su desarrollo y fundamento.
+De acuerdo con Álvarez y López (2005), los procesos ágiles se centran en las personas, en su comunicación directa y sus habilidades, y resultan apropiados para proyectos de menor complejidad o riesgo con equipos que trabajan en un mismo lugar físico; los procesos tradicionales, en cambio, convienen a proyectos de gran dimensión, larga duración o equipos numerosos y distribuidos. Dado el ambiente identificado — equipo pequeño y colocalizado, clienta accesible, requisitos que evolucionan con la retroalimentación — el proyecto Chepicare adopta un **proceso ágil (Scrum)**, formalizado mediante el plan de la calidad para procesos ágiles propuesto por las autoras: declaración de valores del equipo y tabla de prácticas con su desarrollo y fundamento.
 
 No obstante, para la fase de diseño se incorpora adicionalmente el formato tabular de actividades dependientes de la fase (propio de los planes para procesos tradicionales), pues la naturaleza clínica del dominio exige registrar con precisión qué artefactos de diseño se producen, de qué insumos dependen y quién responde por ellos. Esta combinación es coherente con la recomendación de las autoras de adecuar el plan a las características de cada situación.
 
@@ -64,7 +64,7 @@ La siguiente tabla documenta las prácticas adoptadas, cómo se desarrollan en e
 
 # La fase de diseño en el plan de la calidad
 
-Aplicando el formato tabular de actividades dependientes de la fase (Álvarez y López, 2005), la fase de diseño del producto Pawcare queda documentada así. Roles: GEPRO (gestión del proyecto), ARQ (arquitectura), UI (diseño de interfaz), DEV (desarrollo), TUT (tutora), CLI (clienta/informantes clave).
+Aplicando el formato tabular de actividades dependientes de la fase (Álvarez y López, 2005), la fase de diseño del producto Chepicare queda documentada así. Roles: GEPRO (gestión del proyecto), ARQ (arquitectura), UI (diseño de interfaz), DEV (desarrollo), TUT (tutora), CLI (clienta/informantes clave).
 
 | Cód. Tarea | Actividad | P. Resultado | P. Consumido | Rol Resp. | Roles Part. | Doc. de Referencia |
 |---|---|---|---|---|---|---|
@@ -80,7 +80,7 @@ Las actividades independientes de la fase — planificación y seguimiento del p
 
 # Documentación del proceso según el enfoque ISO 9000:2000
 
-Romero Mosquera (2006) documenta el proceso de desarrollo de software de la Unidad de Sistemas de Información del CIAT con miras a la certificación ISO 9000:2000, aplicando el principio del enfoque basado en procesos: identificar los procesos del sistema de gestión de la calidad, clasificarlos (dirección, producción, soporte), caracterizarlos y establecer sus interacciones, para luego definir la documentación y los registros que evidencian su cumplimiento. Por analogía, el proyecto Pawcare adopta esa estructura a su escala.
+Romero Mosquera (2006) documenta el proceso de desarrollo de software de la Unidad de Sistemas de Información del CIAT con miras a la certificación ISO 9000:2000, aplicando el principio del enfoque basado en procesos: identificar los procesos del sistema de gestión de la calidad, clasificarlos (dirección, producción, soporte), caracterizarlos y establecer sus interacciones, para luego definir la documentación y los registros que evidencian su cumplimiento. Por analogía, el proyecto Chepicare adopta esa estructura a su escala.
 
 ## Mapa de procesos del proyecto
 
@@ -92,7 +92,7 @@ Romero Mosquera (2006) documenta el proceso de desarrollo de software de la Unid
 
 ## Caracterización del proceso de diseño
 
-Siguiendo el formato de caracterización empleado por Romero Mosquera (2006) — encabezado, descripción del proceso y complemento — el proceso de diseño de Pawcare se caracteriza así:
+Siguiendo el formato de caracterización empleado por Romero Mosquera (2006) — encabezado, descripción del proceso y complemento — el proceso de diseño de Chepicare se caracteriza así:
 
 | Campo | Contenido |
 |---|---|
@@ -106,7 +106,7 @@ Siguiendo el formato de caracterización empleado por Romero Mosquera (2006) —
 | Entradas | Especificación de RF/RNF; catálogo de 157 rutas del API; criterios básicos de diseño; restricciones tecnológicas (Expo SDK 56, Android). |
 | Subprocesos | Diseño arquitectónico (TD3.1–TD3.2); diseño de interacción e interfaz (TD3.3–TD3.4); diseño de servicios (TD3.5); trazabilidad y validación (TD3.6–TD3.7). |
 | Salidas | ADR 0001; diagramas de arquitectura; mapa de rutas y pantallas; tokens y componentes de UI; especificación de servicios; matriz de trazabilidad. |
-| Clientes | Proceso de construcción (equipo DEV); tutora académica; consultorio Pawcare. |
+| Clientes | Proceso de construcción (equipo DEV); tutora académica; consultorio Chepicare. |
 | Documentos | Plan de la calidad del proyecto; instructivos de los artefactos (formatos ADR, matriz de trazabilidad); norma de referencia ISO/IEC 25010. |
 | Recursos | Equipo de desarrollo, repositorio Git, backend de referencia en ejecución, emulador Android, herramientas de diagramación. |
 | Métricas | Cobertura de trazabilidad endpoint→requisito (meta ≥ 99 %; actual 156/157); porcentaje de pantallas con estados de carga/error/vacío diseñados (meta 100 %); hallazgos de react-doctor en los archivos tocados (meta 0). |
@@ -138,11 +138,11 @@ La fase de diseño produce y mantiene los siguientes artefactos verificables, to
 - **Mapa de rutas y pantallas** (mobile-routes.md, mobile-screens.md): navegación por dominios público, dueño y administrador.
 - **Sistema visual** (mobile-design-tokens.css, mobile-ui-components.md, demo de UI): tokens de color, tipografía y espaciado con tema claro y oscuro.
 - **Matriz de trazabilidad** requisito → ruta → pantalla → componente, con cobertura verificada de 156/157 endpoints.
-- **Documento de diseño del proyecto** (diseno-proyecto-pawcare): criterios, estilos arquitectónicos, atributos de calidad ISO/IEC 25010 y marco legal.
+- **Documento de diseño del proyecto** (diseno-proyecto-chepicare): criterios, estilos arquitectónicos, atributos de calidad ISO/IEC 25010 y marco legal.
 
 # Conclusiones
 
-La fase de diseño de Pawcare no se limita a producir artefactos técnicos: formaliza el proceso mediante el cual esos artefactos se elaboran, revisan, aprueban y mantienen. Del trabajo de Álvarez y López (2005) se adopta el instrumento del plan de la calidad adaptado a la metodología del proyecto — valores y prácticas ágiles, complementados con el registro tabular de las actividades de la fase — confirmando que el plan debe adecuarse a las características de cada situación y evolucionar con el aprendizaje del equipo. De la experiencia de Romero Mosquera (2006) se adopta el enfoque basado en procesos de la ISO 9000:2000: el mapa de procesos, la caracterización del proceso de diseño con sus entradas, salidas, métricas y registros, y el control documental — demostrando que un proyecto académico puede documentarse con un rigor análogo al exigido para una certificación, usando el propio repositorio como sistema de control de documentos.
+La fase de diseño de Chepicare no se limita a producir artefactos técnicos: formaliza el proceso mediante el cual esos artefactos se elaboran, revisan, aprueban y mantienen. Del trabajo de Álvarez y López (2005) se adopta el instrumento del plan de la calidad adaptado a la metodología del proyecto — valores y prácticas ágiles, complementados con el registro tabular de las actividades de la fase — confirmando que el plan debe adecuarse a las características de cada situación y evolucionar con el aprendizaje del equipo. De la experiencia de Romero Mosquera (2006) se adopta el enfoque basado en procesos de la ISO 9000:2000: el mapa de procesos, la caracterización del proceso de diseño con sus entradas, salidas, métricas y registros, y el control documental — demostrando que un proyecto académico puede documentarse con un rigor análogo al exigido para una certificación, usando el propio repositorio como sistema de control de documentos.
 
 El beneficio ya es observable: las compuertas de calidad ejecutadas antes de cada commit convierten el aseguramiento de la calidad en una actividad sistemática y no discrecional, y la matriz de trazabilidad permite auditar, en cualquier momento, que cada requisito del consultorio está cubierto por un elemento de diseño y una prueba. Al cierre del proyecto, este plan permitirá además analizar la eficacia del proceso seguido y servirá de primera aproximación a un proceso organizacional reutilizable en futuros proyectos socio tecnológicos.
 

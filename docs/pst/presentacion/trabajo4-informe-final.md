@@ -18,13 +18,13 @@ A la Uneti, por ser un mal ejemplo, gracias a esto pude canalizar mi ira y mi de
 
 # RESUMEN
 
-La presente investigación tiene como objetivo el desarrollo de **Pawcare, aplicación móvil para atención veterinaria a domicilio**, segunda etapa del Proyecto Sociotecnológico iniciado con la plataforma CRM del consultorio veterinario Pawcare (urbanización La Mora I, La Victoria, estado Aragua). El diagnóstico participativo realizado con la Dra. Génesis Conesa y su equipo evidenció que, si bien la plataforma web resolvió la gestión interna del consultorio, dos realidades limitaban su alcance: la **atención a domicilio se realiza en campo, con conectividad intermitente**, y **una parte importante de los usuarios no utiliza computadoras — su único dispositivo de acceso digital es el teléfono**. Como respuesta se construyó una aplicación móvil Android (Expo SDK 56, React Native, TypeScript estricto) cuyo eje arquitectónico es el enfoque **local-first**: los datos residen primero en el dispositivo (base SQLite local) y se **sincronizan con el servidor cuando existe conexión**, garantizando que la atención clínica en campo nunca dependa de la red — incluidas las alarmas de medicación y el sistema de notificaciones, que operan sin conexión. La aplicación consume el API REST del CRM (157 rutas) mediante 10 servicios de dominio y expone 74 pantallas en los dominios público, dueño y administrador. El proceso se gestionó con Scrum en sprints de dos semanas, con desarrollo guiado por pruebas (TDD) y una regla estricta de trabajo sin datos simulados: 24 suites con 108 pruebas de integración se ejecutan contra el backend real. Los resultados demuestran el cumplimiento de los objetivos planificados con una velocity estable de 27 puntos por sprint, y el impacto se valida con la comunidad mediante el Formato de Evaluación de PST provisto por la universidad, aplicado a los usuarios finales.
+La presente investigación tiene como objetivo el desarrollo de **Chepicare, aplicación móvil para atención veterinaria a domicilio**, segunda etapa del Proyecto Sociotecnológico iniciado con la plataforma CRM del consultorio veterinario Chepicare (urbanización La Mora I, La Victoria, estado Aragua). El diagnóstico participativo realizado con la Dra. Génesis Conesa y su equipo evidenció que, si bien la plataforma web resolvió la gestión interna del consultorio, dos realidades limitaban su alcance: la **atención a domicilio se realiza en campo, con conectividad intermitente**, y **una parte importante de los usuarios no utiliza computadoras — su único dispositivo de acceso digital es el teléfono**. Como respuesta se construyó una aplicación móvil Android (Expo SDK 56, React Native, TypeScript estricto) cuyo eje arquitectónico es el enfoque **local-first**: los datos residen primero en el dispositivo (base SQLite local) y se **sincronizan con el servidor cuando existe conexión**, garantizando que la atención clínica en campo nunca dependa de la red — incluidas las alarmas de medicación y el sistema de notificaciones, que operan sin conexión. La aplicación consume el API REST del CRM (157 rutas) mediante 10 servicios de dominio y expone 74 pantallas en los dominios público, dueño y administrador. El proceso se gestionó con Scrum en sprints de dos semanas, con desarrollo guiado por pruebas (TDD) y una regla estricta de trabajo sin datos simulados: 24 suites con 108 pruebas de integración se ejecutan contra el backend real. Los resultados demuestran el cumplimiento de los objetivos planificados con una velocity estable de 27 puntos por sprint, y el impacto se valida con la comunidad mediante el Formato de Evaluación de PST provisto por la universidad, aplicado a los usuarios finales.
 
 **Palabras clave:** aplicación móvil, local-first, sincronización, atención veterinaria a domicilio, React Native, Scrum, desarrollo guiado por pruebas, Investigación Acción Participativa.
 
 # INTRODUCCIÓN
 
-En Venezuela, el teléfono inteligente es el dispositivo digital de mayor penetración: para una parte significativa de la población es, en la práctica, **el único punto de acceso a servicios digitales**, pues no posee ni utiliza computadoras personales. Cualquier solución tecnológica pensada para llegar a la comunidad — y no solo al mostrador de un negocio — debe partir de esa realidad. La primera etapa de este Proyecto Sociotecnológico entregó al consultorio veterinario Pawcare una plataforma web de gestión de relaciones con los clientes (CRM) que digitalizó sus procesos internos; la etapa que documenta este informe lleva ese sistema **al bolsillo de los usuarios**: una aplicación móvil que acompaña al equipo del consultorio en la atención a domicilio y acerca los servicios al dueño de la mascota desde su teléfono.
+En Venezuela, el teléfono inteligente es el dispositivo digital de mayor penetración: para una parte significativa de la población es, en la práctica, **el único punto de acceso a servicios digitales**, pues no posee ni utiliza computadoras personales. Cualquier solución tecnológica pensada para llegar a la comunidad — y no solo al mostrador de un negocio — debe partir de esa realidad. La primera etapa de este Proyecto Sociotecnológico entregó al consultorio veterinario Chepicare una plataforma web de gestión de relaciones con los clientes (CRM) que digitalizó sus procesos internos; la etapa que documenta este informe lleva ese sistema **al bolsillo de los usuarios**: una aplicación móvil que acompaña al equipo del consultorio en la atención a domicilio y acerca los servicios al dueño de la mascota desde su teléfono.
 
 El desafío técnico central no fue estético sino estructural: la atención a domicilio ocurre donde la conectividad es intermitente o inexistente. Por ello, la decisión arquitectónica más importante del proyecto — registrada en el documento de decisión ADR 0001 — fue adoptar un enfoque **local-first**: la aplicación funciona primero con datos locales en el dispositivo y **sincroniza con el servidor cuando hay conexión disponible**, en lugar de exigir red permanente. Este informe final documenta las tres fases del proyecto: el diagnóstico situacional que fundamenta la necesidad (Fase I), la planificación bajo el marco Scrum (Fase II) y los resultados y logros alcanzados, incluyendo el análisis de cumplimiento de objetivos, el rendimiento del equipo y la evaluación de resultados e impacto con la comunidad (Fase III).
 
@@ -32,7 +32,7 @@ El desafío técnico central no fue estético sino estructural: la atención a d
 
 ## Descripción del contexto
 
-El consultorio veterinario Pawcare, dirigido por la Dra. Génesis Conesa, se encuentra ubicado en la urbanización La Mora I, La Victoria, municipio José Félix Ribas, estado Aragua. Ofrece servicios integrales de salud animal — consultas, hospedaje, peluquería canina y **atención a domicilio** — a precios accesibles, atendiendo a familias de distintos estratos socioeconómicos de la ciudad, y participa activamente en campañas de vacunación y jornadas de atención comunitaria. El equipo base lo conforman la Dra. Conesa y su asistente, apoyadas por veterinarios auxiliares en procedimientos especiales.
+El consultorio veterinario Chepicare, dirigido por la Dra. Génesis Conesa, se encuentra ubicado en la urbanización La Mora I, La Victoria, municipio José Félix Ribas, estado Aragua. Ofrece servicios integrales de salud animal — consultas, hospedaje, peluquería canina y **atención a domicilio** — a precios accesibles, atendiendo a familias de distintos estratos socioeconómicos de la ciudad, y participa activamente en campañas de vacunación y jornadas de atención comunitaria. El equipo base lo conforman la Dra. Conesa y su asistente, apoyadas por veterinarios auxiliares en procedimientos especiales.
 
 El diagnóstico participativo de esta etapa se realizó mediante entrevistas a profundidad con la Dra. Conesa y su asistente, observación directa de la operación — incluyendo salidas de atención a domicilio — y talleres de validación de incrementos, siguiendo el enfoque de Investigación Acción Participativa (IAP) que caracterizó todo el proyecto.
 
@@ -42,7 +42,7 @@ La urbanización La Mora I es un sector residencial consolidado de La Victoria, 
 
 ## Antecedente: la plataforma CRM (primera etapa del PST)
 
-La primera etapa del proyecto entregó la plataforma CRM Pawcare (Ruby on Rails 8, React, Inertia.js), que digitalizó la gestión de citas, historias clínicas electrónicas, control de vacunación, comunicación con clientes y registro de pagos del consultorio, con dos portales web (propietario y administración) y 41 requisitos funcionales documentados. Esa plataforma opera correctamente en el mostrador del consultorio; el presente proyecto parte de su API para extender el sistema hacia el campo y hacia el teléfono del usuario.
+La primera etapa del proyecto entregó la plataforma CRM Chepicare (Ruby on Rails 8, React, Inertia.js), que digitalizó la gestión de citas, historias clínicas electrónicas, control de vacunación, comunicación con clientes y registro de pagos del consultorio, con dos portales web (propietario y administración) y 41 requisitos funcionales documentados. Esa plataforma opera correctamente en el mostrador del consultorio; el presente proyecto parte de su API para extender el sistema hacia el campo y hacia el teléfono del usuario.
 
 ## Análisis del problema
 
@@ -76,7 +76,7 @@ Con el CRM web en operación, el diagnóstico participativo identificó una brec
 
 ### Objetivo General
 
-Desarrollar una aplicación móvil **local-first** para el consultorio veterinario Pawcare que extienda la plataforma CRM hacia la atención a domicilio y hacia los teléfonos de los dueños de mascotas, garantizando la operación sin conexión con **sincronización automática cuando exista conectividad**, mediante un enfoque de Investigación Acción Participativa.
+Desarrollar una aplicación móvil **local-first** para el consultorio veterinario Chepicare que extienda la plataforma CRM hacia la atención a domicilio y hacia los teléfonos de los dueños de mascotas, garantizando la operación sin conexión con **sincronización automática cuando exista conectividad**, mediante un enfoque de Investigación Acción Participativa.
 
 ### Objetivos Específicos
 
@@ -101,7 +101,7 @@ El impacto social es directo: democratiza el acceso a los servicios digitales de
 
 **Directa:**
 
-- El equipo del consultorio Pawcare (la Dra. Génesis Conesa, su asistente y los veterinarios auxiliares), que dispone de la historia clínica y la agenda en el teléfono durante la atención a domicilio, con o sin conexión.
+- El equipo del consultorio Chepicare (la Dra. Génesis Conesa, su asistente y los veterinarios auxiliares), que dispone de la historia clínica y la agenda en el teléfono durante la atención a domicilio, con o sin conexión.
 - Los dueños de mascotas atendidos por el consultorio — cientos de familias de La Victoria — que ahora agendan citas, consultan vacunas, historias y pagos **desde su teléfono**, sin necesidad de computadora.
 - Las mascotas, beneficiarias finales de un seguimiento clínico continuo y de esquemas de vacunación al día.
 
@@ -198,7 +198,7 @@ La aplicación expone **74 pantallas** organizadas en cuatro dominios (más dos 
 | Hallazgos de análisis estático y react-doctor al cierre | 0 |
 | Sprints ejecutados / velocity | 4 sprints; 108 puntos completados de 108 comprometidos; promedio 27 |
 | Pull requests integrados con revisión | 3 (#1, #2 y #3) |
-| Repositorio público | github.com/TheDigitalLab-dev/pawcare-mobile |
+| Repositorio público | github.com/TheDigitalLab-dev/chepicare-mobile |
 
 ## Análisis de cumplimiento de objetivos
 
@@ -226,7 +226,7 @@ El impacto esperado y observado se concentra donde el diagnóstico señaló la n
 
 ## Alcance extendido del proyecto
 
-Dado el grado de finalización alcanzado, el equipo realizó una exploración técnica **fuera del alcance del PST** — el agente de inteligencia artificial pawcare-harness (github.com/TheDigitalLab-dev/pawcare-harness) — documentada como spike en el segundo informe parcial y registrada como candidato a evolución futura del producto: un asistente conversacional dentro de la aplicación. No computó puntos en la velocity ni compromete el alcance entregado.
+Dado el grado de finalización alcanzado, el equipo realizó una exploración técnica **fuera del alcance del PST** — el agente de inteligencia artificial chepicare-harness (github.com/TheDigitalLab-dev/chepicare-harness) — documentada como spike en el segundo informe parcial y registrada como candidato a evolución futura del producto: un asistente conversacional dentro de la aplicación. No computó puntos en la velocity ni compromete el alcance entregado.
 
 ## CONCLUSIONES
 
@@ -244,7 +244,7 @@ Dado el grado de finalización alcanzado, el equipo realizó una exploración t�
 4. Publicar la aplicación en una tienda de distribución (o mediante APK firmado de distribución directa) y acompañar el despliegue con una jornada de capacitación a los usuarios del consultorio.
 5. Aplicar periódicamente el Formato de Evaluación de PST de la Comunidad para realimentar el backlog con la experiencia real de uso.
 6. Implementar las **push remotas** (avisos con la app cerrada) conforme al plan 033 documentado en el backend: registro de dispositivos y emisor Expo Push junto a los mailers existentes.
-7. Evaluar, como evolución posterior al PST, la integración del asistente conversacional explorado en pawcare-harness.
+7. Evaluar, como evolución posterior al PST, la integración del asistente conversacional explorado en chepicare-harness.
 
 ## BIBLIOGRAFÍA
 

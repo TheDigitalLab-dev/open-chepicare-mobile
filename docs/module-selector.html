@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PawCare Mobile - Selector de Rutas</title>
+<title>ChepiCare Mobile - Selector de Rutas</title>
 <style>
 :root{--bg:hsl(43,44%,97%);--fg:hsl(210,24%,16%);--card:#fff;--primary:hsl(174,55%,47%);--primary-fg:#fff;--secondary:hsl(174,20%,95%);--secondary-fg:hsl(174,55%,25%);--muted:hsl(42,25%,92%);--muted-fg:hsl(215,16%,47%);--border:hsl(174,20%,88%);--success:hsl(142,76%,36%);--danger:hsl(0,84%,60%);--warning:hsl(38,92%,50%);--info:hsl(199,89%,48%);--ring:hsl(174,55%,47%);--r:.5rem}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -63,7 +63,7 @@ h1{font-size:1.5rem;font-weight:700;margin-bottom:.25rem}
 </style>
 </head>
 <body>
-<h1>PawCare Mobile &mdash; Selector de Rutas</h1>
+<h1>ChepiCare Mobile &mdash; Selector de Rutas</h1>
 <p class="sub">Todas las 332 rutas de rails-routes.txt agrupadas por controlador. Selecciona el modulo completo o rutas individuales. Exporta a JSON con &quot;Copiar JSON&quot;.</p>
 <div class="bar" id="bar">
   <span class="st"><span class="dot dot-t"></span>Controladores: <span id="s-ctrl">0</span></span>
@@ -165,8 +165,8 @@ const DATA = [
       },
       {
         "method": "GET",
-        "path": "/pawcare",
-        "controller": "pages#pawcare",
+        "path": "/chepicare",
+        "controller": "pages#chepicare",
         "included": false
       },
       {
@@ -2571,7 +2571,7 @@ function stats(){
 }
 
 function buildJSON(){
-  var res = {app:"pawcare-mobile",exported_at:new Date().toISOString(),summary:{total_controllers:0,total_routes:0,routes_included:0,routes_excluded:0},controllers:[]};
+  var res = {app:"chepicare-mobile",exported_at:new Date().toISOString(),summary:{total_controllers:0,total_routes:0,routes_included:0,routes_excluded:0},controllers:[]};
   DATA.forEach(function(g){
     var inc=g.routes.filter(function(r){return r.included;});
     var exc=g.routes.filter(function(r){return !r.included;});

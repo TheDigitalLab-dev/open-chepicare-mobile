@@ -1,12 +1,9 @@
 /**
- * Esquemas de deep link de la app.
- *
- * `chepicare://` es el principal desde el cambio de nombre. `pawcare://` sigue
- * registrado y aceptado: los QR de emparejamiento y los enlaces ya emitidos (y
- * los servidores que aún no se actualizaron) lo usan. El orden importa: el
- * primero es el que la app genera.
+ * Esquemas de deep link de la app: `chepicare://` (QR de emparejamiento y
+ * enlaces de recuperación de contraseña que emite el servidor). El primero es
+ * el que la app genera.
  */
-export const DEEP_LINK_SCHEMES = ['chepicare', 'pawcare'] as const;
+export const DEEP_LINK_SCHEMES = ['chepicare'] as const;
 
 export const DEEP_LINK_PREFIXES = DEEP_LINK_SCHEMES.map((scheme) => `${scheme}://`);
 

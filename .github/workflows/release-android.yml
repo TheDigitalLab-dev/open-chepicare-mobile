@@ -12,15 +12,14 @@
 #
 # Firma (opcional pero recomendada antes de distribuir):
 #   1. Generar un keystore UNA vez y guardarlo en un lugar seguro — si se
-#      pierde, no se pueden publicar actualizaciones con la misma firma. Si ya
-#      existe uno (p. ej. alias `pawcare`), NO se regenera: la firma y el
-#      package (com.pawcare.mobile) son la identidad de la app instalada:
-#        keytool -genkeypair -v -keystore pawcare-release.keystore \
-#          -alias pawcare -keyalg RSA -keysize 2048 -validity 10000
+#      pierde, no se pueden publicar actualizaciones con la misma firma (junto
+#      con el package com.chepicare.mobile, es la identidad de la app instalada):
+#        keytool -genkeypair -v -keystore chepicare-release.keystore \
+#          -alias chepicare -keyalg RSA -keysize 2048 -validity 10000
 #   2. Crear estos secrets del repositorio:
-#        ANDROID_KEYSTORE_BASE64  → base64 -w0 pawcare-release.keystore
+#        ANDROID_KEYSTORE_BASE64  → base64 -w0 chepicare-release.keystore
 #        ANDROID_KEYSTORE_PASSWORD
-#        ANDROID_KEY_ALIAS        (p. ej. pawcare)
+#        ANDROID_KEY_ALIAS        (p. ej. chepicare)
 #        ANDROID_KEY_PASSWORD
 #   Sin estos secrets el workflow igual compila y publica, pero el APK queda
 #   firmado con el keystore debug del template (sirve para probar en emulador

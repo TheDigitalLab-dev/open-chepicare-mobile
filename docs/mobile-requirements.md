@@ -1,4 +1,4 @@
-# PawCare Mobile — Requisitos funcionales y no funcionales
+# ChepiCare Mobile — Requisitos funcionales y no funcionales
 
 > Basado en [mobile-routes.md](./mobile-routes.md) · 157 rutas API · App movil **Android** (Expo / React Native)
 
@@ -218,7 +218,7 @@ El dueno debe poder listar, crear, editar, eliminar sus mascotas y gestionar la 
 Alta
 
 **Justificacion**  
-Entidad central del ecosistema PawCare. Rutas: `GET /my-pets`, `GET /pets`, `GET /pets/:id`, `GET /pets/new`, `GET /pets/:id/edit`, `POST /pets`, `PATCH /pets/:id`, `PUT /pets/:id`, `DELETE /pets/:id`, `POST /pets/:id/photo`, `DELETE /pets/:id/photo`.
+Entidad central del ecosistema ChepiCare. Rutas: `GET /my-pets`, `GET /pets`, `GET /pets/:id`, `GET /pets/new`, `GET /pets/:id/edit`, `POST /pets`, `PATCH /pets/:id`, `PUT /pets/:id`, `DELETE /pets/:id`, `POST /pets/:id/photo`, `DELETE /pets/:id/photo`.
 
 **Criterios de aceptacion**
 

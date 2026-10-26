@@ -154,24 +154,6 @@ describe('caché local-first', () => {
     expect(CLINIC_CONFIG_STORAGE_KEY).toBe('chepicare.clinic_config');
   });
 
-  it('arranca sin red con la configuración guardada por una versión PawCare', async () => {
-    // La caché real del último inicio, tal como la guardaba la versión PawCare.
-    await authService.login(OWNER.login, OWNER.password);
-    await authService.logout();
-    const saved = await AsyncStorage.getItem(CLINIC_CONFIG_STORAGE_KEY);
-    expect(saved).not.toBeNull();
-    await AsyncStorage.setItem('pawcare.clinic_config', saved!);
-    await AsyncStorage.removeItem(CLINIC_CONFIG_STORAGE_KEY);
-    forgetClinicConfig();
-
-    const restored = await restoreClinicConfig();
-
-    expect(restored?.time_zone).toBe(general.timezone);
-    expect(getClinicTimeZone()).toBe(general.timezone);
-    expect(await AsyncStorage.getItem('pawcare.clinic_config')).toBeNull();
-    expect(await AsyncStorage.getItem(CLINIC_CONFIG_STORAGE_KEY)).not.toBeNull();
-  });
-
   it('una caché corrupta se ignora sin lanzar', async () => {
     await AsyncStorage.setItem(CLINIC_CONFIG_STORAGE_KEY, '{no es json');
 

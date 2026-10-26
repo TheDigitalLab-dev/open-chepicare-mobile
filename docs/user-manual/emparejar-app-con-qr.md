@@ -1,6 +1,6 @@
 # Conectar la app a tu clínica con un código QR
 
-La app ChepiCare (antes PawCare) puede conectarse al servidor de tu clínica (por ejemplo, una
+La app ChepiCare puede conectarse al servidor de tu clínica (por ejemplo, una
 instalación propia de la versión open source) escaneando un código QR. Sirve
 tanto para el **personal de la clínica** (veterinarios y administradores) como
 para los **propietarios de mascotas**: la app guarda la dirección del servidor,
@@ -55,8 +55,7 @@ Si ya tenías una sesión abierta con otra cuenta, al emparejar la app la cierra
 en su servidor y borra del teléfono los datos guardados de esa cuenta (incluidos
 los cambios sin sincronizar y las alarmas) antes de abrir la nueva.
 
-También puedes abrir el enlace `chepicare://pair?...` (o `pawcare://pair?...`, el
-que generan los servidores y QR anteriores) del código desde el teléfono
+También puedes abrir el enlace `chepicare://pair?...` del código desde el teléfono
 (sin sesión abierta): la app lo canjea igual que si lo escanearas.
 
 ## Dispositivos conectados y revocación

@@ -50,7 +50,7 @@ const totalIncluded = SCOPE_ORDER.reduce(
 
 // --- Markdown ---
 const md = [];
-md.push("# PawCare Mobile — Rutas API");
+md.push("# ChepiCare Mobile — Rutas API");
 md.push("");
 md.push(
   `> App: \`${data.app}\` · Exportado: ${data.exported_at} · **${totalIncluded} rutas** seleccionadas para la app movil`
@@ -133,7 +133,7 @@ const html = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PawCare Mobile — Rutas API</title>
+<title>ChepiCare Mobile — Rutas API</title>
 <style>
 :root{--bg:hsl(43,44%,97%);--fg:hsl(210,24%,16%);--card:#fff;--primary:hsl(174,55%,47%);--primary-fg:#fff;--secondary:hsl(174,20%,95%);--secondary-fg:hsl(174,55%,25%);--muted:hsl(42,25%,92%);--muted-fg:hsl(215,16%,47%);--border:hsl(174,20%,88%);--success:hsl(142,76%,36%);--danger:hsl(0,84%,60%);--warning:hsl(38,92%,50%);--info:hsl(199,89%,48%);--r:.5rem}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -167,7 +167,7 @@ h1{font-size:1.5rem;font-weight:700;margin-bottom:.25rem}
 </style>
 </head>
 <body>
-<h1>PawCare Mobile &mdash; Rutas API</h1>
+<h1>ChepiCare Mobile &mdash; Rutas API</h1>
 <p class="sub">App: <code>${esc(data.app)}</code> &middot; Exportado: ${esc(data.exported_at)} &middot; <strong>${totalIncluded} rutas</strong> seleccionadas para la app movil</p>
 <div class="bar">
   ${scopeCounts}

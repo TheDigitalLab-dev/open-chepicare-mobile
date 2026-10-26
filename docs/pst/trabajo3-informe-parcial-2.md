@@ -1,6 +1,6 @@
 # Informe Parcial de Ejecución N.° 2
 
-El presente documento constituye el **segundo informe parcial de ejecución** del Proyecto Sociotecnológico **Pawcare: App móvil para atención veterinaria a domicilio**, y actualiza los soportes de la gestión ágil del equipo presentados en el primer informe parcial: entregables por sprint, reporte de velocity, retrospectivas, reuniones de planificación y seguimiento, mejora continua y demostraciones. El foco de esta segunda entrega es **mostrar el avance**: el grado de finalización alcanzado por el producto, la publicación de los repositorios de código y una exploración técnica realizada fuera del alcance del proyecto que el equipo registra como posible siguiente paso. El corte del informe es el **14 de julio de 2026**, durante la ejecución del sprint 4. Toda la información es verificable en los repositorios públicos del proyecto.
+El presente documento constituye el **segundo informe parcial de ejecución** del Proyecto Sociotecnológico **Chepicare: App móvil para atención veterinaria a domicilio**, y actualiza los soportes de la gestión ágil del equipo presentados en el primer informe parcial: entregables por sprint, reporte de velocity, retrospectivas, reuniones de planificación y seguimiento, mejora continua y demostraciones. El foco de esta segunda entrega es **mostrar el avance**: el grado de finalización alcanzado por el producto, la publicación de los repositorios de código y una exploración técnica realizada fuera del alcance del proyecto que el equipo registra como posible siguiente paso. El corte del informe es el **14 de julio de 2026**, durante la ejecución del sprint 4. Toda la información es verificable en los repositorios públicos del proyecto.
 
 # Parte I. Marco de Trabajo y Repositorios
 
@@ -14,8 +14,8 @@ El código del proyecto está publicado en GitHub, bajo la organización TheDigi
 
 | Repositorio | Contenido | URL |
 |---|---|---|
-| pawcare-mobile | Aplicación móvil del proyecto (Expo SDK 56 / React Native / TypeScript): código fuente, pruebas de integración, documentación de diseño y entregables académicos. **Este es el producto del PST.** | https://github.com/TheDigitalLab-dev/pawcare-mobile |
-| pawcare-harness | Exploración técnica **fuera del alcance del PST** (ver Parte VII): agente de inteligencia artificial que opera la API del consultorio. | https://github.com/TheDigitalLab-dev/pawcare-harness |
+| chepicare-mobile | Aplicación móvil del proyecto (Expo SDK 56 / React Native / TypeScript): código fuente, pruebas de integración, documentación de diseño y entregables académicos. **Este es el producto del PST.** | https://github.com/TheDigitalLab-dev/chepicare-mobile |
+| chepicare-harness | Exploración técnica **fuera del alcance del PST** (ver Parte VII): agente de inteligencia artificial que opera la API del consultorio. | https://github.com/TheDigitalLab-dev/chepicare-harness |
 
 La docente guía puede auditar en el primer repositorio cada entregable citado en este informe y en el anterior: historial de commits, ramas de trabajo, pull requests (#1 y #2) y el hook de calidad pre-push.
 
@@ -42,7 +42,7 @@ El primer informe parcial reportó 13 puntos completados en el sprint 4. Al pres
 | Informes parciales del PST N.° 1 y N.° 2, con soportes de la gestión Scrum | docs/pst | 2 | Completado |
 | **Total del sprint al corte** | | **15** | |
 
-Adicionalmente, durante este sprint el equipo realizó una **exploración técnica fuera del alcance** (el agente pawcare-harness, Parte VII), que por disciplina de gestión **no computa puntos** en la velocity del producto.
+Adicionalmente, durante este sprint el equipo realizó una **exploración técnica fuera del alcance** (el agente chepicare-harness, Parte VII), que por disciplina de gestión **no computa puntos** en la velocity del producto.
 
 # Parte III. Reporte de Velocity del Equipo
 
@@ -109,7 +109,7 @@ En el seguimiento del 9 de julio se presentó al equipo el resultado del spike d
 | 5 jun | 1 | Demo navegable de la interfaz (maquetas, tema claro/oscuro). | Realizada |
 | 19 jun | 2 | Aplicación en emulador Android contra el backend real: flujos de mascotas, citas, pagos e historia clínica. | Realizada |
 | 3 jul | 3 | Selector de servidor autoalojado con verificación de salud y arranque con base local SQLite (F1). | Realizada |
-| 9 jul | 4 | Demostración interna del spike pawcare-harness: conversación con el agente operando la API del consultorio con confirmación humana. | Realizada (interna) |
+| 9 jul | 4 | Demostración interna del spike chepicare-harness: conversación con el agente operando la API del consultorio con confirmación humana. | Realizada (interna) |
 | 17 jul | 4 | Listas virtualizadas con volúmenes reales de datos; cierre del sprint. | Prevista |
 
 # Parte VII. Grado de Avance del Producto
@@ -127,13 +127,13 @@ Indicadores objetivos de finalización de la aplicación móvil al corte:
 
 En términos globales, el equipo estima el producto en un **≈ 85 % de finalización** respecto al alcance del PST: la funcionalidad en línea está completa y verificada en los cuatro dominios, y el trabajo restante se concentra en las fases F2–F4 de la arquitectura offline-first (cola de escrituras y sincronización diferida), la integración continua remota y las pruebas E2E automatizadas.
 
-# Parte VIII. Exploración Fuera de Alcance: el Agente pawcare-harness
+# Parte VIII. Exploración Fuera de Alcance: el Agente chepicare-harness
 
-Dado el grado de finalización alcanzado por la aplicación móvil, en el seguimiento del 9 de julio el equipo conversó sobre los posibles siguientes pasos del producto más allá del alcance del PST. De esa conversación surgió un **spike técnico** materializado en el repositorio **pawcare-harness** (https://github.com/TheDigitalLab-dev/pawcare-harness), que el equipo declara y documenta expresamente **fuera del alcance del proyecto actual**:
+Dado el grado de finalización alcanzado por la aplicación móvil, en el seguimiento del 9 de julio el equipo conversó sobre los posibles siguientes pasos del producto más allá del alcance del PST. De esa conversación surgió un **spike técnico** materializado en el repositorio **chepicare-harness** (https://github.com/TheDigitalLab-dev/chepicare-harness), que el equipo declara y documenta expresamente **fuera del alcance del proyecto actual**:
 
 - **Qué es**: un servicio Node.js + TypeScript que expone un **agente de inteligencia artificial multi-modelo** (Anthropic, OpenAI, Groq) capaz de operar la API Rails del consultorio **siempre con la identidad del usuario final**: el mismo token de sesión de la app móvil se propaga en cada operación, de modo que el backend sigue siendo la única autoridad de permisos.
 - **Capacidades implementadas en el spike**: chat con streaming (SSE) pensado para integrarse en la app móvil y la web; herramientas por rol (22 para el dueño, 16 clínicas, 9 de operaciones); **confirmación humana obligatoria** para toda escritura (token de un solo uso con expiración); registro de auditoría inmutable; presupuesto diario de tokens y limitación de tasa por usuario; transcripción de voz; y un servidor MCP para herramientas de desarrollo. Incluye pruebas automatizadas, contenedor Docker e integración continua.
-- **Relación con el PST**: el spike documenta además los cambios que requerirían los otros repositorios (incluido pawcare-mobile) para una eventual integración. Ninguno de esos cambios se ejecutará dentro del PST: el equipo lo registra como **candidato a siguiente paso** del producto — un asistente conversacional dentro de la app para que el dueño consulte citas, vacunas y pagos en lenguaje natural — sujeto a los lineamientos de la docente guía y a la culminación del alcance comprometido.
+- **Relación con el PST**: el spike documenta además los cambios que requerirían los otros repositorios (incluido chepicare-mobile) para una eventual integración. Ninguno de esos cambios se ejecutará dentro del PST: el equipo lo registra como **candidato a siguiente paso** del producto — un asistente conversacional dentro de la app para que el dueño consulte citas, vacunas y pagos en lenguaje natural — sujeto a los lineamientos de la docente guía y a la culminación del alcance comprometido.
 - **Disciplina de gestión**: conforme al acuerdo de la retrospectiva parcial del sprint 4, este trabajo no computa puntos en la velocity del producto y queda registrado como spike con resultado documentado (8 commits, 8–9 de julio de 2026).
 
 # Parte IX. Próximos Pasos
@@ -142,4 +142,4 @@ Dado el grado de finalización alcanzado por la aplicación móvil, en el seguim
 2. Planificar el sprint 5 (lunes 20 de julio) priorizando la fase F2 del ADR 0001: cola de escrituras y sincronización diferida.
 3. Incorporar la integración continua remota (GitHub Actions) con el backend contenerizado, conforme a la recomendación del informe técnico de verificación (eval 4).
 4. Añadir pruebas E2E automatizadas de los flujos críticos (inicio de sesión, agendamiento, registro de pago).
-5. Mantener en el radar, fuera de alcance, la eventual integración del agente conversacional (pawcare-harness) como evolución del producto posterior al PST.
+5. Mantener en el radar, fuera de alcance, la eventual integración del agente conversacional (chepicare-harness) como evolución del producto posterior al PST.

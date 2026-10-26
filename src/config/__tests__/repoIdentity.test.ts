@@ -1,13 +1,10 @@
 /**
- * El repo se renombró a `open-chepicare-mobile` (antes `pawcare-mobile`) y la
- * marca pasó de PawCare a ChepiCare. Este test fija qué cambia y qué NO:
- * - cambia lo visible: nombre mostrado de la app, textos de permisos, APK
- *   publicado y el esquema principal de deep link (`chepicare://`);
- * - se conserva la identidad de la app instalada: `expo.slug` y
- *   `android.package` (cambiarlos crea OTRA app y rompe las actualizaciones), y
- *   el esquema `pawcare://` sigue registrado para los QR ya emitidos, y el
- *   archivo SQLite local conserva su nombre (ahí están los datos sin sincronizar).
+ * Identidad del repo `open-chepicare-mobile` y de la app ChepiCare: nombre
+ * visible, identificadores técnicos (slug de Expo, package de Android, archivo
+ * SQLite), esquema de deep link `chepicare://` y textos de permisos. El nombre
+ * anterior de la marca no aparece en ningún archivo ni ruta versionados.
  */
+import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -21,6 +18,9 @@ async function expoConfig() {
   return JSON.parse(await read('app.json')).expo;
 }
 
+// Nombre anterior de la marca, armado por partes para que este archivo no lo contenga.
+const OLD_BRAND = ['paw', 'care'].join('');
+
 describe('identidad del repo open-chepicare-mobile', () => {
   it('usa el nombre nuevo en package.json', async () => {
     expect(JSON.parse(await read('package.json')).name).toBe('open-chepicare-mobile');
@@ -30,22 +30,22 @@ describe('identidad del repo open-chepicare-mobile', () => {
     expect((await expoConfig()).name).toBe('ChepiCare');
   });
 
-  it('conserva los identificadores técnicos de la app instalada', async () => {
+  it('usa los identificadores técnicos de ChepiCare', async () => {
     const expo = await expoConfig();
-    expect(expo.slug).toBe('pawcare-mobile');
-    expect(expo.android.package).toBe('com.pawcare.mobile');
+    expect(expo.slug).toBe('chepicare-mobile');
+    expect(expo.android.package).toBe('com.chepicare.mobile');
     expect(expo.ios?.bundleIdentifier).toBeUndefined();
     expect(expo.owner).toBeUndefined();
     expect(expo.extra?.eas?.projectId).toBeUndefined();
   });
 
-  it('conserva el archivo SQLite con los datos locales (pawcare.db)', () => {
-    expect(DATABASE_NAME).toBe('pawcare.db');
+  it('guarda los datos locales en chepicare.db', () => {
+    expect(DATABASE_NAME).toBe('chepicare.db');
   });
 
-  it('registra chepicare:// (principal) y pawcare:// (QR ya emitidos)', async () => {
-    expect(DEEP_LINK_SCHEMES).toEqual(['chepicare', 'pawcare']);
-    expect(DEEP_LINK_PREFIXES).toEqual(['chepicare://', 'pawcare://']);
+  it('registra solo el esquema chepicare://', async () => {
+    expect(DEEP_LINK_SCHEMES).toEqual(['chepicare']);
+    expect(DEEP_LINK_PREFIXES).toEqual(['chepicare://']);
     expect((await expoConfig()).scheme).toEqual(DEEP_LINK_SCHEMES);
   });
 
@@ -61,8 +61,22 @@ describe('identidad del repo open-chepicare-mobile', () => {
     expect(texts.length).toBe(3);
     for (const text of texts) {
       expect(text).toMatch(/^ChepiCare /);
-      expect(text).not.toMatch(/pawcare/i);
+      expect(text.toLowerCase()).not.toContain(OLD_BRAND);
     }
+  });
+  it('ningún archivo versionado menciona el nombre anterior (ni en su ruta)', () => {
+    const git = (args: string[]) =>
+      execFileSync('git', args, { cwd: process.cwd(), encoding: 'utf8' });
+    const paths = git(['ls-files']).split('\n');
+    expect(paths.filter((file) => file.toLowerCase().includes(OLD_BRAND))).toEqual([]);
+    // `git grep` sale con 1 cuando no hay coincidencias (lo esperado).
+    let matches = '';
+    try {
+      matches = git(['grep', '-I', '-i', '-l', OLD_BRAND]);
+    } catch (error) {
+      if ((error as { status?: number }).status !== 1) throw error;
+    }
+    expect(matches.split('\n').filter(Boolean)).toEqual([]);
   });
 });
 
@@ -81,8 +95,7 @@ describe('workflow de release Android', () => {
     expect(
       workflow.match(/gh release create .* chepicare\.apk open-chepicare-mobile\.apk/g),
     ).toHaveLength(2);
-    expect(workflow).not.toMatch(/(?<!open-chepicare-)pawcare-mobile\.apk/);
-    expect(workflow).not.toMatch(/--title "Pawcare/);
+    expect(workflow.toLowerCase()).not.toContain(OLD_BRAND);
     expect(workflow.match(/--title "ChepiCare móvil/g)).toHaveLength(2);
   });
 
