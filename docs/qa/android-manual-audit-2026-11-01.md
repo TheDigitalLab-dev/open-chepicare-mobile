@@ -151,6 +151,28 @@ El transporte de archivos sigue la [documentación de Expo SDK 56](https://docs.
   el límite de logins y primitivas de streams/tareas de Node para respuestas
   grandes. No se desactiva el límite de Rails ni se sustituyen sus respuestas.
 
+### Revalidación con base aislada
+
+La base compartida de desarrollo tiene columnas de autenticación `token_digest`,
+pero esta rama utiliza `token`. Esa combinación devuelve HTTP 500 al iniciar
+sesión; no se debe usar para validar este contrato ni restaurar su esquema
+encima de los datos existentes.
+
+La revalidación usa Rails de la rama del PR del backend, con datos reales
+sembrados en `chepicare_android_audit_development`, en el puerto 3001:
+
+```sh
+EXPO_PUBLIC_API_BASE_URL=http://localhost:3001 pnpm test --runInBand
+```
+
+Resultado de la revalidación: **100 suites y 542 pruebas aprobadas**, salida 0.
+
+Rails debe arrancar con `PORT=3001` para que el agente de IA utilice también
+`http://127.0.0.1:3001/mcp`; indicar únicamente `rails server -p 3001` deja
+el puerto MCP predeterminado en 3000. RSpec utiliza una base independiente,
+`chepicare_android_audit_test`, sin seeds de demo que interfieran con sus factories.
+El emulador se cerró después de la revisión manual.
+
 ## Alcance de la revisión manual
 
 Abrir una pantalla no equivale a ejecutar todas sus operaciones. Se inspeccionaron
