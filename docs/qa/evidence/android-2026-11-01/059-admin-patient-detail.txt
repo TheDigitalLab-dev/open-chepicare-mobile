@@ -1,0 +1,31 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Max' [497,170][583,231]
+TextView 'Max' [484,563][596,641]
+TextView 'Perro · Labrador' [407,657][673,708]
+ViewGroup 'Especie, Perro' [42,782][1038,957] DISABLED
+TextView 'Especie' [76,816][1004,870]
+TextView 'Perro' [76,875][1004,922]
+ViewGroup 'Raza, Labrador' [42,988][1038,1163] DISABLED
+TextView 'Raza' [76,1022][1004,1076]
+TextView 'Labrador' [76,1081][1004,1128]
+ViewGroup 'Sexo, Masculino' [42,1194][1038,1369] DISABLED
+TextView 'Sexo' [76,1228][1004,1282]
+TextView 'Masculino' [76,1287][1004,1334]
+ViewGroup 'Nacimiento, 14/10/2024' [42,1400][1038,1575] DISABLED
+TextView 'Nacimiento' [76,1434][1004,1488]
+TextView '14/10/2024' [76,1493][1004,1540]
+ViewGroup 'Características, Muy amigable, le encanta jugar' [42,1606][1038,1781] DISABLED
+TextView 'Características' [76,1640][1004,1694]
+TextView 'Muy amigable, le encanta jugar' [76,1699][1004,1746]
+Button 'Editar paciente' [42,1833][1038,1959]
+TextView 'Editar paciente' [398,1868][682,1925]
+Button 'Perfil médico' [42,1980][1038,2106]
+TextView 'Perfil médico' [415,2015][666,2072]
+View '\uf382, Inicio' [0,2209][270,2337]
+TextView 'Inicio' [102,2295][168,2332]
+View '\uf499, Pacientes' [270,2209][540,2337]
+TextView 'Pacientes' [345,2295][464,2332]
+View '\uf1cf, Agenda' [540,2209][810,2337]
+TextView 'Agenda' [629,2295][721,2332]
+View '\uf2ce, Más' [810,2209][1080,2337]
+TextView 'Más' [918,2295][971,2332]

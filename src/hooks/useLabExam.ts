@@ -3,19 +3,22 @@
  * documentos o la galería) y cargar los resultados ("parámetro → valor"), en
  * el servidor. Solo un examen pendiente o en proceso admite cambios.
  *
- * El listado de consultas no incluye los adjuntos: se muestran los que se
- * subieron en esta pantalla (la clínica los ve en la ficha del examen).
+ * Lee la ficha autorizada del examen y sus adjuntos persistidos; propietario
+ * y personal autorizado ven los mismos archivos al volver a abrirla.
  */
 import { useCallback, useMemo, useState } from 'react';
 
 import { useAsync } from '@/hooks/useAsync';
 import { pickDocuments, pickImages } from '@/services/filePicker';
+import { updateLabExamResults, uploadLabExamFile } from '@/services/medical';
+import { ApiError, toApiError } from '@/types/api';
 import {
-  listConsultations,
-  updateLabExamResults,
-  uploadLabExamFile,
-} from '@/services/medical';
-import { type ApiError, toApiError } from '@/types/api';
+  getOwnerLabExam,
+  getStaffLabExam,
+  updateStaffLabExam,
+  uploadStaffLabExamFile,
+} from '@/services/labExams';
+import type { LabExamAudience, LabExamDetail } from '@/types/labExams';
 import type { LabExam, LabExamAttachment } from '@/types/models';
 import type { UploadSource } from '@/types/uploads';
 import { type LabResultRow, resultRowsFrom, resultsFromRows } from '@/utils/labResults';
@@ -38,7 +41,7 @@ function nextKey(rows: EditableResultRow[]): number {
 }
 
 export interface LabExamState {
-  exam: LabExam | null;
+  exam: LabExamDetail | null;
   loading: boolean;
   error: ApiError | null;
   notFound: boolean;
@@ -65,14 +68,36 @@ export function useLabExam(
   petId: number,
   consultationId: number,
   examId: number,
+  audience: LabExamAudience = 'owner',
 ): LabExamState {
-  const { data, loading, error, reload } = useAsync(() => listConsultations(petId));
-  const exam =
-    (data ?? [])
-      .find((c) => c.id === consultationId)
-      ?.lab_exams.find((e) => e.id === examId) ?? null;
+  const { data, loading, error, reload } = useAsync(async () => {
+    try {
+      const detail =
+        audience === 'staff'
+          ? await getStaffLabExam(consultationId, examId)
+          : await getOwnerLabExam(examId);
+      return detail.pet_id === petId && detail.consultation_id === consultationId
+        ? detail
+        : null;
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.kind === 'notFound') return null;
+      throw cause;
+    }
+  });
+  const exam = data ?? null;
 
-  const [uploads, setUploads] = useState<LabExamAttachment[]>([]);
+  const [newUploads, setUploads] = useState<LabExamAttachment[]>([]);
+  const uploads = useMemo(
+    () => [
+      ...new Map(
+        [...(exam?.attachments ?? []), ...newUploads].map((attachment) => [
+          attachment.id,
+          attachment,
+        ]),
+      ).values(),
+    ],
+    [exam, newUploads],
+  );
   const [uploading, setUploading] = useState<LabExamState['uploading']>(null);
   // Las filas parten de los resultados guardados hasta que el usuario edita.
   const [edited, setEdited] = useState<EditableResultRow[] | null>(null);
@@ -93,7 +118,9 @@ export function useLabExam(
       const settled = await Promise.allSettled(
         files.map(async (file) => {
           try {
-            return await uploadLabExamFile(examId, file);
+            return audience === 'staff'
+              ? await uploadStaffLabExamFile(consultationId, examId, file)
+              : await uploadLabExamFile(examId, file);
           } finally {
             done += 1;
             setUploading({ done: Math.min(done, files.length - 1), total: files.length });
@@ -122,7 +149,7 @@ export function useLabExam(
         );
       }
     },
-    [examId],
+    [audience, consultationId, examId],
   );
 
   const pickAndUpload = useCallback(
@@ -185,7 +212,9 @@ export function useLabExam(
     }
     setSaving(true);
     try {
-      await updateLabExamResults(examId, built.results);
+      if (audience === 'staff')
+        await updateStaffLabExam(consultationId, examId, { results: built.results });
+      else await updateLabExamResults(examId, built.results);
       // Lo guardado pasa a ser la base del formulario (y del estado del examen).
       await reload();
       setEdited(null);
@@ -195,15 +224,19 @@ export function useLabExam(
     } finally {
       setSaving(false);
     }
-  }, [rows, examId, reload]);
+  }, [rows, audience, consultationId, examId, reload]);
 
   return {
     exam,
     loading,
     error,
-    notFound: data !== null && exam === null,
+    notFound: !loading && error === null && exam === null,
     reload,
-    editable: exam !== null && EDITABLE.includes(exam.status),
+    editable:
+      exam !== null &&
+      (audience === 'staff'
+        ? exam.status !== 'cancelled'
+        : EDITABLE.includes(exam.status)),
     uploads,
     uploading,
     uploadFiles,

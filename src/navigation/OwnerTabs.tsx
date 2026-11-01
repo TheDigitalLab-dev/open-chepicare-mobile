@@ -97,7 +97,10 @@ function OwnerPetsStack() {
 const ApptStack = createNativeStackNavigator<OwnerAppointmentsStackParamList>();
 function OwnerAppointmentsStack() {
   return (
-    <ApptStack.Navigator screenOptions={{ headerShown: false }}>
+    <ApptStack.Navigator
+      initialRouteName="OwnerCalendar"
+      screenOptions={{ headerShown: false }}
+    >
       <ApptStack.Screen name="AppointmentsList" component={AppointmentsListScreen} />
       <ApptStack.Screen name="AppointmentDetail" component={AppointmentDetailScreen} />
       <ApptStack.Screen name="AppointmentWizard" component={AppointmentWizardScreen} />

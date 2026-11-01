@@ -1,0 +1,7 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Términos y condiciones' [302,170][778,231]
+TextView '1. Aceptación de los términos\nAl usar la aplicación ChepiCare aceptas los presentes términos y condiciones. Si no estás de acuerdo, te pedimos abstenerte de utilizar nuestros servicios.' [42,317][1038,548]
+TextView '2. Uso de los servicios\nLos servicios veterinarios, la tienda y el programa de adopción se ofrecen de buena fe. Te comprometes a proporcionar información veraz y a usar la plataforma de manera responsable.' [42,579][1038,866]
+TextView '3. Pagos y comprobantes\nLos pedidos y servicios deben pagarse según los medios indicados. El comprobante de pago será validado por nuestro equipo antes de confirmar cualquier pedido.' [42,898][1038,1129]
+TextView '4. Adopción responsable\nLa adopción está sujeta a la evaluación de requisitos. ChepiCare se reserva el derecho de aprobar o rechazar solicitudes en beneficio del bienestar animal.' [42,1160][1038,1391]
+TextView '5. Modificaciones\nPodemos actualizar estos términos en cualquier momento. Los cambios entrarán en vigor al publicarse en la aplicación.' [42,1423][1038,1598]

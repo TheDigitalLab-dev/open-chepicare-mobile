@@ -7,6 +7,8 @@
  *    AsyncStorage), porque no existen en el entorno Node de Jest.
  */
 module.exports = {
+  // Las integraciones comparten backend, cuentas y almacenamiento nativo local.
+  maxWorkers: 1,
   preset: 'jest-expo',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {

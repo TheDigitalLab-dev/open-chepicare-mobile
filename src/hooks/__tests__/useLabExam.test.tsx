@@ -82,6 +82,7 @@ describe('useLabExam', () => {
 
   it('si un archivo falla, sube los demás y dice cuál falló', async () => {
     const { result } = await renderExam();
+    const previous = result.current.uploads.map((file) => file.filename);
 
     await act(() =>
       result.current.uploadFiles([
@@ -90,15 +91,19 @@ describe('useLabExam', () => {
       ]),
     );
 
-    expect(result.current.uploads.map((u) => u.filename)).toEqual(['orina.pdf']);
+    expect(result.current.uploads.map((u) => u.filename)).toEqual([
+      ...previous,
+      'orina.pdf',
+    ]);
     expect(result.current.actionError).toMatch(/^No se pudo subir «nota\.txt»: /);
   });
 
   it('elige documentos con el selector del sistema; cancelar no hace nada', async () => {
     const { result } = await renderExam();
+    const previous = result.current.uploads;
 
     await act(() => result.current.uploadFromDocuments());
-    expect(result.current.uploads).toEqual([]);
+    expect(result.current.uploads).toEqual(previous);
     expect(result.current.actionError).toBeNull();
 
     const file = new Blob([SAMPLE_PDF_BYTES], { type: 'application/pdf' });
@@ -115,11 +120,15 @@ describe('useLabExam', () => {
     });
     await act(() => result.current.uploadFromDocuments());
 
-    expect(result.current.uploads.map((u) => u.filename)).toEqual(['quimica.pdf']);
+    expect(result.current.uploads.map((u) => u.filename)).toEqual([
+      ...previous.map((file) => file.filename),
+      'quimica.pdf',
+    ]);
   });
 
   it('elige fotos de la galería', async () => {
     const { result } = await renderExam();
+    const previous = result.current.uploads.map((file) => file.filename);
     const file = new Blob([SAMPLE_PNG_BYTES], { type: 'image/png' });
     jest.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValueOnce({
       canceled: false,
@@ -137,7 +146,10 @@ describe('useLabExam', () => {
 
     await act(() => result.current.uploadFromGallery());
 
-    expect(result.current.uploads.map((u) => u.filename)).toEqual(['muestra.png']);
+    expect(result.current.uploads.map((u) => u.filename)).toEqual([
+      ...previous,
+      'muestra.png',
+    ]);
   });
 
   it('valida los resultados en el teléfono antes de enviarlos', async () => {

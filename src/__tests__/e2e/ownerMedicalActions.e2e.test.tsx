@@ -63,8 +63,10 @@ async function openFixtureConsultation() {
   fireEvent.press(screen.getAllByText('Mascotas').at(-1)!);
   fireEvent.press(await findText(pet.name));
   await pressButton('Consultas');
-  fireEvent.press(await findText(`Otitis ${fixture.label}`));
+  fireEvent.press(await findText(`${pet.name} — Otitis ${fixture.label}`));
   await findText('Diagnóstico');
+  expect(screen.getByText(`${pet.name} — Otitis ${fixture.label}`)).toBeTruthy();
+  expect(screen.getByText('Tutor: Juan Pérez')).toBeTruthy();
 }
 
 it('sube archivos y carga los resultados de un examen de laboratorio', async () => {

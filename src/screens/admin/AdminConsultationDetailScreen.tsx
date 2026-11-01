@@ -5,24 +5,25 @@ import { useTheme } from '@/theme';
 import { AppHeader, MobileShell } from '@/components/layout';
 import { AsyncBoundary, Badge, Button, Card, SectionTitle } from '@/components/ui';
 import { DetailHero, ListRow } from '@/components/domain';
+import { ConsultationPreventiveCare } from '@/components/domain/ConsultationPreventiveCare';
 import type { AdminMoreStackParamList } from '@/navigation/types';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAsync } from '@/hooks/useAsync';
 import { getAdminConsultation } from '@/services/admin';
 import { formatDateTime } from '@/utils/format';
-import type { Consultation } from '@/types/models';
+import type { StaffConsultation } from '@/types/models';
 import { VoiceDictationSection } from './components/VoiceDictationSection';
 
 type Rt = RouteProp<AdminMoreStackParamList, 'AdminConsultationDetail'>;
 
-function Body({ consultation }: { consultation: Consultation }) {
+function Body({ consultation }: { consultation: StaffConsultation }) {
   const { colors } = useTheme();
   const completed = consultation.treatment_completed_at != null;
   return (
     <>
       <DetailHero
-        title={consultation.diagnosis ?? 'Consulta'}
-        subtitle={formatDateTime(consultation.consultation_date)}
+        title={`${consultation.pet.name} — ${consultation.anamnesis?.trim() || consultation.diagnosis?.trim() || 'Consulta'}`}
+        subtitle={`Tutor: ${consultation.pet.proprietary?.full_name ?? 'No registrado'}`}
       >
         <Badge
           label={completed ? 'Tratamiento completado' : 'En curso'}
@@ -31,11 +32,17 @@ function Body({ consultation }: { consultation: Consultation }) {
       </DetailHero>
 
       <ListRow title="Veterinario" subtitle={consultation.veterinarian.full_name} />
+      <ListRow title="Fecha" subtitle={formatDateTime(consultation.consultation_date)} />
+      <ListRow
+        title="Diagnóstico"
+        subtitle={consultation.diagnosis ?? 'Sin especificar'}
+      />
       <ListRow
         title="Tratamiento"
         subtitle={consultation.treatment ?? 'Sin especificar'}
       />
       <ListRow title="Notas" subtitle={consultation.notes ?? 'Sin notas'} />
+      <ConsultationPreventiveCare consultation={consultation} />
 
       {consultation.prescriptions.length > 0 ? (
         <View style={{ gap: 6 }}>

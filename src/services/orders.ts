@@ -3,6 +3,7 @@
  * Endpoints JSON: POST /public/product_orders y /public/product_orders/:id/upload_proof.
  */
 import { api } from './api';
+import { uploadForm } from './uploads';
 
 /** Métodos de pago aceptados por el backend (ProductOrder). */
 export type OrderPaymentMethod = 'in_store' | 'transfer' | 'mobile_payment';
@@ -17,6 +18,7 @@ export interface CreateOrderInput {
   contact_email: string;
   contact_phone: string;
   payment_method: OrderPaymentMethod;
+  transaction_id?: string;
   notes?: string;
   items: OrderItemInput[];
 }
@@ -39,6 +41,7 @@ export async function createProductOrder(input: CreateOrderInput): Promise<Creat
         contact_email: input.contact_email,
         contact_phone: input.contact_phone,
         payment_method: input.payment_method,
+        transaction_id: input.transaction_id,
         notes: input.notes,
         items: input.items,
       },
@@ -68,13 +71,7 @@ export async function uploadOrderProof(
   orderId: number,
   file: ProofFile,
 ): Promise<UploadProofResult> {
-  const body = new FormData();
-  // React Native acepta el descriptor de archivo nativo en FormData.
-  body.append('payment_proof', {
-    uri: file.uri,
-    name: file.name,
-    type: file.type,
-  } as unknown as Blob);
+  const body = uploadForm('payment_proof', file);
   return api.post<UploadProofResult>(
     `/public/product_orders/${orderId}/upload_proof`,
     body,

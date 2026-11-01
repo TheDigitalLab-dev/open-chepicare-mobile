@@ -26,8 +26,8 @@ export function ConsultationsScreen() {
   const renderItem = useCallback(
     ({ item: c }: ListRenderItemInfo<Consultation>) => (
       <ListRow
-        title={c.diagnosis ?? 'Consulta'}
-        subtitle={`${formatDate(c.consultation_date)} · ${c.veterinarian.full_name}`}
+        title={`${c.pet ? `${c.pet.name} — ` : ''}${c.anamnesis?.trim() || c.diagnosis?.trim() || 'Consulta'}`}
+        subtitle={`Tutor: ${c.pet?.proprietary?.full_name ?? 'No registrado'}\n${formatDate(c.consultation_date)} · ${c.veterinarian.full_name}`}
         onPress={() => navigation.navigate('ConsultationDetail', { petId, id: c.id })}
       />
     ),

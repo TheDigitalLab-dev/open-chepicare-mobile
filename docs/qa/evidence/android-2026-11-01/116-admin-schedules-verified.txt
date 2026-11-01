@@ -1,0 +1,22 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Esquemas de vacunación' [286,170][794,231]
+ViewGroup 'Rocky, Personalizado · 14/08/2026, Activo' [42,317][1038,492] DISABLED
+TextView 'Rocky' [76,351][840,405]
+TextView 'Activo' [892,356][983,399]
+TextView 'Personalizado · 14/08/2026' [76,410][840,457]
+ViewGroup 'Luna, Cachorro (perro) · 30/09/2026, Activo' [42,523][1038,698] DISABLED
+TextView 'Luna' [76,557][840,611]
+TextView 'Activo' [892,562][983,605]
+TextView 'Cachorro (perro) · 30/09/2026' [76,616][840,663]
+ViewGroup 'Max, Anual · 14/04/2026, Activo' [42,729][1038,904] DISABLED
+TextView 'Max' [76,763][840,817]
+TextView 'Activo' [892,768][983,811]
+TextView 'Anual · 14/04/2026' [76,822][840,869]
+View '\uf382, Inicio' [0,2209][270,2337]
+TextView 'Inicio' [102,2295][168,2332]
+View '\uf499, Pacientes' [270,2209][540,2337]
+TextView 'Pacientes' [345,2295][464,2332]
+View '\uf1cf, Agenda' [540,2209][810,2337]
+TextView 'Agenda' [629,2295][721,2332]
+View '\uf2ce, Más' [810,2209][1080,2337]
+TextView 'Más' [918,2295][971,2332]

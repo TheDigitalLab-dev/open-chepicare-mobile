@@ -1,0 +1,8 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Jeringas Desechables 5ml (100 unidades)' [168,170][911,231]
+TextView 'Jeringas Desechables 5ml (100 unidades)' [86,1389][994,1511]
+TextView 'Jeringas estériles para uso veterinario' [86,1532][994,1583]
+TextView '$28' [86,1604][994,1675]
+TextView 'En stock (20)' [108,1702][297,1745]
+Button 'Comprar' [42,1826][1038,1952]
+TextView 'Comprar' [458,1861][622,1918]

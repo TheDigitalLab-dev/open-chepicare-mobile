@@ -4,6 +4,7 @@ import { useTheme } from '@/theme';
 
 export interface TimelineItemProps {
   title: string;
+  subtitle?: string;
   date?: string;
   description?: string;
   /** Color del punto (default primary). */
@@ -14,6 +15,7 @@ export interface TimelineItemProps {
 
 export function TimelineItem({
   title,
+  subtitle,
   date,
   description,
   tone = 'primary',
@@ -30,6 +32,9 @@ export function TimelineItem({
       </View>
       <View style={styles.content}>
         <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
+        {subtitle ? (
+          <Text style={[styles.date, { color: colors.mutedForeground }]}>{subtitle}</Text>
+        ) : null}
         {date ? (
           <Text style={[styles.date, { color: colors.mutedForeground }]}>{date}</Text>
         ) : null}

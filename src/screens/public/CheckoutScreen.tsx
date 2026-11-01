@@ -44,6 +44,7 @@ function CheckoutForm({ product, quantity }: { product: Product; quantity: numbe
     Math.max(stock > 0 ? 1 : 0, Math.min(quantity, stock)),
   );
   const [payment, setPayment] = useState<OrderPaymentMethod>('in_store');
+  const [transactionId, setTransactionId] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -61,6 +62,7 @@ function CheckoutForm({ product, quantity }: { product: Product; quantity: numbe
     name.trim().length > 0 &&
     email.trim().length > 0 &&
     phone.trim().length > 0 &&
+    (!requiresPaymentProof(payment) || transactionId.trim().length > 0) &&
     qty > 0 &&
     !submitting;
 
@@ -73,6 +75,7 @@ function CheckoutForm({ product, quantity }: { product: Product; quantity: numbe
         contact_email: email.trim(),
         contact_phone: phone.trim(),
         payment_method: payment,
+        transaction_id: requiresPaymentProof(payment) ? transactionId.trim() : undefined,
         notes: notes.trim() || undefined,
         items: [{ product_id: product.id, quantity: qty }],
       });
@@ -139,6 +142,16 @@ function CheckoutForm({ product, quantity }: { product: Product; quantity: numbe
       />
 
       <SectionTitle>Datos de contacto</SectionTitle>
+      {requiresPaymentProof(payment) ? (
+        <TextField
+          label="Referencia de la transacción"
+          value={transactionId}
+          onChangeText={setTransactionId}
+          keyboardType="default"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      ) : null}
       <TextField label="Nombre" value={name} onChangeText={setName} />
       <TextField
         label="Correo"

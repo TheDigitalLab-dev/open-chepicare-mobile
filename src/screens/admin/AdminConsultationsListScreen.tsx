@@ -11,7 +11,7 @@ import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { listAdminConsultations } from '@/services/admin';
 import { formatDateTime } from '@/utils/format';
-import type { Consultation } from '@/types/models';
+import type { StaffConsultation } from '@/types/models';
 
 type Nav = NativeStackNavigationProp<AdminMoreStackParamList>;
 
@@ -37,10 +37,10 @@ export function AdminConsultationsListScreen() {
   );
 
   const renderItem = useCallback(
-    ({ item: c }: ListRenderItemInfo<Consultation>) => (
+    ({ item: c }: ListRenderItemInfo<StaffConsultation>) => (
       <ListRow
-        title={c.diagnosis ?? 'Consulta'}
-        subtitle={`${c.veterinarian.full_name} · ${formatDateTime(c.consultation_date)}`}
+        title={`${c.pet.name} — ${c.anamnesis?.trim() || c.diagnosis?.trim() || 'Consulta'}`}
+        subtitle={`Tutor: ${c.pet.proprietary?.full_name ?? 'No registrado'}\n${c.veterinarian.full_name} · ${formatDateTime(c.consultation_date)}`}
         trailing={c.treatment_completed_at ? BADGE_COMPLETED : BADGE_IN_PROGRESS}
         onPress={() => navigation.navigate('AdminConsultationDetail', { id: c.id })}
       />

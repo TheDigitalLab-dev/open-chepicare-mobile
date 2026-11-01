@@ -1,0 +1,8 @@
+TextView 'ChepiCare' [263,929][816,1084]
+TextView 'Cuidado veterinario a domicilio' [252,1100][827,1157]
+Button 'Iniciar sesión' [42,1833][1038,1959]
+TextView 'Iniciar sesión' [414,1868][666,1925]
+Button 'Crear cuenta' [42,1991][1038,2117]
+TextView 'Crear cuenta' [420,2026][661,2083]
+Button 'Configurar servidor' [42,2148][1038,2274]
+TextView 'Configurar servidor' [358,2183][722,2240]

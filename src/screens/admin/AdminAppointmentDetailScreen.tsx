@@ -32,8 +32,12 @@ function Body({ appointment }: { appointment: Appointment }) {
   return (
     <>
       <DetailHero
-        title={appointment.pet?.name ?? 'Mascota'}
-        subtitle={formatDateTime(appointment.scheduled_at, appointment.time_zone)}
+        title={`${appointment.pet?.name ?? 'Paciente'} — ${appointment.service?.name ?? 'Cita'}`}
+        subtitle={
+          appointment.owner
+            ? `Tutor: ${appointment.owner.first_name} ${appointment.owner.last_name}`
+            : 'Tutor no registrado'
+        }
       >
         <Badge
           label={APPOINTMENT_STATUS_LABEL[appointment.status]}
@@ -44,6 +48,18 @@ function Body({ appointment }: { appointment: Appointment }) {
       <ListRow
         title="Servicio"
         subtitle={appointment.service?.name ?? 'Sin especificar'}
+      />
+      <ListRow
+        title="Fecha"
+        subtitle={formatDateTime(appointment.scheduled_at, appointment.time_zone)}
+      />
+      <ListRow
+        title="Teléfono del tutor"
+        subtitle={appointment.owner?.phone || 'Sin teléfono registrado'}
+      />
+      <ListRow
+        title="Correo del tutor"
+        subtitle={appointment.owner?.email || 'Sin correo registrado'}
       />
       <ListRow title="Veterinario" subtitle={vet} />
       <ListRow title="Duración" subtitle={`${appointment.duration_minutes ?? 0} min`} />

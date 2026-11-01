@@ -8,17 +8,20 @@ import type { AdminMoreStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
 import { getAdminMedicalReport } from '@/services/admin';
 import { formatDate } from '@/utils/format';
-import type { MedicalReport } from '@/types/models';
+import type { StaffMedicalReport } from '@/types/models';
 
 type Rt = RouteProp<AdminMoreStackParamList, 'AdminMedicalReportDetail'>;
 
-function Body({ report }: { report: MedicalReport }) {
+function Body({ report }: { report: StaffMedicalReport }) {
   const { colors } = useTheme();
   return (
     <>
       <Card style={{ gap: 6 }}>
         <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground }}>
-          {report.title}
+          {report.pet.name} — {report.title}
+        </Text>
+        <Text style={{ fontSize: 14, color: colors.mutedForeground }}>
+          Tutor: {report.proprietary?.full_name ?? 'No registrado'}
         </Text>
         <Text style={{ fontSize: 13, color: colors.mutedForeground }}>
           {formatDate(report.generated_at ?? report.created_at)} ·{' '}
@@ -37,6 +40,14 @@ function Body({ report }: { report: MedicalReport }) {
         </>
       ) : null}
 
+      {report.referral_reason ? (
+        <>
+          <SectionTitle>Motivo de remisión</SectionTitle>
+          <Card>
+            <Text style={{ color: colors.foreground }}>{report.referral_reason}</Text>
+          </Card>
+        </>
+      ) : null}
       {report.content ? (
         <>
           <SectionTitle>Contenido</SectionTitle>

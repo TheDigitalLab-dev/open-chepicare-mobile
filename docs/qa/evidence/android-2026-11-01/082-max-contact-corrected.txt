@@ -1,0 +1,33 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Max' [497,170][583,231]
+TextView 'Max' [484,563][596,641]
+TextView 'Perro · Labrador' [407,657][673,708]
+TextView 'TUTOR Y CONTACTO' [42,803][1038,846]
+ViewGroup 'Juan Pérez, V12345678' [42,888][1038,1063] DISABLED
+TextView 'Juan Pérez' [76,922][1004,976]
+TextView 'V12345678' [76,981][1004,1028]
+ViewGroup 'Teléfono, 04241234567' [42,1094][1038,1269] DISABLED
+TextView 'Teléfono' [76,1128][1004,1182]
+TextView '04241234567' [76,1187][1004,1234]
+ViewGroup 'Correo, owner1@example.com' [42,1300][1038,1475] DISABLED
+TextView 'Correo' [76,1334][1004,1388]
+TextView 'owner1@example.com' [76,1393][1004,1440]
+ViewGroup 'Especie, Perro' [42,1506][1038,1681] DISABLED
+TextView 'Especie' [76,1540][1004,1594]
+TextView 'Perro' [76,1599][1004,1646]
+ViewGroup 'Raza, Labrador' [42,1712][1038,1887] DISABLED
+TextView 'Raza' [76,1746][1004,1800]
+TextView 'Labrador' [76,1805][1004,1852]
+ViewGroup 'Sexo, Masculino' [42,1918][1038,2093] DISABLED
+TextView 'Sexo' [76,1952][1004,2006]
+TextView 'Masculino' [76,2011][1004,2058]
+ViewGroup 'Nacimiento, 14/10/2024' [42,2124][1038,2208] DISABLED
+TextView 'Nacimiento' [76,2158][1004,2208]
+View '\uf382, Inicio' [0,2209][270,2337]
+TextView 'Inicio' [102,2295][168,2332]
+View '\uf499, Pacientes' [270,2209][540,2337]
+TextView 'Pacientes' [345,2295][464,2332]
+View '\uf1cf, Agenda' [540,2209][810,2337]
+TextView 'Agenda' [629,2295][721,2332]
+View '\uf2ce, Más' [810,2209][1080,2337]
+TextView 'Más' [918,2295][971,2332]

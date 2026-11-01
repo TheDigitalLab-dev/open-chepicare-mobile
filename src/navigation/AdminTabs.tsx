@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { AdminPatientHistoryScreen } from '@/screens/admin/AdminPatientHistoryScreen';
+import { AdminLabExamDetailScreen } from '@/screens/admin/AdminLabExamDetailScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { useTheme } from '@/theme';
@@ -60,6 +62,23 @@ function AdminPatientsStack() {
       <PatientsStack.Screen name="AdminPetsList" component={AdminPetsListScreen} />
       <PatientsStack.Screen name="AdminPetDetail" component={AdminPetDetailScreen} />
       <PatientsStack.Screen
+        name="AdminPatientHistory"
+        component={AdminPatientHistoryScreen}
+      />
+      <PatientsStack.Screen
+        name="AdminMedicalReportDetail"
+        component={AdminMedicalReportDetailScreen}
+      />
+      <PatientsStack.Screen
+        name="AdminPrescriptions"
+        component={AdminPrescriptionsScreen}
+      />
+      <PatientsStack.Screen name="AdminLabExams" component={AdminLabExamsScreen} />
+      <PatientsStack.Screen
+        name="AdminLabExamDetail"
+        component={AdminLabExamDetailScreen}
+      />
+      <PatientsStack.Screen
         name="AdminPetConsultation"
         component={AdminConsultationDetailScreen}
       />
@@ -87,7 +106,10 @@ function AdminPatientsStack() {
 const AgendaStack = createNativeStackNavigator<AdminAgendaStackParamList>();
 function AdminAgendaStack() {
   return (
-    <AgendaStack.Navigator screenOptions={{ headerShown: false }}>
+    <AgendaStack.Navigator
+      initialRouteName="AdminCalendar"
+      screenOptions={{ headerShown: false }}
+    >
       <AgendaStack.Screen
         name="AdminAppointmentsList"
         component={AdminAppointmentsListScreen}
@@ -125,6 +147,7 @@ function AdminMoreStack() {
       />
       <MoreStack.Screen name="AdminPrescriptions" component={AdminPrescriptionsScreen} />
       <MoreStack.Screen name="AdminLabExams" component={AdminLabExamsScreen} />
+      <MoreStack.Screen name="AdminLabExamDetail" component={AdminLabExamDetailScreen} />
       <MoreStack.Screen
         name="AdminVaccinationsList"
         component={AdminVaccinationsListScreen}

@@ -15,7 +15,7 @@ import {
 
 function event(
   id: string,
-  type: CalendarEvent['type'],
+  type: Exclude<CalendarEvent['type'], 'clinic_event'>,
   start: string,
   end = start,
 ): CalendarEvent {

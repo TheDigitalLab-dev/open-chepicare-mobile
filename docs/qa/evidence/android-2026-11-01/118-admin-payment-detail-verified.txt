@@ -1,0 +1,31 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Detalle de pago' [384,170][695,231]
+TextView 'USD 500' [427,359][652,437]
+TextView 'Kiwi (Refugio)' [424,452][655,503]
+TextView 'Pendiente' [468,546][613,589]
+ViewGroup 'Mascota, Kiwi (Refugio)' [42,668][1038,842] DISABLED
+TextView 'Mascota' [76,702][1004,756]
+TextView 'Kiwi (Refugio)' [76,761][1004,808]
+ViewGroup 'Dueño, Juan Pérez' [42,874][1038,1048] DISABLED
+TextView 'Dueño' [76,908][1004,962]
+TextView 'Juan Pérez' [76,967][1004,1014]
+ViewGroup 'Método de pago, Sin especificar' [42,1080][1038,1254] DISABLED
+TextView 'Método de pago' [76,1114][1004,1168]
+TextView 'Sin especificar' [76,1173][1004,1220]
+ViewGroup 'Vence, —' [42,1286][1038,1460] DISABLED
+TextView 'Vence' [76,1320][1004,1374]
+ViewGroup 'Pagado el, —' [42,1492][1038,1666] DISABLED
+TextView 'Pagado el' [76,1526][1004,1580]
+ViewGroup 'Notas, Sin notas' [42,1698][1038,1872] DISABLED
+TextView 'Notas' [76,1732][1004,1786]
+TextView 'Sin notas' [76,1791][1004,1838]
+Button 'Registrar pago' [42,1925][1038,2051]
+TextView 'Registrar pago' [401,1960][680,2017]
+View '\uf382, Inicio' [0,2209][270,2337]
+TextView 'Inicio' [102,2295][168,2332]
+View '\uf499, Pacientes' [270,2209][540,2337]
+TextView 'Pacientes' [345,2295][464,2332]
+View '\uf1cf, Agenda' [540,2209][810,2337]
+TextView 'Agenda' [629,2295][721,2332]
+View '\uf2ce, Más' [810,2209][1080,2337]
+TextView 'Más' [918,2295][971,2332]

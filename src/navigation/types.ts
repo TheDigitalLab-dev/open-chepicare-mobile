@@ -132,6 +132,11 @@ export type AdminPatientsStackParamList = {
   AdminPetConsultation: { id: number };
   AdminPetForm: { id?: number };
   AdminMedicalProfile: { petId: number };
+  AdminPatientHistory: { petId: number };
+  AdminLabExamDetail: { petId: number; consultationId: number; examId: number };
+  AdminMedicalReportDetail: { id: number };
+  AdminPrescriptions: { consultationId: number };
+  AdminLabExams: { consultationId: number };
   AdminAdoptionsList: undefined;
   AdminAdoptionDetail: { id: number };
   AdminAdoptionForm: undefined;
@@ -146,6 +151,7 @@ export type AdminAgendaStackParamList = {
 };
 
 export type AdminMoreStackParamList = {
+  AdminLabExamDetail: { petId: number; consultationId: number; examId: number };
   AdminModules: undefined;
   NotificationPrefs: undefined;
   AdminConsultationsList: undefined;

@@ -5,6 +5,7 @@
  * degradación reales (sin claves de STT/IA en el entorno de pruebas).
  */
 import { randomUUID } from 'node:crypto';
+import { File, Paths } from 'expo-file-system';
 
 import * as adminService from '@/services/admin';
 import * as authService from '@/services/auth';
@@ -34,10 +35,12 @@ afterAll(async () => {
   await restoreAi();
 });
 
-const audio = () => ({
-  blob: new Blob([SAMPLE_M4A_BYTES], { type: 'audio/mp4' }),
-  name: 'dictado.m4a',
-});
+const audio = () => {
+  const file = new File(Paths.cache, 'dictado.m4a');
+  file.create({ overwrite: true });
+  file.write(SAMPLE_M4A_BYTES);
+  return { uri: file.uri, name: 'dictado.m4a', type: 'audio/mp4' };
+};
 
 describe('assistant: dictado de consulta (real)', () => {
   it('crea la sesión, sube el audio y el servidor la procesa hasta un estado final', async () => {

@@ -1,0 +1,13 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Exámenes de laboratorio' [292,170][788,231]
+ViewGroup 'Electrocardiograma (ECG) de reposo, Completado' [42,317][1038,439] DISABLED
+TextView 'Electrocardiograma (ECG) de reposo' [76,351][757,405]
+TextView 'Completado' [809,356][983,399]
+View '\uf382, Inicio' [0,2209][270,2337]
+TextView 'Inicio' [102,2295][168,2332]
+View '\uf499, Pacientes' [270,2209][540,2337]
+TextView 'Pacientes' [345,2295][464,2332]
+View '\uf1cf, Agenda' [540,2209][810,2337]
+TextView 'Agenda' [629,2295][721,2332]
+View '\uf2ce, Más' [810,2209][1080,2337]
+TextView 'Más' [918,2295][971,2332]

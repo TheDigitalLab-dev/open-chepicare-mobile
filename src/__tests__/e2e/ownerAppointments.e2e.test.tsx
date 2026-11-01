@@ -18,12 +18,44 @@ import * as appointmentsService from '@/services/appointments';
 import * as authService from '@/services/auth';
 import * as petsService from '@/services/pets';
 import * as secureStore from '@/utils/secureStore';
-import { clinicDayKey, clinicHourKey, clinicMonth } from '@/utils/clinicTime';
+import {
+  clinicDayKey,
+  clinicHourKey,
+  clinicMonth,
+  formatDayLong,
+} from '@/utils/clinicTime';
 import { formatDate, formatDateTime } from '@/utils/format';
+import * as calendarService from '@/services/calendar';
+import type { Appointment } from '@/types/models';
+import { monthOfDay, weekdayIndex, WEEKDAY_NAMES } from '@/utils/calendarGrid';
+import { eventSubtitle, eventStatusLabel } from '@/utils/calendarEvents';
 import { shiftMonth } from '@/utils/schedule';
 import { bookFreshAppointment } from '@/testing/ownerData';
 
 let createdId: number | null = null;
+
+async function openCalendarAppointment(appointment: Appointment) {
+  const day = clinicDayKey(appointment.scheduled_at, appointment.time_zone);
+  const target = monthOfDay(day);
+  const current = clinicMonth();
+  const delta = (target.year - current.year) * 12 + target.month - current.month;
+  for (let i = 0; i < Math.abs(delta); i += 1)
+    await pressButton(delta > 0 ? 'Mes siguiente' : 'Mes anterior');
+  const prefix = `${WEEKDAY_NAMES[weekdayIndex(day)]} ${formatDayLong(day)},`;
+  fireEvent.press(
+    await waitFor(() => screen.getByLabelText(new RegExp(`^${prefix}`)), E2E_WAIT),
+  );
+  const { events } = await calendarService.getOwnerCalendarEvents({
+    start: day,
+    end: day,
+  });
+  const event = events.find(
+    (item) => item.type === 'appointment' && item.record_id === appointment.id,
+  )!;
+  await pressButton(
+    `Citas: ${event.title}. ${eventSubtitle(event, 'owner')}. ${eventStatusLabel(event)}`,
+  );
+}
 
 async function loginSeedOwner() {
   await authService.login('owner1@example.com', 'password123');
@@ -90,7 +122,7 @@ it('agenda, confirma, reprograma y cancela una cita desde la app', async () => {
   fireEvent.changeText(notes, 'Agendada desde el e2e');
   await pressButton('Confirmar');
 
-  // De vuelta en la lista: la cita nueva aparece como pendiente.
+  // De vuelta en Calendario: abrir el día real de la cita recién creada.
   await waitFor(async () => {
     const now = await appointmentsService.listAppointments();
     const created = now.find((a) => !before.has(a.id));
@@ -101,8 +133,7 @@ it('agenda, confirma, reprograma y cancela una cita desde la app', async () => {
   expect(clinicHourKey(created.scheduled_at, created.time_zone)).toBe(first);
   expect(created.notes).toBe('Agendada desde el e2e');
 
-  const cardLabel = `${created.pet!.name}, ${formatDateTime(created.scheduled_at, created.time_zone)}, Pendiente`;
-  await pressButton(cardLabel);
+  await openCalendarAppointment(created);
 
   // Detalle: el pago pendiente creado al agendar, con acceso a registrarlo.
   await findText('Detalle de cita');
@@ -183,9 +214,7 @@ it('reprograma a un horario que solo chocaba con la propia cita (exclude_appoint
   renderApp();
   await loginThroughUi('owner1@example.com');
   fireEvent.press(screen.getAllByText('Citas').at(-1)!);
-  await pressButton(
-    `${appt.pet!.name}, ${formatDateTime(appt.scheduled_at, appt.time_zone)}, Pendiente`,
-  );
+  await openCalendarAppointment(appt);
   await pressButton('Reprogramar');
   await findText('Reprogramar cita');
   for (let i = 0; i < 4; i += 1) await pressButton('Siguiente');

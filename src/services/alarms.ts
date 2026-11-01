@@ -56,7 +56,6 @@ async function ensureChannel(): Promise<void> {
   await Notifications.setNotificationChannelAsync(MEDICATION_CHANNEL_ID, {
     name: 'Alarmas de medicación',
     importance: Notifications.AndroidImportance.MAX,
-    sound: 'default',
     vibrationPattern: [0, 300, 200, 300],
     enableVibrate: true,
   });

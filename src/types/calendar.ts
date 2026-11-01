@@ -13,7 +13,8 @@ export type CalendarEventType =
   | 'appointment'
   | 'prescription'
   | 'vaccination'
-  | 'deworming';
+  | 'deworming'
+  | 'clinic_event';
 
 /** Orden fijo de la leyenda y de los puntos de cada día. */
 export const CALENDAR_EVENT_TYPES: readonly CalendarEventType[] = [
@@ -21,6 +22,7 @@ export const CALENDAR_EVENT_TYPES: readonly CalendarEventType[] = [
   'prescription',
   'vaccination',
   'deworming',
+  'clinic_event',
 ];
 
 export const CALENDAR_EVENT_TYPE_LABEL: Record<CalendarEventType, string> = {
@@ -28,12 +30,14 @@ export const CALENDAR_EVENT_TYPE_LABEL: Record<CalendarEventType, string> = {
   prescription: 'Tratamientos',
   vaccination: 'Vacunas',
   deworming: 'Desparasitaciones',
+  clinic_event: 'Eventos de la clínica',
 };
 
 export interface CalendarPet {
   id: number;
   name: string;
   species: Species;
+  proprietary?: { id: number; type: 'Owner' | 'User'; full_name: string } | null;
 }
 
 interface CalendarEventBase {
@@ -107,7 +111,15 @@ export type CalendarEvent =
   | AppointmentCalendarEvent
   | PrescriptionCalendarEvent
   | VaccinationCalendarEvent
-  | DewormingCalendarEvent;
+  | DewormingCalendarEvent
+  | ClinicCalendarEvent;
+
+export interface ClinicCalendarEvent extends Omit<CalendarEventBase, 'pet'> {
+  type: 'clinic_event';
+  pet: null;
+  status: string;
+  details: { location: string | null; slug: string; registration_id: number };
+}
 
 export interface CalendarRange {
   start: string;

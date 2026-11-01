@@ -1,4 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
+import { Alert } from 'react-native';
+import { Fab } from '@/components/ui';
+import { eventSubtitle } from '@/utils/calendarEvents';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -26,6 +29,10 @@ export function OwnerCalendarScreen() {
   useReloadOnFocus(calendar.reload);
 
   const openEvent = (event: CalendarEvent) => {
+    if (event.type === 'clinic_event') {
+      Alert.alert(event.title, eventSubtitle(event, 'owner'));
+      return;
+    }
     if (event.type === 'appointment') {
       navigation.navigate('AppointmentDetail', { id: event.record_id });
       return;
@@ -42,10 +49,21 @@ export function OwnerCalendarScreen() {
   return (
     <MobileShell
       scroll
+      fab={
+        calendar.canCreateAppointment ? (
+          <Fab
+            accessibilityLabel="Agendar cita"
+            onPress={() => navigation.navigate('AppointmentWizard', {})}
+          />
+        ) : undefined
+      }
       header={<AppHeader title="Calendario" onBack={back} />}
       contentStyle={{ gap: 12, paddingBottom: 32 }}
     >
       <CalendarBoard
+        viewMode={calendar.viewMode}
+        onViewModeChange={calendar.setViewMode}
+        events={calendar.events}
         audience="owner"
         month={calendar.month}
         weeks={calendar.weeks}

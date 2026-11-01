@@ -1,10 +1,10 @@
 import { StyleSheet, Switch, Text, View } from 'react-native';
 
 import { useTheme } from '@/theme';
-import { AsyncBoundary, Button, Card, IconButton } from '@/components/ui';
+import { AsyncBoundary, Button, Card, FilterChips, IconButton } from '@/components/ui';
 import type { ApiError } from '@/types/api';
 import type { CalendarEvent, CalendarEventType } from '@/types/calendar';
-import type { CalendarAudience } from '@/utils/calendarGrid';
+import { eventsByDay, type CalendarAudience } from '@/utils/calendarGrid';
 import {
   eventStatusLabel,
   eventSubtitle,
@@ -17,6 +17,9 @@ import { CalendarLegend } from './CalendarLegend';
 import { CalendarMonthGrid } from './CalendarMonthGrid';
 
 export interface CalendarBoardProps {
+  viewMode?: 'calendar' | 'currentWeek';
+  onViewModeChange?: (mode: 'calendar' | 'currentWeek') => void;
+  events?: CalendarEvent[];
   audience: CalendarAudience;
   month: MonthRef;
   weeks: string[][];
@@ -48,6 +51,9 @@ export interface CalendarBoardProps {
  * leyenda, filtros y debajo la lista del día elegido.
  */
 export function CalendarBoard({
+  viewMode = 'calendar',
+  onViewModeChange,
+  events = [],
   audience,
   month,
   weeks,
@@ -77,35 +83,49 @@ export function CalendarBoard({
     legendTypes.length === 0 || legendTypes.includes('appointment');
   return (
     <View style={styles.root}>
-      <Card padding={8} style={styles.card}>
-        <View style={styles.toolbar}>
-          <IconButton
-            icon="chevron-back"
-            accessibilityLabel="Mes anterior"
-            onPress={onPrevMonth}
-          />
-          <Text
-            accessibilityRole="header"
-            style={[styles.monthTitle, { color: colors.foreground }]}
-          >
-            {monthTitle(month)}
-          </Text>
-          <IconButton
-            icon="chevron-forward"
-            accessibilityLabel="Mes siguiente"
-            onPress={onNextMonth}
-          />
-          <Button label="Hoy" size="sm" variant="outline" onPress={onToday} />
-        </View>
-        <CalendarMonthGrid
-          month={month}
-          weeks={weeks}
-          today={today}
-          selectedDay={selectedDay}
-          markersByDay={markersByDay}
-          onSelectDay={onSelectDay}
+      {onViewModeChange ? (
+        <FilterChips
+          options={[
+            { id: 'calendar', label: 'Calendario' },
+            { id: 'currentWeek', label: 'Semana en curso' },
+          ]}
+          selectedId={viewMode}
+          onSelect={(id) =>
+            onViewModeChange(id === 'currentWeek' ? 'currentWeek' : 'calendar')
+          }
         />
-      </Card>
+      ) : null}
+      {viewMode === 'calendar' ? (
+        <Card padding={8} style={styles.card}>
+          <View style={styles.toolbar}>
+            <IconButton
+              icon="chevron-back"
+              accessibilityLabel="Mes anterior"
+              onPress={onPrevMonth}
+            />
+            <Text
+              accessibilityRole="header"
+              style={[styles.monthTitle, { color: colors.foreground }]}
+            >
+              {monthTitle(month)}
+            </Text>
+            <IconButton
+              icon="chevron-forward"
+              accessibilityLabel="Mes siguiente"
+              onPress={onNextMonth}
+            />
+            <Button label="Hoy" size="sm" variant="outline" onPress={onToday} />
+          </View>
+          <CalendarMonthGrid
+            month={month}
+            weeks={weeks}
+            today={today}
+            selectedDay={selectedDay}
+            markersByDay={markersByDay}
+            onSelectDay={onSelectDay}
+          />
+        </Card>
+      ) : null}
 
       {legendTypes.length > 0 ? (
         <CalendarLegend
@@ -136,7 +156,7 @@ export function CalendarBoard({
           accessibilityRole="header"
           style={[styles.dayTitle, { color: colors.foreground }]}
         >
-          {selectedDayTitle(selectedDay)}
+          {viewMode === 'calendar' ? selectedDayTitle(selectedDay) : 'Semana en curso'}
         </Text>
         {canCreate ? <Button label="Nueva cita" size="sm" onPress={onCreate} /> : null}
       </View>
@@ -145,7 +165,7 @@ export function CalendarBoard({
         loading={loading}
         error={error}
         onRetry={onRetry}
-        empty={selectedEvents.length === 0}
+        empty={viewMode === 'calendar' && selectedEvents.length === 0}
         emptyIcon="calendar-clear-outline"
         emptyTitle="Sin eventos este día"
         emptyDescription={
@@ -153,17 +173,49 @@ export function CalendarBoard({
         }
       >
         <View style={styles.list}>
-          {selectedEvents.map((event) => (
-            <CalendarEventRow
-              key={event.id}
-              type={event.type}
-              title={event.title}
-              subtitle={eventSubtitle(event, audience)}
-              statusLabel={eventStatusLabel(event)}
-              cancelled={event.type === 'appointment' && event.status === 'cancelled'}
-              onPress={() => onOpenEvent(event)}
-            />
-          ))}
+          {viewMode === 'currentWeek'
+            ? weeks.flat().map((day) => {
+                const dayEvents =
+                  eventsByDay(events, { start: day, end: day }).get(day) ?? [];
+                return (
+                  <View key={day} style={styles.list}>
+                    <Text
+                      accessibilityRole="header"
+                      style={[styles.dayTitle, { color: colors.foreground }]}
+                    >
+                      {selectedDayTitle(day)}
+                    </Text>
+                    {dayEvents.length === 0 ? (
+                      <Text style={{ color: colors.mutedForeground }}>Sin eventos</Text>
+                    ) : (
+                      dayEvents.map((event) => (
+                        <CalendarEventRow
+                          key={event.id}
+                          type={event.type}
+                          title={event.title}
+                          subtitle={eventSubtitle(event, audience)}
+                          statusLabel={eventStatusLabel(event)}
+                          cancelled={
+                            event.type === 'appointment' && event.status === 'cancelled'
+                          }
+                          onPress={() => onOpenEvent(event)}
+                        />
+                      ))
+                    )}
+                  </View>
+                );
+              })
+            : selectedEvents.map((event) => (
+                <CalendarEventRow
+                  key={event.id}
+                  type={event.type}
+                  title={event.title}
+                  subtitle={eventSubtitle(event, audience)}
+                  statusLabel={eventStatusLabel(event)}
+                  cancelled={event.type === 'appointment' && event.status === 'cancelled'}
+                  onPress={() => onOpenEvent(event)}
+                />
+              ))}
         </View>
       </AsyncBoundary>
     </View>

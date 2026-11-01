@@ -1,0 +1,10 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Comprobante de pago' [318,148][761,209]
+TextView 'Pedido #43' [458,209][621,252]
+TextView 'ADJUNTA TU COMPROBANTE' [42,338][1038,381]
+Button 'Subir comprobante' [42,423][1038,764]
+TextView 'Subir comprobante' [369,589][712,643]
+TextView 'Toca para elegir una foto de tu galería' [244,648][837,695]
+TextView 'Validaremos tu pago y confirmaremos el pedido por correo.' [153,829][1004,923]
+Button 'Enviar comprobante' [42,989][1038,1115] DISABLED
+TextView 'Enviar comprobante' [351,1024][730,1081]

@@ -11,20 +11,51 @@ import * as appointmentsService from '@/services/appointments';
 import * as authService from '@/services/auth';
 import * as calendarService from '@/services/calendar';
 import { bookFreshAppointment } from '@/testing/ownerData';
+import {
+  createTreatmentConsultation,
+  type TreatmentConsultation,
+} from '@/testing/medicalData';
+import { listPets } from '@/services/pets';
 import { clinicDayKey, clinicMonth, clinicToday, shiftDayKey } from '@/utils/clinicTime';
 import { isDayInMonth, monthGridRange } from '@/utils/calendarGrid';
 import { shiftMonth } from '@/utils/schedule';
 import * as secureStore from '@/utils/secureStore';
 
 const WAIT = { timeout: 10000 };
+let treatmentFixture: TreatmentConsultation;
 
 afterAll(async () => {
+  await treatmentFixture?.cleanup();
   await secureStore.clearTokens();
 });
 
 describe('useCalendar (propietario)', () => {
   beforeAll(async () => {
     await authService.login('owner1@example.com', 'password123');
+    treatmentFixture = await createTreatmentConsultation((await listPets())[0]!.id);
+  });
+
+  it('abre Calendario y limita Semana en curso a lunes-domingo de hoy, incluso entre meses', async () => {
+    const { result } = renderHook(() =>
+      useCalendar({ audience: 'owner', initialDay: '2026-12-15' }),
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false), WAIT);
+    expect(result.current.viewMode).toBe('calendar');
+    act(() => result.current.setViewMode('currentWeek'));
+    await waitFor(() => expect(result.current.loading).toBe(false), WAIT);
+    const today = clinicToday();
+    const weekday = (new Date(`${today}T12:00:00Z`).getUTCDay() + 6) % 7;
+    const start = shiftDayKey(today, -weekday);
+    const end = shiftDayKey(start, 6);
+    const expected = await calendarService.getOwnerCalendarEvents({ start, end });
+    expect(result.current.weeks).toEqual([
+      Array.from({ length: 7 }, (_, i) => shiftDayKey(start, i)),
+    ]);
+    expect(result.current.events).toEqual(expected.events);
+    expect(result.current.selectedDay).toBe(today);
+    act(() => result.current.setViewMode('calendar'));
+    await waitFor(() => expect(result.current.loading).toBe(false), WAIT);
+    expect(result.current.weeks.length).toBeGreaterThan(1);
   });
 
   it('carga el mes de la clínica con puntos por tipo y la lista del día elegido', async () => {
@@ -52,7 +83,13 @@ describe('useCalendar (propietario)', () => {
 
     act(() => result.current.selectDay(appointment.start_date));
     expect(result.current.selectedDay).toBe(appointment.start_date);
-    expect(result.current.selectedEvents.map((e) => e.id)).toContain(appointment.id);
+    await waitFor(
+      () =>
+        expect(result.current.selectedEvents.map((e) => e.id)).toContain(appointment.id),
+      WAIT,
+    );
+    act(() => result.current.goToday());
+    await waitFor(() => expect(result.current.loading).toBe(false), WAIT);
 
     // Un tratamiento de varios días aparece también en su segundo día (dentro
     // del mes visible, para no cambiar de mes).

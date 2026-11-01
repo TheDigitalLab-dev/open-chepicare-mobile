@@ -6,7 +6,7 @@
  * orden contra el backend REAL: no se simula nada, solo se elige la credencial
  * que el servidor en ejecución acepta.
  */
-import { ApiError } from '@/types/api';
+import { ApiError, type AuthTokenPair } from '@/types/api';
 import type { AuthUser } from '@/types/models';
 import * as authService from '@/services/auth';
 
@@ -14,6 +14,7 @@ const BASE = () => process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:300
 
 export const ADMIN_LOGIN = 'admin@chepicare.com';
 const ADMIN_PASSWORDS = ['password123', 'admin12345'];
+const fixtureTokens = new Map<string, { token: string; expiresAt: number }>();
 
 /** Inicia sesión como el admin del seed con el servicio real de la app. */
 export async function loginSeedAdmin(): Promise<AuthUser> {
@@ -34,14 +35,22 @@ export async function loginSeedAdmin(): Promise<AuthUser> {
  * el servidor desde un test que corre con otro usuario).
  */
 export async function seedAdminAccessToken(): Promise<string> {
+  const base = BASE();
+  const cached = fixtureTokens.get(base);
+  if (cached && cached.expiresAt > Date.now()) return cached.token;
   for (const password of ADMIN_PASSWORDS) {
-    const res = await fetch(`${BASE()}/auth/mobile/login`, {
+    const res = await fetch(`${base}/auth/mobile/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ login: ADMIN_LOGIN, password }),
     });
     if (res.ok) {
-      const body = (await res.json()) as { auth: { access_token: string } };
+      const body = (await res.json()) as { auth: AuthTokenPair };
+      // Reutiliza únicamente el JWT real hasta antes del vencimiento del servidor.
+      fixtureTokens.set(base, {
+        token: body.auth.access_token,
+        expiresAt: Date.now() + Math.max(0, body.auth.expires_in - 30) * 1000,
+      });
       return body.auth.access_token;
     }
     if (res.status !== 401) throw new Error(`login admin falló (${res.status})`);

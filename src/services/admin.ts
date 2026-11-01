@@ -7,6 +7,11 @@ import type {
   Appointment,
   AvailableVet,
   Consultation,
+  StaffConsultation,
+  StaffPatientHistory,
+  StaffVaccination,
+  StaffDeworming,
+  StaffMedicalReport,
   Deworming,
   MedicalProfile,
   AppointmentStatus,
@@ -17,6 +22,10 @@ import type {
   Vaccination,
 } from '@/types/models';
 import type { Paginated, SearchOptions } from '@/types/api';
+import type {
+  ClinicalConsultationFields,
+  ConsultationVaccination,
+} from '@/types/clinical';
 import { learnClinicTimeZone, learnFromAppointments } from '@/utils/clinicTime';
 import { api } from './api';
 import { fetchAllPages, fetchPage, MAX_PER_PAGE } from './pagination';
@@ -43,8 +52,8 @@ export interface VaccinationSchedule {
 }
 
 /** Consulta completa (con recetas y exámenes) — /admin/consultations/:id. */
-export async function getAdminConsultation(id: number): Promise<Consultation> {
-  const { consultation } = await api.get<{ consultation: Consultation }>(
+export async function getAdminConsultation(id: number): Promise<StaffConsultation> {
+  const { consultation } = await api.get<{ consultation: StaffConsultation }>(
     `/admin/consultations/${id}`,
   );
   return consultation;
@@ -73,16 +82,16 @@ export function listActiveVaccinationSchedules(): Promise<VaccinationSchedule[]>
 export function listAdminMedicalReports(
   filters: { petSearch?: string } = {},
   page = 1,
-): Promise<Paginated<MedicalReport>> {
-  return fetchPage<'medical_reports', MedicalReport>(
-    '/admin/medical-reports-list',
+): Promise<Paginated<StaffMedicalReport>> {
+  return fetchPage<'medical_reports', StaffMedicalReport>(
+    '/admin/medical_reports',
     'medical_reports',
     { page, pet_search: filters.petSearch || undefined },
   );
 }
 
-export async function getAdminMedicalReport(id: number): Promise<MedicalReport> {
-  const { medical_report } = await api.get<{ medical_report: MedicalReport }>(
+export async function getAdminMedicalReport(id: number): Promise<StaffMedicalReport> {
+  const { medical_report } = await api.get<{ medical_report: StaffMedicalReport }>(
     `/admin/medical_reports/${id}`,
   );
   return medical_report;
@@ -186,24 +195,24 @@ export function listAdminPayments(
   });
 }
 
-export function listAdminConsultations(page = 1): Promise<Paginated<Consultation>> {
-  return fetchPage<'consultations', Consultation>(
+export function listAdminConsultations(page = 1): Promise<Paginated<StaffConsultation>> {
+  return fetchPage<'consultations', StaffConsultation>(
     '/admin/consultations-list',
     'consultations',
     { page },
   );
 }
 
-export function listAdminVaccinations(page = 1): Promise<Paginated<Vaccination>> {
-  return fetchPage<'vaccinations', Vaccination>(
+export function listAdminVaccinations(page = 1): Promise<Paginated<StaffVaccination>> {
+  return fetchPage<'vaccinations', StaffVaccination>(
     '/admin/vaccinations-list',
     'vaccinations',
     { page },
   );
 }
 
-export function listAdminDewormings(page = 1): Promise<Paginated<Deworming>> {
-  return fetchPage<'dewormings', Deworming>('/admin/dewormings-list', 'dewormings', {
+export function listAdminDewormings(page = 1): Promise<Paginated<StaffDeworming>> {
+  return fetchPage<'dewormings', StaffDeworming>('/admin/dewormings-list', 'dewormings', {
     page,
   });
 }
@@ -339,17 +348,7 @@ export async function registerAdminPayment(
 
 // --- Creación de registros médicos (admin) ---------------------------------
 
-export interface AdminConsultationInput {
-  pet_id: number;
-  /** Cita que se atiende: el backend la marca completada (no cancelada, misma mascota). */
-  appointment_id?: number;
-  consultation_date: string;
-  diagnosis?: string;
-  treatment?: string;
-  notes?: string;
-  weight?: number;
-  temperature?: number;
-}
+export type AdminConsultationInput = ClinicalConsultationFields;
 
 export async function createAdminConsultation(
   input: AdminConsultationInput,
@@ -365,7 +364,7 @@ export async function deleteAdminConsultation(id: number): Promise<void> {
   await api.delete<unknown>(`/admin/consultations/${id}`);
 }
 
-export interface AdminVaccinationInput {
+export interface AdminVaccinationInput extends ConsultationVaccination {
   pet_id: number;
   vaccine_name: string;
   manufacturer?: string;
@@ -486,10 +485,38 @@ export async function deleteAdminAppointment(id: number): Promise<void> {
 export async function getAdminMedicalProfile(
   petId: number,
 ): Promise<MedicalProfile | null> {
-  const pet = await getAdminPet(petId);
-  if (pet.proprietary_id === undefined || pet.proprietary_id === null) return null;
   const { profile } = await api.get<{ profile: MedicalProfile | null }>(
-    `/admin/owners/${pet.proprietary_id}/pets/${petId}/medical_profile`,
+    `/admin/pets/${petId}/medical_profile`,
   );
   return profile;
+}
+
+/** Historial completo de un paciente; cada índice filtra y pagina en Rails. */
+export async function getAdminPatientHistory(
+  petId: number,
+): Promise<StaffPatientHistory> {
+  const params = { pet_id: petId };
+  const [consultations, vaccinations, dewormings, reports] = await Promise.all([
+    fetchAllPages<'consultations', StaffConsultation>(
+      '/admin/consultations-list',
+      'consultations',
+      params,
+    ),
+    fetchAllPages<'vaccinations', Vaccination>(
+      '/admin/vaccinations-list',
+      'vaccinations',
+      params,
+    ),
+    fetchAllPages<'dewormings', Deworming>(
+      '/admin/dewormings-list',
+      'dewormings',
+      params,
+    ),
+    fetchAllPages<'medical_reports', MedicalReport>(
+      '/admin/medical_reports',
+      'medical_reports',
+      params,
+    ),
+  ]);
+  return { consultations, vaccinations, dewormings, reports };
 }

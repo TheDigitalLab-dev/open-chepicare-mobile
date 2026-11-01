@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import type { ConsultationVaccination } from '@/types/clinical';
+import { VaccinationEditor } from './components/ClinicalPlanFields';
 import { useNavigation } from '@react-navigation/native';
 
 import { AppHeader, MobileShell } from '@/components/layout';
@@ -25,14 +27,14 @@ function VaccinationForm() {
 
   const [form, setForm] = useState({
     petId: undefined as number | undefined,
-    vaccine_name: '',
-    manufacturer: '',
-    dose: '',
     application_date: clinicToday(),
-    next_due_date: '',
   });
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+  const [vaccination, setVaccination] = useState<ConsultationVaccination>({
+    vaccine_type: 'other',
+    vaccine_name: '',
+  });
   const petSearch = useRemoteSearch(searchPets);
   // El backend exige can_vaccinate al veterinario que registra la vacuna.
   const { user } = useAuth();
@@ -45,13 +47,13 @@ function VaccinationForm() {
   const canSubmit =
     canVaccinate &&
     form.petId !== undefined &&
-    form.vaccine_name.trim().length > 0 &&
+    vaccination.vaccine_name.trim().length > 0 &&
     form.application_date.trim().length > 0 &&
     !submitting;
 
   const onSubmit = async () => {
     if (form.petId === undefined) return;
-    const nextDue = form.next_due_date.trim();
+    const nextDue = (vaccination.next_due_date ?? '').trim();
     if (
       !isValidDayKey(form.application_date.trim()) ||
       (nextDue && !isValidDayKey(nextDue))
@@ -63,12 +65,11 @@ function VaccinationForm() {
     setError(undefined);
     try {
       await createAdminVaccination({
+        ...vaccination,
         pet_id: form.petId,
-        vaccine_name: form.vaccine_name.trim(),
-        manufacturer: form.manufacturer.trim() || undefined,
-        dose: form.dose.trim() || undefined,
+        vaccine_name: vaccination.vaccine_name.trim(),
         application_date: form.application_date.trim(),
-        next_due_date: form.next_due_date.trim() || undefined,
+        next_due_date: (vaccination.next_due_date ?? '').trim() || undefined,
       });
       if (back) back();
     } catch (e) {
@@ -104,29 +105,16 @@ function VaccinationForm() {
       />
 
       <TextField
-        label="Vacuna"
-        value={form.vaccine_name}
-        onChangeText={(v) => set('vaccine_name', v)}
-      />
-      <TextField
-        label="Fabricante"
-        value={form.manufacturer}
-        onChangeText={(v) => set('manufacturer', v)}
-      />
-      <TextField label="Dosis" value={form.dose} onChangeText={(v) => set('dose', v)} />
-      <TextField
         label="Fecha de aplicación"
         value={form.application_date}
         onChangeText={(v) => set('application_date', v)}
         placeholder="AAAA-MM-DD"
         keyboardType="numbers-and-punctuation"
       />
-      <TextField
-        label="Próxima dosis"
-        value={form.next_due_date}
-        onChangeText={(v) => set('next_due_date', v)}
-        placeholder="AAAA-MM-DD"
-        keyboardType="numbers-and-punctuation"
+      <VaccinationEditor
+        value={vaccination}
+        change={(patch) => setVaccination((previous) => ({ ...previous, ...patch }))}
+        locked={submitting || !canVaccinate}
       />
 
       <Button

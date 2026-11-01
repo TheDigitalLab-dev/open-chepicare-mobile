@@ -99,13 +99,15 @@ it('eventTimeLabel: hora de la clínica, periodo o todo el día', () => {
   expect(eventTimeLabel(vaccination)).toBe('Todo el día');
 });
 
-it('eventSubtitle: el personal ve el dueño; el propietario, el veterinario', () => {
+it('eventSubtitle: muestra el tutor debajo del título y conserva hora y veterinario', () => {
   expect(eventSubtitle(appointment, 'staff')).toBe(
-    '10:00 – 10:30 · Luis Gómez · Ana Pérez',
+    'Tutor: Luis Gómez\n10:00 – 10:30 · Ana Pérez',
   );
-  expect(eventSubtitle(appointment, 'owner')).toBe('10:00 – 10:30 · Ana Pérez');
+  expect(eventSubtitle(appointment, 'owner')).toBe(
+    'Tutor: Luis Gómez\n10:00 – 10:30 · Ana Pérez',
+  );
   expect(eventSubtitle(prescription, 'owner')).toBe(
-    '18/10/2026 – 24/10/2026 · 250mg · Cada 12 horas',
+    'Tutor: No registrado\n18/10/2026 – 24/10/2026 · 250mg · Cada 12 horas',
   );
 });
 

@@ -16,6 +16,7 @@ import type { OwnerPetsStackParamList } from '@/navigation/types';
 import { useConsultationCare, type ConsultationCare } from '@/hooks/useConsultationCare';
 import { formatDate } from '@/utils/format';
 import type { Consultation, PrescriptionItem } from '@/types/models';
+import { ConsultationPreventiveCare } from '@/components/domain/ConsultationPreventiveCare';
 
 type Nav = NativeStackNavigationProp<OwnerPetsStackParamList>;
 
@@ -155,6 +156,13 @@ function Body({
   return (
     <>
       <Card style={{ gap: 10 }}>
+        <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>
+          {consultation.pet ? `${consultation.pet.name} — ` : ''}
+          {consultation.anamnesis?.trim() || consultation.diagnosis?.trim() || 'Consulta'}
+        </Text>
+        <Text style={{ color: colors.mutedForeground }}>
+          Tutor: {consultation.pet?.proprietary?.full_name ?? 'No registrado'}
+        </Text>
         <Field label="Fecha" value={formatDate(consultation.consultation_date)} />
         <Field label="Veterinario" value={consultation.veterinarian.full_name} />
         {consultation.diagnosis ? (
@@ -170,6 +178,7 @@ function Body({
       ) : null}
 
       <TreatmentCard consultation={consultation} care={care} />
+      <ConsultationPreventiveCare consultation={consultation} />
 
       {consultation.prescriptions.length > 0 ? (
         <>

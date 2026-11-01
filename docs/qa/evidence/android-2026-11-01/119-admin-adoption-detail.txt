@@ -1,0 +1,28 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Rocky (Refugio)' [378,170][701,231]
+TextView 'Rocky (Refugio)' [332,563][748,641]
+TextView 'Perro' [495,657][585,708]
+TextView 'Adoptada' [471,750][609,793]
+ViewGroup 'Fecha de adopción, 11/10/2026' [42,872][1038,1047] DISABLED
+TextView 'Fecha de adopción' [76,906][1004,960]
+TextView '11/10/2026' [76,965][1004,1012]
+ViewGroup 'Adoptante, María García' [42,1078][1038,1253] DISABLED
+TextView 'Adoptante' [76,1112][1004,1166]
+TextView 'María García' [76,1171][1004,1218]
+ViewGroup 'Correo, owner2@example.com' [42,1284][1038,1459] DISABLED
+TextView 'Correo' [76,1318][1004,1372]
+TextView 'owner2@example.com' [76,1377][1004,1424]
+ViewGroup 'Procesada por, Sin registrar' [42,1490][1038,1665] DISABLED
+TextView 'Procesada por' [76,1524][1004,1578]
+TextView 'Sin registrar' [76,1583][1004,1630]
+ViewGroup 'Notas, Seguimiento en 1 mes' [42,1696][1038,1871] DISABLED
+TextView 'Notas' [76,1730][1004,1784]
+TextView 'Seguimiento en 1 mes' [76,1789][1004,1836]
+View '\uf382, Inicio' [0,2209][270,2337]
+TextView 'Inicio' [102,2295][168,2332]
+View '\uf499, Pacientes' [270,2209][540,2337]
+TextView 'Pacientes' [345,2295][464,2332]
+View '\uf1cf, Agenda' [540,2209][810,2337]
+TextView 'Agenda' [629,2295][721,2332]
+View '\uf2ce, Más' [810,2209][1080,2337]
+TextView 'Más' [918,2295][971,2332]

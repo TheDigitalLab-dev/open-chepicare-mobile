@@ -190,7 +190,11 @@ function ResetPasswordRoute() {
         await resetPassword(token, password, passwordConfirmation);
         navigation.navigate('Login');
       } catch (err) {
-        setErrorMessage(messageFrom(err, 'No se pudo restablecer la contraseña.'));
+        setErrorMessage(
+          err instanceof ApiError && err.status === 401
+            ? 'El enlace de recuperación no es válido o venció. Solicita uno nuevo.'
+            : messageFrom(err, 'No se pudo restablecer la contraseña.'),
+        );
       } finally {
         setSubmitting(false);
       }
