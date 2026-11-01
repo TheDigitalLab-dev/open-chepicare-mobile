@@ -14,7 +14,7 @@ capturas muestran el defecto inicial; las posteriores documentan su corrección.
 
 ## Entorno
 
-- Emulador `pawcare_pixel`, Android 15, 1080 × 2400; `com.chepicare.mobile`.
+- Emulador local, Android 15, 1080 × 2400; `com.chepicare.mobile`.
 - MCP `@mobilenext/mobile-mcp@1.0.15`, con ADB para tocar, escribir y desplazar.
 - Rails real en 3000, Metro en 8081 y web/Vite en 3036.
 - Comparación con `useConsultationWizard.ts`, tipos, rutas, controladores,
