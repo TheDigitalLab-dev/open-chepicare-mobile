@@ -9,7 +9,7 @@ import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { listAdminDewormings } from '@/services/admin';
 import { formatDate } from '@/utils/format';
-import type { Deworming } from '@/types/models';
+import type { StaffDeworming } from '@/types/models';
 
 export function AdminDewormingsListScreen() {
   const navigation = useNavigation();
@@ -20,9 +20,10 @@ export function AdminDewormingsListScreen() {
 
   const count = items.length;
   const renderItem = useCallback(
-    ({ item: d, index }: ListRenderItemInfo<Deworming>) => (
+    ({ item: d, index }: ListRenderItemInfo<StaffDeworming>) => (
       <TimelineItem
-        title={d.product_name}
+        title={`${d.pet.name} — ${d.product_name}`}
+        subtitle={`Tutor: ${d.pet.proprietary?.full_name ?? 'No registrado'}`}
         date={`Aplicada: ${formatDate(d.application_date)}`}
         description={`${d.dose ?? 'Dosis no especificada'} · Próxima: ${formatDate(d.next_due_date)}`}
         last={index === count - 1}

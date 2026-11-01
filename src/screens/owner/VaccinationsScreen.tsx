@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 
@@ -12,6 +12,8 @@ import { LEGACY_VACCINATION_REMINDER, syncReminders } from '@/services/reminderA
 import { vaccinationReminders } from '@/utils/reminders';
 import { formatDate } from '@/utils/format';
 import type { Vaccination } from '@/types/models';
+import { vaccinationDueState } from '@/utils/vaccinationDue';
+import { clinicToday } from '@/utils/clinicTime';
 
 export function VaccinationsScreen() {
   const navigation = useNavigation();
@@ -20,7 +22,8 @@ export function VaccinationsScreen() {
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
   const { data, loading, error, reload } = useAsync(() => listVaccinations(petId));
-  const items = data ?? [];
+  const items = useMemo(() => data ?? [], [data]);
+  const today = clinicToday();
 
   // O3 del plan: aviso local 3 días antes del vencimiento de la próxima dosis.
   useEffect(() => {
@@ -35,11 +38,16 @@ export function VaccinationsScreen() {
   const renderItem = useCallback(
     ({ item: v, index }: ListRenderItemInfo<Vaccination>) => (
       <TimelineItem
-        tone="success"
+        tone={
+          vaccinationDueState(v, items, today) === 'overdue' ? 'destructive' : 'success'
+        }
         title={v.vaccine_name}
         date={formatDate(v.application_date)}
         description={
           [
+            vaccinationDueState(v, items, today) === 'overdue'
+              ? 'Próxima dosis vencida'
+              : null,
             v.next_due_date ? `Próxima: ${formatDate(v.next_due_date)}` : null,
             v.veterinarian ? v.veterinarian.full_name : null,
           ]
@@ -49,7 +57,7 @@ export function VaccinationsScreen() {
         last={index === items.length - 1}
       />
     ),
-    [items.length],
+    [items, today],
   );
 
   return (

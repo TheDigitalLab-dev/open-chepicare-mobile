@@ -87,6 +87,21 @@ it('Agenda: «Próximas» desde hoy y «Pasadas» con la más reciente primero',
     `${a.pet?.name ?? 'Mascota'}, ${formatDateTime(a.scheduled_at, a.time_zone)}, ${APPOINTMENT_STATUS_LABEL[a.status]}`;
 
   fireEvent.press(await findText('Agenda'));
+  await waitFor(
+    () =>
+      expect(
+        screen.getByRole('button', { name: 'Calendario' }).props.accessibilityState
+          .selected,
+      ).toBe(true),
+    E2E_WAIT,
+  );
+  expect(screen.getByRole('button', { name: 'Semana en curso' })).toBeTruthy();
+  // La lista histórica conserva su contrato de datos; la entrada visible es Calendario.
+  const navigate = navigationRef.navigate as unknown as (
+    name: string,
+    params: Record<string, unknown>,
+  ) => void;
+  act(() => navigate('AgendaTab', { screen: 'AdminAppointmentsList' }));
   await findText('Próximas');
   if (upcoming.items[0]) {
     await waitFor(() => screen.getByLabelText(label(upcoming.items[0]!)), E2E_WAIT);

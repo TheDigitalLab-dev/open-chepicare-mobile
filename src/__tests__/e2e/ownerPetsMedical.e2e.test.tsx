@@ -38,7 +38,11 @@ it('recorre mascotas, perfil médico, consultas y exámenes de laboratorio', asy
   const consultations = await medicalService.listConsultations(1);
   const withExams = consultations.find((c) => c.diagnosis === 'Gastroenteritis leve')!;
   await pressButton('Consultas');
-  fireEvent.press(await findText('Gastroenteritis leve'));
+  fireEvent.press(
+    await findText(
+      `${withExams.pet!.name} — ${withExams.anamnesis?.trim() || withExams.diagnosis}`,
+    ),
+  );
   await findText('Diagnóstico');
   await pressButton(`Ver exámenes de laboratorio (${withExams.lab_exams.length})`);
   await findText('Hemograma completo (CBC)');

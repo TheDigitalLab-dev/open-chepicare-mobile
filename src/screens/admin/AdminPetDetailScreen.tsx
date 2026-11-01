@@ -4,6 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
 import { AsyncBoundary, Button, PetAvatar } from '@/components/ui';
+import { TutorContact } from '@/components/domain/TutorContact';
 import { DetailHero, ListRow } from '@/components/domain';
 import type { AdminPatientsStackParamList } from '@/navigation/types';
 import { useAsync } from '@/hooks/useAsync';
@@ -26,6 +27,8 @@ function Body({ pet }: { pet: Pet }) {
         avatar={<PetAvatar fallback={SPECIES_EMOJI[pet.species]} size="lg" />}
       />
 
+      <TutorContact tutor={pet.proprietary} />
+
       <ListRow title="Especie" subtitle={SPECIES_LABEL[pet.species]} />
       <ListRow title="Raza" subtitle={pet.breed ?? 'Sin especificar'} />
       <ListRow title="Sexo" subtitle={pet.sex ? SEX_LABEL[pet.sex] : 'Sin especificar'} />
@@ -36,6 +39,11 @@ function Body({ pet }: { pet: Pet }) {
       />
 
       <View style={{ gap: 8, marginTop: 8 }}>
+        <Button
+          label="Historia médica"
+          fullWidth
+          onPress={() => navigation.navigate('AdminPatientHistory', { petId: pet.id })}
+        />
         <Button
           label="Editar paciente"
           fullWidth

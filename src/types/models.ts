@@ -258,6 +258,14 @@ export interface Appointment {
   pet_id: number;
   service_id: number;
   owner_id: number;
+  owner?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string | null;
+    identity_document?: string | null;
+  } | null;
   assigned_to_id: number | null;
   /** ISO 8601 con el offset de la clínica para esa fecha ("…T09:00:00-04:00"). */
   scheduled_at: string;
@@ -339,9 +347,35 @@ export interface MedicalVet {
 }
 
 // Espejo de los json médicos del owner (owner_*_controller).
+export interface StaffPatientIdentity {
+  id: number;
+  name: string;
+  species: Species;
+  proprietary: { id: number; type: 'Owner' | 'User'; full_name: string } | null;
+}
+
+export interface StaffConsultation extends Consultation {
+  pet: StaffPatientIdentity;
+}
+
+export interface StaffVaccination extends Vaccination {
+  pet: StaffPatientIdentity;
+}
+export interface StaffDeworming extends Deworming {
+  pet: StaffPatientIdentity;
+}
+
+export interface StaffPatientHistory {
+  consultations: StaffConsultation[];
+  vaccinations: Vaccination[];
+  dewormings: Deworming[];
+  reports: MedicalReport[];
+}
+
 export interface Consultation {
   id: number;
   pet_id: number;
+  pet?: StaffPatientIdentity;
   consultation_date: string;
   anamnesis?: string | null;
   diagnosis?: string | null;
@@ -356,6 +390,8 @@ export interface Consultation {
   veterinarian: MedicalVet;
   prescriptions: Prescription[];
   lab_exams: LabExam[];
+  vaccinations_in_consultation?: Vaccination[];
+  dewormings_in_consultation?: Deworming[];
 }
 
 export interface Vaccination {
@@ -375,6 +411,7 @@ export interface Vaccination {
 }
 
 export interface Deworming {
+  parasite_type?: 'internal' | 'external' | 'both';
   id: number;
   pet_id?: number;
   product_name: string;
@@ -452,6 +489,15 @@ export interface MedicalReport {
   generated_at?: string | null;
   created_at?: string | null;
   created_by: MedicalVet;
+}
+
+export interface StaffMedicalReport extends MedicalReport {
+  pet: Pick<StaffPatientIdentity, 'id' | 'name' | 'species'>;
+  proprietary: {
+    id: number;
+    full_name: string;
+    identity_document?: string | null;
+  } | null;
 }
 
 // Espejo de product_json (public/products_controller). sale_price es string.

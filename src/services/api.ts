@@ -9,6 +9,8 @@
  */
 import { config } from '@/config/env';
 import { getApiBaseUrl } from '@/config/serverConfig';
+import { fetch as expoFetch } from 'expo/fetch';
+
 import {
   ApiError,
   type ApiErrorKind,
@@ -253,7 +255,8 @@ async function rawRequest(
   let res: Response;
   try {
     devLog(method, path);
-    res = await fetch(url, {
+    const transport = isFormData ? expoFetch : fetch;
+    res = await transport(url, {
       method,
       headers: finalHeaders,
       body: payload,

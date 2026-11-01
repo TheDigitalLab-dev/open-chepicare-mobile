@@ -1,0 +1,7 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Política de privacidad' [324,170][756,231]
+TextView '1. Datos que recopilamos\nRecopilamos los datos que nos proporcionas al registrarte o realizar un pedido: nombre, correo, teléfono y la información de tus mascotas.' [42,317][1038,548]
+TextView '2. Uso de la información\nUsamos tus datos para gestionar citas, pedidos, historiales médicos y para comunicarnos contigo sobre nuestros servicios.' [42,579][1038,810]
+TextView '3. Protección de datos\nAplicamos medidas razonables de seguridad para proteger tu información. No compartimos tus datos con terceros sin tu consentimiento, salvo obligación legal.' [42,842][1038,1073]
+TextView '4. Tus derechos\nPuedes solicitar el acceso, la rectificación o la eliminación de tus datos personales en cualquier momento a través de nuestros canales de contacto.' [42,1104][1038,1335]
+TextView '5. Cambios en esta política\nPodemos actualizar esta política de privacidad. Te notificaremos los cambios relevantes dentro de la aplicación.' [42,1367][1038,1598]

@@ -26,6 +26,7 @@ import type {
   VoiceDictationStatus,
 } from '@/types/assistant';
 import { api } from './api';
+import { uploadForm } from './uploads';
 
 /** Subida de audio: más tiempo que el default (notas de hasta 15 min). */
 const UPLOAD_TIMEOUT_MS = 120_000;
@@ -196,14 +197,7 @@ export const TOOL_CALL_STATUS_LABEL: Record<AiToolCall['status'], string> = {
 };
 
 function audioForm(audio: AudioSource): FormData {
-  const form = new FormData();
-  if ('blob' in audio) {
-    form.append('audio', audio.blob, audio.name);
-  } else {
-    // React Native: FormData acepta `{ uri, name, type }` y lee el archivo local.
-    form.append('audio', audio as unknown as Blob);
-  }
-  return form;
+  return uploadForm('audio', audio);
 }
 
 // --- Dictado de consulta -------------------------------------------------------

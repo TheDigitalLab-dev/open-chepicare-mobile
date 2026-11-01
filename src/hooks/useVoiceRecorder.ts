@@ -9,7 +9,7 @@
  * Formato: AAC en contenedor .m4a, mono, 64 kbps — suficiente para voz y
  * ~7 MB en el máximo de 15 min (el servidor admite hasta 25 MB).
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   RecordingPresets,
   getRecordingPermissionsAsync,
@@ -88,13 +88,8 @@ export function useVoiceRecorder(): VoiceRecorderState {
     }
   }, [recorder]);
 
-  // Salir de la pantalla con una grabación en curso la detiene.
-  useEffect(
-    () => () => {
-      if (recorder.isRecording) void recorder.stop();
-    },
-    [recorder],
-  );
+  // useAudioRecorder ya detiene y libera el grabador al desmontar (Expo SDK 56).
+  // Un cleanup adicional accedería al objeto nativo después de su liberación.
 
   return {
     isRecording: state.isRecording,

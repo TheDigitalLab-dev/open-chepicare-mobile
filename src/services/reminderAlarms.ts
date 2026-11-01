@@ -43,7 +43,6 @@ async function ensureChannel(): Promise<void> {
   await Notifications.setNotificationChannelAsync(REMINDERS_CHANNEL_ID, {
     name: 'Recordatorios de citas y vacunas',
     importance: Notifications.AndroidImportance.HIGH,
-    sound: 'default',
   });
   channelReady = true;
 }

@@ -1,0 +1,7 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Adopción' [445,170][635,231]
+TextView 'Dale un hogar' [94,369][985,447]
+TextView 'Conoce a las mascotas que buscan una familia.' [94,458][985,509]
+TextView 'En ChepiCare promovemos la adopción responsable. Todas nuestras mascotas están desparasitadas, vacunadas y revisadas por nuestro equipo veterinario. Adoptar es un compromiso de amor y cuidado para toda la vida.' [42,603][1038,893]
+Button 'Ver mascotas' [42,936][1038,1062]
+TextView 'Ver mascotas' [410,971][671,1028]

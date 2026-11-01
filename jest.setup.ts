@@ -62,6 +62,16 @@ if (typeof symbolCtor.dispose !== 'symbol') {
 // El preset de React Native reemplaza `fetch` por un polyfill que no hace red
 // real en Node. Restauramos un cliente HTTP real (undici) para que los tests
 // peguen DE VERDAD al backend.
+// Su lectura de cuerpos grandes necesita las primitivas de Node, incluidas
+// las tareas inmediatas y el control de flujo de los streams web.
+/* eslint-disable @typescript-eslint/no-require-imports */
+Object.assign(globalThis, require('node:stream/web'));
+const nodeTimers = require('node:timers');
+Object.assign(globalThis, {
+  setImmediate: nodeTimers.setImmediate,
+  clearImmediate: nodeTimers.clearImmediate,
+});
+/* eslint-enable @typescript-eslint/no-require-imports */
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { fetch, FormData, Headers, Request, Response } = require('undici');
 // FormData/Blob/File del mismo realm que undici: las subidas multipart (audio
@@ -70,6 +80,18 @@ const { fetch, FormData, Headers, Request, Response } = require('undici');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { Blob, File } = require('node:buffer');
 Object.assign(globalThis, { fetch, FormData, Blob, File, Headers, Request, Response });
+
+// Transporte Expo nativo sobre HTTP REAL en Node; conserva undici y sus respuestas.
+jest.mock('expo/fetch', () => ({
+  fetch: (...args: Parameters<typeof globalThis.fetch>) => globalThis.fetch(...args),
+}));
+
+// La suite usa logins reales y comparte la IP del backend de desarrollo
+// (100 logins/minuto). Espaciar archivos evita agotar ese límite sin desactivar
+// Rack::Attack ni sustituir respuestas HTTP. Jest ejecuta un solo worker.
+beforeAll(async () => {
+  await new Promise<void>((resolve) => setTimeout(resolve, 1500));
+});
 
 // Shim de plataforma: WebSocket con la firma de React Native
 // `new WebSocket(url, protocols, { headers })` sobre el WebSocket REAL de undici
@@ -257,6 +279,7 @@ type MockNodeFs = {
   mkdtempSync(prefix: string): string;
   existsSync(p: string): boolean;
   writeFileSync(p: string, data: string | Uint8Array): void;
+  readFileSync(p: string): Uint8Array;
 };
 type MockNodeOs = { tmpdir(): string };
 type MockNodePath = { join(...parts: string[]): string };
@@ -269,10 +292,23 @@ jest.mock('expo-file-system', () => {
   const mockCacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chepicare-cache-'));
   const toPath = (part: string | { uri: string }) =>
     (typeof part === 'string' ? part : part.uri).replace(/^file:\/\//, '');
-  class MockFile {
+  class MockFile extends globalThis.Blob {
     readonly path: string;
     constructor(...parts: (string | { uri: string })[]) {
-      this.path = path.join(...parts.map(toPath));
+      const filePath = path.join(...parts.map(toPath));
+      const type = /\.png$/i.test(filePath)
+        ? 'image/png'
+        : /\.jpe?g$/i.test(filePath)
+          ? 'image/jpeg'
+          : /\.pdf$/i.test(filePath)
+            ? 'application/pdf'
+            : /\.m4a$/i.test(filePath)
+              ? 'audio/mp4'
+              : 'application/octet-stream';
+      super(fs.existsSync(filePath) ? [Uint8Array.from(fs.readFileSync(filePath))] : [], {
+        type,
+      });
+      this.path = filePath;
     }
     get uri() {
       return `file://${this.path}`;

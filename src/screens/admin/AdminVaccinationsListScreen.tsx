@@ -11,7 +11,7 @@ import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { useReloadOnFocus } from '@/hooks/useReloadOnFocus';
 import { listAdminVaccinations } from '@/services/admin';
 import { formatDate } from '@/utils/format';
-import type { Vaccination } from '@/types/models';
+import type { StaffVaccination } from '@/types/models';
 
 type Nav = NativeStackNavigationProp<AdminMoreStackParamList>;
 
@@ -34,9 +34,10 @@ export function AdminVaccinationsListScreen() {
 
   const count = items.length;
   const renderItem = useCallback(
-    ({ item: v, index }: ListRenderItemInfo<Vaccination>) => (
+    ({ item: v, index }: ListRenderItemInfo<StaffVaccination>) => (
       <TimelineItem
-        title={v.vaccine_name}
+        title={`${v.pet.name} — ${v.vaccine_name}`}
+        subtitle={`Tutor: ${v.pet.proprietary?.full_name ?? 'No registrado'}`}
         date={`Aplicada: ${formatDate(v.application_date)}`}
         description={`${v.manufacturer ?? 'Fabricante desconocido'} · Próxima: ${formatDate(v.next_due_date)}`}
         last={index === count - 1}

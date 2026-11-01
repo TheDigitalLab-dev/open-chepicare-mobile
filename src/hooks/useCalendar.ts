@@ -30,9 +30,10 @@ import {
   monthGrid,
   monthGridRange,
   monthOfDay,
+  weekdayIndex,
   type CalendarAudience,
 } from '@/utils/calendarGrid';
-import { clinicToday } from '@/utils/clinicTime';
+import { clinicToday, shiftDayKey } from '@/utils/clinicTime';
 import { shiftMonth, type MonthRef } from '@/utils/schedule';
 
 export interface UseCalendarOptions {
@@ -44,6 +45,8 @@ export interface UseCalendarOptions {
 }
 
 export interface CalendarState {
+  viewMode: 'calendar' | 'currentWeek';
+  setViewMode: (mode: 'calendar' | 'currentWeek') => void;
   month: MonthRef;
   /** Semanas (lunes → domingo) del mes visible. */
   weeks: string[][];
@@ -71,6 +74,7 @@ export interface CalendarState {
   canFilterMine: boolean;
   setVetFilter: (filter: CalendarVetFilter) => void;
   canCreateOnSelectedDay: boolean;
+  canCreateAppointment: boolean;
   selectDay: (day: string) => void;
   prevMonth: () => void;
   nextMonth: () => void;
@@ -205,6 +209,7 @@ export function useCalendar({
   initialDay,
 }: UseCalendarOptions): CalendarState {
   const [today] = useState(() => clinicToday());
+  const [viewMode, changeViewMode] = useState<'calendar' | 'currentWeek'>('calendar');
   // Mes visible y día elegido cambian juntos (dos "mes siguiente" seguidos
   // avanzan dos meses).
   const [view, setView] = useState(() => {
@@ -217,7 +222,11 @@ export function useCalendar({
   const [vetRequest, setVetRequest] = useState<CalendarVetFilter | undefined>();
   const [hiddenTypes, setHiddenTypes] = useState<CalendarEventType[]>([]);
 
-  const range = useMemo(() => monthGridRange(month), [month]);
+  const range = useMemo(() => {
+    if (viewMode === 'calendar') return monthGridRange(month);
+    const start = shiftDayKey(today, -weekdayIndex(today));
+    return { start, end: shiftDayKey(start, 6) };
+  }, [month, today, viewMode]);
   const { current, staffMeta, reload } = useCalendarEvents(audience, {
     ...range,
     includeCancelled,
@@ -232,7 +241,13 @@ export function useCalendar({
   );
   const byDay = useMemo(() => eventsByDay(events, range), [events, range]);
   const markersByDay = useMemo(() => markersFor(byDay), [byDay]);
-  const weeks = useMemo(() => monthGrid(month), [month]);
+  const weeks = useMemo(
+    () =>
+      viewMode === 'calendar'
+        ? monthGrid(month)
+        : [Array.from({ length: 7 }, (_, i) => shiftDayKey(range.start, i))],
+    [month, range.start, viewMode],
+  );
 
   const vets = staffMeta?.vets ?? NO_VETS;
 
@@ -264,6 +279,11 @@ export function useCalendar({
   }, []);
 
   return {
+    viewMode,
+    setViewMode: (mode) => {
+      selectDay(today);
+      changeViewMode(mode);
+    },
     month,
     weeks,
     today,
@@ -294,6 +314,7 @@ export function useCalendar({
       audience,
       response?.can_create_appointment ?? false,
     ),
+    canCreateAppointment: response?.can_create_appointment ?? false,
     selectDay,
     prevMonth: () => changeMonth(-1),
     nextMonth: () => changeMonth(1),

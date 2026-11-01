@@ -3,7 +3,7 @@ import { StyleSheet, Text } from 'react-native';
 
 import { useTheme } from '@/theme';
 import { AppHeader, MobileShell } from '@/components/layout';
-import { Button, TextField } from '@/components/ui';
+import { Button, InfoBanner, TextField } from '@/components/ui';
 
 const MIN_PASSWORD = 8;
 
@@ -43,6 +43,7 @@ export function ResetPasswordScreen({
       </Text>
       <TextField
         label="Nueva contraseña"
+        keyboardType="default"
         placeholder="••••••••"
         value={password}
         onChangeText={setPassword}
@@ -53,13 +54,15 @@ export function ResetPasswordScreen({
       />
       <TextField
         label="Confirmar contraseña"
+        keyboardType="default"
         placeholder="••••••••"
         value={confirm}
         onChangeText={setConfirm}
         secureTextEntry
         textContentType="newPassword"
-        error={mismatch ? 'Las contraseñas no coinciden.' : errorMessage}
+        error={mismatch ? 'Las contraseñas no coinciden.' : undefined}
       />
+      {errorMessage ? <InfoBanner tone="destructive" message={errorMessage} /> : null}
       <Button
         label="Restablecer contraseña"
         fullWidth

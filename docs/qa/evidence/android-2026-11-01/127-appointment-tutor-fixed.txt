@@ -1,0 +1,34 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Detalle de cita' [397,170][682,231]
+TextView 'Max — Cirugía mayor' [266,359][814,437]
+TextView 'Tutor: Juan Pérez' [396,452][683,503]
+TextView 'Pendiente' [468,546][613,589]
+ViewGroup 'Servicio, Cirugía mayor' [42,668][1038,842] DISABLED
+TextView 'Servicio' [76,702][1004,756]
+TextView 'Cirugía mayor' [76,761][1004,808]
+ViewGroup 'Fecha, 2 de nov, 8:00' [42,874][1038,1048] DISABLED
+TextView 'Fecha' [76,908][1004,962]
+TextView '2 de nov, 8:00' [76,967][1004,1014]
+ViewGroup 'Teléfono del tutor, 04241234567' [42,1080][1038,1254] DISABLED
+TextView 'Teléfono del tutor' [76,1114][1004,1168]
+TextView '04241234567' [76,1173][1004,1220]
+ViewGroup 'Correo del tutor, owner1@example.com' [42,1286][1038,1460] DISABLED
+TextView 'Correo del tutor' [76,1320][1004,1374]
+TextView 'owner1@example.com' [76,1379][1004,1426]
+ViewGroup 'Veterinario, Admin ChepiCare' [42,1492][1038,1666] DISABLED
+TextView 'Veterinario' [76,1526][1004,1580]
+TextView 'Admin ChepiCare' [76,1585][1004,1632]
+ViewGroup 'Duración, 120 min' [42,1698][1038,1872] DISABLED
+TextView 'Duración' [76,1732][1004,1786]
+TextView '120 min' [76,1791][1004,1838]
+ViewGroup 'Notas, Sin notas' [42,1904][1038,2078] DISABLED
+TextView 'Notas' [76,1938][1004,1992]
+TextView 'Sin notas' [76,1997][1004,2044]
+View '\uf382, Inicio' [0,2209][270,2337]
+TextView 'Inicio' [102,2295][168,2332]
+View '\uf499, Pacientes' [270,2209][540,2337]
+TextView 'Pacientes' [345,2295][464,2332]
+View '\uf1cf, Agenda' [540,2209][810,2337]
+TextView 'Agenda' [629,2295][721,2332]
+View '\uf2ce, Más' [810,2209][1080,2337]
+TextView 'Más' [918,2295][971,2332]

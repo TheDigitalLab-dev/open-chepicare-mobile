@@ -18,6 +18,10 @@ import * as authService from '@/services/auth';
 import * as calendarService from '@/services/calendar';
 import * as petsService from '@/services/pets';
 import {
+  createTreatmentConsultation,
+  type TreatmentConsultation,
+} from '@/testing/medicalData';
+import {
   WEEKDAY_NAMES,
   isDayInMonth,
   monthGridRange,
@@ -29,8 +33,11 @@ import { shiftMonth } from '@/utils/schedule';
 import * as secureStore from '@/utils/secureStore';
 
 let createdId: number | null = null;
+let treatmentFixture: TreatmentConsultation | null = null;
 
 afterEach(async () => {
+  await treatmentFixture?.cleanup();
+  treatmentFixture = null;
   if (createdId !== null) {
     await authService.login('owner1@example.com', 'password123');
     await appointmentsService
@@ -66,6 +73,9 @@ async function openOwnerCalendar() {
 it('el propietario ve su cita y su tratamiento y abre el detalle de la cita', async () => {
   renderApp();
   await loginThroughUi('owner1@example.com');
+  treatmentFixture = await createTreatmentConsultation(
+    (await petsService.listPets())[0]!.id,
+  );
   const month = clinicMonth();
   const { events } = await calendarService.getOwnerCalendarEvents(monthGridRange(month));
   const appointment = events.find(
@@ -154,7 +164,7 @@ it('agenda una cita desde un día del calendario con la fecha precargada', async
   }, E2E_WAIT);
   await findText('Mostrar citas canceladas');
   const created = await appointmentsService.getAppointment(createdId!);
-  const title = `${created.service?.name ?? services[0]!.name} · ${created.pet?.name ?? pets[0]!.name}`;
+  const title = `${created.pet?.name ?? pets[0]!.name} — ${created.service?.name ?? services[0]!.name}`;
   await findText(title);
 }, 90000);
 

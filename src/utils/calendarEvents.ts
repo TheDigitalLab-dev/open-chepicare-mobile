@@ -48,6 +48,14 @@ export function eventStatusLabel(event: CalendarEvent): string {
       return APPOINTMENT_STATUS_LABEL[event.status] ?? event.status;
     case 'prescription':
       return PRESCRIPTION_STATUS_LABEL[event.status] ?? event.status;
+    case 'clinic_event':
+      return event.status === 'published'
+        ? 'Publicado'
+        : event.status === 'cancelled'
+          ? 'Cancelado'
+          : event.status === 'completed'
+            ? 'Finalizado'
+            : 'Programado';
     default:
       return CLINICAL_STATUS_LABEL[event.status] ?? event.status;
   }
@@ -69,19 +77,21 @@ function compact(parts: (string | null | undefined)[]): string {
   return parts.filter((p): p is string => !!p && p.trim() !== '').join(' · ');
 }
 
-export function eventSubtitle(event: CalendarEvent, audience: CalendarAudience): string {
+export function eventSubtitle(event: CalendarEvent, _audience: CalendarAudience): string {
   const time = eventTimeLabel(event);
+  const tutor =
+    event.pet?.proprietary?.full_name ??
+    (event.type === 'appointment' ? event.details.owner?.full_name : null);
+  const ownerLine = event.pet ? `Tutor: ${tutor ?? 'No registrado'}\n` : '';
   switch (event.type) {
     case 'appointment':
-      return compact([
-        time,
-        audience === 'staff' ? event.details.owner?.full_name : null,
-        event.details.assigned_to?.full_name,
-      ]);
+      return ownerLine + compact([time, event.details.assigned_to?.full_name]);
     case 'prescription':
-      return compact([time, event.details.dose, event.details.frequency]);
+      return ownerLine + compact([time, event.details.dose, event.details.frequency]);
+    case 'clinic_event':
+      return compact([time, event.details.location]);
     default:
-      return time;
+      return ownerLine + time;
   }
 }
 

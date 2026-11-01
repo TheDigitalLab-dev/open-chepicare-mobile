@@ -33,12 +33,18 @@ afterAll(async () => {
   await secureStore.clearTokens();
 });
 
-function renderBoard(day: string, events: CalendarEvent[], canCreate = false) {
+function renderBoard(
+  day: string,
+  events: CalendarEvent[],
+  canCreate = false,
+  mode: 'calendar' | 'currentWeek' = 'calendar',
+) {
   const month = clinicMonth();
   const range = monthGridRange(month);
   const byDay = eventsByDay(events, range);
   const markers = new Map([...byDay].map(([d, list]) => [d, dayEventTypes(list)]));
   const handlers = {
+    onViewModeChange: jest.fn(),
     onRetry: jest.fn(),
     onSelectDay: jest.fn(),
     onPrevMonth: jest.fn(),
@@ -52,9 +58,15 @@ function renderBoard(day: string, events: CalendarEvent[], canCreate = false) {
   render(
     <ThemeProvider initialPreference="dark">
       <CalendarBoard
+        viewMode={mode}
+        events={events}
         audience="owner"
         month={month}
-        weeks={monthGrid(month)}
+        weeks={
+          mode === 'calendar'
+            ? monthGrid(month)
+            : [monthGrid(month).find((week) => week.includes(day))!]
+        }
         today={clinicToday()}
         selectedDay={day}
         markersByDay={markers}
@@ -71,6 +83,23 @@ function renderBoard(day: string, events: CalendarEvent[], canCreate = false) {
   );
   return { handlers, markers };
 }
+
+it('ofrece solo Calendario y Semana en curso; la semana muestra sus siete días sin navegación a otros periodos', () => {
+  const today = clinicToday();
+  renderBoard(today, response.events, false, 'currentWeek');
+  expect(
+    screen.getByRole('button', { name: 'Calendario' }).props.accessibilityState.selected,
+  ).toBe(false);
+  expect(
+    screen.getByRole('button', { name: 'Semana en curso' }).props.accessibilityState
+      .selected,
+  ).toBe(true);
+  expect(screen.queryByRole('button', { name: 'Mes anterior' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Mes siguiente' })).toBeNull();
+  const week = monthGrid(clinicMonth()).find((days) => days.includes(today))!;
+  for (const day of week)
+    expect(screen.getByRole('header', { name: selectedDayTitle(day) })).toBeTruthy();
+});
 
 it('pinta los eventos del día con los colores oscuros y abre el evento al tocarlo', () => {
   const appointment = response.events.find(

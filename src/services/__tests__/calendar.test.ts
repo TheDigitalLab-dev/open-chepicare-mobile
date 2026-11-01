@@ -19,10 +19,17 @@ import {
 } from '@/utils/clinicTime';
 import { shiftMonth } from '@/utils/schedule';
 import * as secureStore from '@/utils/secureStore';
+import {
+  createTreatmentConsultation,
+  type TreatmentConsultation,
+} from '@/testing/medicalData';
+
+let treatmentFixture: TreatmentConsultation;
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 afterAll(async () => {
+  await treatmentFixture?.cleanup();
   setClinicTimeZone(null);
   await secureStore.clearTokens();
 });
@@ -30,6 +37,8 @@ afterAll(async () => {
 describe('calendarService (propietario)', () => {
   beforeAll(async () => {
     await authService.login('owner1@example.com', 'password123');
+    const pets = await petsService.listPets();
+    treatmentFixture = await createTreatmentConsultation(pets[0]!.id);
   });
 
   it('trae los eventos del rango, solo de sus mascotas, y aprende la zona de la clínica', async () => {
@@ -52,7 +61,8 @@ describe('calendarService (propietario)', () => {
       expect(event.end_date >= event.start_date).toBe(true);
       // Un evento del rango toca al menos un día del rango.
       expect(event.end_date >= range.start && event.start_date <= range.end).toBe(true);
-      expect(myPetIds.has(event.pet.id)).toBe(true);
+      if (event.type === 'clinic_event') expect(event.pet).toBeNull();
+      else expect(myPetIds.has(event.pet.id)).toBe(true);
       expect(event.status).not.toBe('cancelled');
     }
   });

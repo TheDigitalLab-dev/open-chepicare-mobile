@@ -10,7 +10,7 @@ import type { AdminMoreStackParamList } from '@/navigation/types';
 import { usePaginatedList } from '@/hooks/usePaginatedList';
 import { listAdminMedicalReports } from '@/services/admin';
 import { formatDate } from '@/utils/format';
-import type { MedicalReport } from '@/types/models';
+import type { StaffMedicalReport } from '@/types/models';
 
 type Nav = NativeStackNavigationProp<AdminMoreStackParamList>;
 
@@ -28,10 +28,10 @@ export function AdminMedicalReportsListScreen() {
     usePaginatedList((page) => listAdminMedicalReports({ petSearch }, page), petSearch);
 
   const renderItem = useCallback(
-    ({ item: r }: ListRenderItemInfo<MedicalReport>) => (
+    ({ item: r }: ListRenderItemInfo<StaffMedicalReport>) => (
       <ListRow
-        title={r.title}
-        subtitle={formatDate(r.generated_at ?? r.created_at)}
+        title={`${r.pet.name} — ${r.title}`}
+        subtitle={`Tutor: ${r.proprietary?.full_name ?? 'No registrado'}\n${formatDate(r.generated_at ?? r.created_at)}`}
         onPress={() => navigation.navigate('AdminMedicalReportDetail', { id: r.id })}
       />
     ),

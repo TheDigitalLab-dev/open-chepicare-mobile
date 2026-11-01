@@ -11,7 +11,7 @@ const BASE = () => process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:300
 
 async function adminRequest<T>(
   token: string,
-  method: 'POST' | 'PATCH' | 'DELETE',
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
   body?: unknown,
 ): Promise<T> {
@@ -27,6 +27,26 @@ async function adminRequest<T>(
   const text = await res.text();
   if (!res.ok) throw new Error(`${method} ${path} → ${res.status}: ${text}`);
   return (text ? JSON.parse(text) : null) as T;
+}
+
+/** Limpia también los registros preventivos de las pruebas del flujo completo. */
+export async function cleanupClinicalConsultation(consultationId: number): Promise<void> {
+  const token = await seedAdminAccessToken();
+  const { consultation } = await adminRequest<{
+    consultation: {
+      vaccinations_in_consultation?: { id: number }[];
+      dewormings_in_consultation?: { id: number }[];
+    };
+  }>(token, 'GET', `/admin/consultations/${consultationId}`);
+  await Promise.all([
+    ...(consultation.vaccinations_in_consultation ?? []).map((item) =>
+      adminRequest(token, 'DELETE', `/admin/vaccinations/${item.id}`),
+    ),
+    ...(consultation.dewormings_in_consultation ?? []).map((item) =>
+      adminRequest(token, 'DELETE', `/admin/dewormings/${item.id}`),
+    ),
+  ]);
+  await adminRequest(token, 'DELETE', `/admin/consultations/${consultationId}`);
 }
 
 export interface TreatmentConsultation {

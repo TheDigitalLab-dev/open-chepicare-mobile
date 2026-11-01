@@ -4,6 +4,7 @@
  */
 import { DatabaseSync } from 'node:sqlite';
 import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 
 import { applyMigrations } from '@/db/migrations';
 import type { SqlExecutor } from '@/db/sqlExecutor';
@@ -70,6 +71,25 @@ function startLongTreatment() {
     startedAt: new Date().toISOString(),
   });
 }
+
+it('usa el sonido nativo sin buscar un archivo llamado default en Android', async () => {
+  const platform = jest.replaceProperty(Platform, 'OS', 'android');
+  try {
+    await syncReminders('qa-native-', appointmentSpecs(1));
+    const repo = createTreatmentsRepo(exec);
+    const treatment = startLongTreatment();
+    await syncTreatmentAlarms(repo, treatment.id, {
+      petName: 'Max',
+      medicationName: 'Amoxicilina',
+      dose: '250 mg',
+    });
+    const calls = jest.mocked(Notifications.setNotificationChannelAsync).mock.calls;
+    expect(calls.length).toBeGreaterThanOrEqual(2);
+    for (const [, options] of calls) expect(options.sound).toBeUndefined();
+  } finally {
+    platform.restore();
+  }
+});
 
 it('los recordatorios no agotan las alarmas de medicación', async () => {
   // 40 citas futuras: antes ocupaban el presupuesto compartido (60) y el

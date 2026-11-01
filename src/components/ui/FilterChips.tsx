@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   FlatList,
   Pressable,
@@ -22,7 +22,20 @@ export interface FilterChipsProps {
 
 export function FilterChips({ options, selectedId, onSelect }: FilterChipsProps) {
   const { colors } = useTheme();
-
+  const scroll = useRef<FlatList<FilterChipOption>>(null);
+  const selectedIndex = options.findIndex((option) => option.id === selectedId);
+  const showSelected = useCallback(() => {
+    if (selectedIndex >= 0)
+      scroll.current?.scrollToIndex({
+        index: selectedIndex,
+        animated: false,
+        viewPosition: 0.5,
+      });
+  }, [selectedIndex]);
+  useEffect(() => {
+    const frame = requestAnimationFrame(showSelected);
+    return () => cancelAnimationFrame(frame);
+  }, [showSelected]);
   const renderItem = useCallback(
     ({ item: opt }: ListRenderItemInfo<FilterChipOption>) => {
       const active = opt.id === selectedId;
@@ -51,18 +64,27 @@ export function FilterChips({ options, selectedId, onSelect }: FilterChipsProps)
         </Pressable>
       );
     },
-    [selectedId, onSelect, colors],
+    [colors, onSelect, selectedId],
   );
-
   return (
     <FlatList
+      ref={scroll}
       horizontal
+      style={{ flexGrow: 0 }}
+      contentContainerStyle={styles.row}
       data={options}
-      keyExtractor={(opt) => opt.id}
+      keyExtractor={(option) => option.id}
       renderItem={renderItem}
       extraData={selectedId}
+      initialNumToRender={options.length}
+      onContentSizeChange={showSelected}
+      onScrollToIndexFailed={({ averageItemLength, index }) =>
+        scroll.current?.scrollToOffset({
+          offset: averageItemLength * index,
+          animated: false,
+        })
+      }
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.row}
     />
   );
 }

@@ -1,0 +1,38 @@
+Button 'Volver' [21,142][137,258]
+TextView 'Historia médica' [381,170][698,231]
+Button 'Control rutinario, propietario reporta buen estado general, 14 de sept, 9:00 · Dr. María Veterinaria, \uf23b' [45,275][1035,298]
+Button 'Paciente presenta sintomas desde hace 5 dias, 12 de sept, 13:00 · Dr. María Veterinaria, \uf23b' [45,298][1035,472]
+TextView 'Paciente presenta sintomas desde hace 5 dias' [79,332][922,386]
+TextView '12 de sept, 13:00 · Dr. María Veterinaria' [79,391][922,438]
+TextView 'VACUNAS' [42,537][1038,580]
+ViewGroup 'DHPP (Distemper/Parvovirus), 14/09/2026 · Próxima dosis: 14/09/2027' [45,615][1035,790] DISABLED
+TextView 'DHPP (Distemper/Parvovirus)' [79,649][1003,703]
+TextView '14/09/2026 · Próxima dosis: 14/09/2027' [79,708][1003,755]
+ViewGroup 'FVRCP (Triple Felina), 04/09/2026 · Próxima dosis: 09/09/2027' [45,789][1035,963] DISABLED
+TextView 'FVRCP (Triple Felina)' [79,823][1003,877]
+TextView '04/09/2026 · Próxima dosis: 09/09/2027' [79,882][1003,929]
+ViewGroup 'Antirrábica, 15/08/2026 · Próxima dosis: 13/10/2026' [45,964][1035,1139] DISABLED
+TextView 'Antirrábica' [79,998][1003,1052]
+TextView '15/08/2026 · Próxima dosis: 13/10/2026' [79,1057][1003,1104]
+TextView 'DESPARASITACIONES' [42,1203][1038,1246]
+ViewGroup 'Prueba QA desparasitante, 01/11/2026' [45,1281][1035,1456] DISABLED
+TextView 'Prueba QA desparasitante' [79,1315][1003,1369]
+TextView '01/11/2026' [79,1374][1003,1421]
+ViewGroup 'Prueba QA desparasitante, 25/10/2026' [45,1455][1035,1629] DISABLED
+TextView 'Prueba QA desparasitante' [79,1489][1003,1543]
+TextView '25/10/2026' [79,1548][1003,1595]
+ViewGroup 'Milbemax, 14/09/2026 · Próxima dosis: 13/12/2026' [45,1630][1035,1805] DISABLED
+TextView 'Milbemax' [79,1664][1003,1718]
+TextView '14/09/2026 · Próxima dosis: 13/12/2026' [79,1723][1003,1770]
+TextView 'INFORMES' [42,1870][1038,1913]
+Button 'Reporte Mensual - Max, 14/10/2026, \uf23b' [45,1948][1035,2122]
+TextView 'Reporte Mensual - Max' [79,1982][922,2036]
+TextView '14/10/2026' [79,2041][922,2088]
+View '\uf382, Inicio' [0,2209][270,2337]
+TextView 'Inicio' [102,2295][168,2332]
+View '\uf499, Pacientes' [270,2209][540,2337]
+TextView 'Pacientes' [345,2295][464,2332]
+View '\uf1cf, Agenda' [540,2209][810,2337]
+TextView 'Agenda' [629,2295][721,2332]
+View '\uf2ce, Más' [810,2209][1080,2337]
+TextView 'Más' [918,2295][971,2332]

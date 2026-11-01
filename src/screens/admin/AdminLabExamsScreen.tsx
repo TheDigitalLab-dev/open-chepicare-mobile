@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { FlatList, StyleSheet, type ListRenderItemInfo } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
 import { AsyncBoundary, Badge, type BadgeVariant } from '@/components/ui';
@@ -27,7 +28,7 @@ const STATUS_VARIANT: Record<string, BadgeVariant> = {
 };
 
 export function AdminLabExamsScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<AdminMoreStackParamList>>();
   const { params } = useRoute<Rt>();
   const back = navigation.canGoBack() ? navigation.goBack : undefined;
 
@@ -41,7 +42,14 @@ export function AdminLabExamsScreen() {
       <ListRow
         title={e.exam_name}
         subtitle={formatLabResults(e.results)}
-        showChevron={false}
+        onPress={() => {
+          if (data)
+            navigation.navigate('AdminLabExamDetail', {
+              petId: data.pet_id,
+              consultationId: params.consultationId,
+              examId: e.id,
+            });
+        }}
         trailing={() => (
           <Badge
             label={STATUS_LABEL[e.status] ?? e.status}
@@ -50,7 +58,7 @@ export function AdminLabExamsScreen() {
         )}
       />
     ),
-    [],
+    [data, navigation, params.consultationId],
   );
 
   return (

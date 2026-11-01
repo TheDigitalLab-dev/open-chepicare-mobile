@@ -1,9 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
+import { Alert } from 'react-native';
+import { eventSubtitle } from '@/utils/calendarEvents';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { AppHeader, MobileShell } from '@/components/layout';
-import { FilterChips, SectionTitle } from '@/components/ui';
+import { Fab, FilterChips, SectionTitle } from '@/components/ui';
 import { CalendarBoard } from '@/components/domain';
 import type { AdminAgendaStackParamList, AdminTabParamList } from '@/navigation/types';
 import { useAuth } from '@/hooks/useAuth';
@@ -45,6 +47,10 @@ export function AdminCalendarScreen() {
   useReloadOnFocus(calendar.reload);
 
   const openEvent = (event: CalendarEvent) => {
+    if (event.type === 'clinic_event') {
+      Alert.alert(event.title, eventSubtitle(event, 'staff'));
+      return;
+    }
     if (event.type === 'appointment') {
       navigation.navigate('AdminAppointmentDetail', { id: event.record_id });
       return;
@@ -74,10 +80,21 @@ export function AdminCalendarScreen() {
   return (
     <MobileShell
       scroll
+      fab={
+        calendar.canCreateAppointment ? (
+          <Fab
+            accessibilityLabel="Agendar cita"
+            onPress={() => navigation.navigate('AdminAppointmentWizard', {})}
+          />
+        ) : undefined
+      }
       header={<AppHeader title="Calendario" onBack={back} />}
       contentStyle={{ gap: 12, paddingBottom: 32 }}
     >
       <CalendarBoard
+        viewMode={calendar.viewMode}
+        onViewModeChange={calendar.setViewMode}
+        events={calendar.events}
         audience="staff"
         month={calendar.month}
         weeks={calendar.weeks}
